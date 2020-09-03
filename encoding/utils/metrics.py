@@ -23,10 +23,12 @@ class SegmentationMetric(object):
 
     def update(self, labels, preds):
         def evaluate_worker(self, label, pred):
+            print (pred.size(),label.size())
             correct, labeled = batch_pix_accuracy(
                 pred, label)
             inter, union = batch_intersection_union(
                 pred, label, self.nclass)
+
             with self.lock:
                 self.total_correct += correct
                 self.total_label += labeled
@@ -87,13 +89,13 @@ def batch_intersection_union(output, target, nclass):
         target: label 3D tensor
         nclass: number of categories (int)
     """
-    _, predict = torch.max(output, 1)
+    # _, predict = torch.max(output, 1)
+    predict = output
     mini = 1
     maxi = nclass
     nbins = nclass
     predict = predict.cpu().numpy().astype('int64') + 1
     target = target.cpu().numpy().astype('int64') + 1
-    print (predict.shape,target.shape)
     predict = predict * (target > 0).astype(predict.dtype)
     intersection = predict * (predict == target)
     # areas of intersection and union

@@ -9,42 +9,87 @@
 ##+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 from PIL import Image
+import numpy as np
 
 def get_mask_pallete(npimg, dataset='detail'):
-    """Get image color pallete for visualizing masks"""
-    # recovery boundary
-    dataset = dataset.lower()
-    if dataset == 'pascal_voc':
-        npimg[npimg==21] = 255
-    # put colormap
-    out_img = Image.fromarray(npimg.squeeze().astype('uint8'))
-    if dataset == 'ade20k':
-        out_img.putpalette(adepallete)
-    elif dataset == 'cityscapes':
-        out_img.putpalette(citypallete)
-    elif dataset in ('pcontext', 'pascal_voc', 'pascal_aug'):
-        out_img.putpalette(vocpallete)
-    return out_img
+	"""Get image color pallete for visualizing masks"""
+	# recovery boundary
+	# dataset = dataset.lower()
+	# if dataset == 'pascal_voc':
+	# 	npimg[npimg==21] = 255
+	# put colormap
+	# out_img = Image.fromarray(npimg.squeeze().astype('uint8'))
+	# if dataset == 'ade20k':
+	# 	out_img.putpalette(adepallete)
+	# elif dataset == 'cityscapes':
+	# 	out_img.putpalette(citypallete)
+	# elif dataset in ('pcontext', 'pascal_voc', 'pascal_aug'):
+	# 	out_img.putpalette(vocpallete)
+	# elif dataset == 'sciencebirds':
+	out_img = usepalette(npimg)
+	return out_img
 
 def _get_voc_pallete(num_cls):
-    n = num_cls
-    pallete = [0]*(n*3)
-    for j in range(0,n):
-            lab = j
-            pallete[j*3+0] = 0
-            pallete[j*3+1] = 0
-            pallete[j*3+2] = 0
-            i = 0
-            while (lab > 0):
-                    pallete[j*3+0] |= (((lab >> 0) & 1) << (7-i))
-                    pallete[j*3+1] |= (((lab >> 1) & 1) << (7-i))
-                    pallete[j*3+2] |= (((lab >> 2) & 1) << (7-i))
-                    i = i + 1
-                    lab >>= 3
-    return pallete
+	n = num_cls
+	pallete = [0]*(n*3)
+	for j in range(0,n):
+			lab = j
+			pallete[j*3+0] = 0
+			pallete[j*3+1] = 0
+			pallete[j*3+2] = 0
+			i = 0
+			while (lab > 0):
+					pallete[j*3+0] |= (((lab >> 0) & 1) << (7-i))
+					pallete[j*3+1] |= (((lab >> 1) & 1) << (7-i))
+					pallete[j*3+2] |= (((lab >> 2) & 1) << (7-i))
+					i = i + 1
+					lab >>= 3
+	return pallete
+
+def usepalette(img):
+	id_to_cat = {
+		0:'BACKGROUND',
+		1:'BLACKBIRD',
+		2:'BLUEBIRD',
+		3:'HILL',
+		4:'ICE',
+		5:'PIG',
+		6:'REDBIRD',
+		7:'STONE',
+		8:'WHITEBIRD',
+		9:'WOOD',
+		10:'YELLOWBIRD',
+		11:'SLING',
+		12:'TNT'
+	}
+
+
+	colormap = {
+		'BACKGROUND':[0,0,0],
+		'BLACKBIRD':[128,0,0],
+		'BLUEBIRD':[0,128,0],
+		'HILL':[128,128,0],
+		'ICE':[0,0,128],
+		'PIG':[128,0,128],
+		'REDBIRD':[0,128,128],
+		'STONE':[128,128,128],
+		'WHITEBIRD':[64,0,0],
+		'WOOD':[192,0,0],
+		'YELLOWBIRD':[64,128,128],
+		'SLING':[192,128,128],
+		'TNT':[64,128,128]
+	}
+
+	row,col = img.shape
+	output = np.zeros((480,840,3)).astype(np.uint8)
+	img = img.data.cpu().numpy()
+	for i in range(row):
+		for j in range(col):
+			output[i,j,:] = colormap[id_to_cat[img[i,j]]]
+	return output
 
 vocpallete = _get_voc_pallete(256)
-
+# print (vocpallete,len(vocpallete))
 adepallete = [0,0,0,120,120,120,180,120,120,6,230,230,80,50,50,4,200,3,120,120,80,140,140,140,204,5,255,230,230,230,4,250,7,224,5,255,235,255,7,150,5,61,120,120,70,8,255,51,255,6,82,143,255,140,204,255,4,255,51,7,204,70,3,0,102,200,61,230,250,255,6,51,11,102,255,255,7,71,255,9,224,9,7,230,220,220,220,255,9,92,112,9,255,8,255,214,7,255,224,255,184,6,10,255,71,255,41,10,7,255,255,224,255,8,102,8,255,255,61,6,255,194,7,255,122,8,0,255,20,255,8,41,255,5,153,6,51,255,235,12,255,160,150,20,0,163,255,140,140,140,250,10,15,20,255,0,31,255,0,255,31,0,255,224,0,153,255,0,0,0,255,255,71,0,0,235,255,0,173,255,31,0,255,11,200,200,255,82,0,0,255,245,0,61,255,0,255,112,0,255,133,255,0,0,255,163,0,255,102,0,194,255,0,0,143,255,51,255,0,0,82,255,0,255,41,0,255,173,10,0,255,173,255,0,0,255,153,255,92,0,255,0,255,255,0,245,255,0,102,255,173,0,255,0,20,255,184,184,0,31,255,0,255,61,0,71,255,255,0,204,0,255,194,0,255,82,0,10,255,0,112,255,51,0,255,0,194,255,0,122,255,0,255,163,255,153,0,0,255,10,255,112,0,143,255,0,82,0,255,163,255,0,255,235,0,8,184,170,133,0,255,0,255,92,184,0,255,255,0,31,0,184,255,0,214,255,255,0,112,92,255,0,0,224,255,112,224,255,70,184,160,163,0,255,153,0,255,71,255,0,255,0,163,255,204,0,255,0,143,0,255,235,133,255,0,255,0,235,245,0,255,255,0,122,255,245,0,10,190,212,214,255,0,0,204,255,20,0,255,255,255,0,0,153,255,0,41,255,0,255,204,41,0,255,41,255,0,173,0,255,0,245,255,71,0,255,122,0,255,0,255,184,0,92,255,184,255,0,0,133,255,255,214,0,25,194,194,102,255,0,92,0,255]
 
 citypallete = [

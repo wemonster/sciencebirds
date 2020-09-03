@@ -33,12 +33,13 @@ class Trainer():
 		self.args = args
 		# data transforms
 		input_transform = transform.Compose([
-			transform.ToTensor()
-			# transform.Normalize([.485, .456, .406], [.229, .224, .225])
+			transform.ToTensor(),
+			transform.Normalize([.485, .456, .406], [.229, .224, .225])
 			])
+		label_transform = transform.ToTensor()
 		# dataset
 		data_kwargs = {'transform': input_transform, 'target_transform':input_transform,
-						'label_transform':input_transform,
+						'label_transform':label_transform,
 						 'base_size': args.base_size,'crop_size': args.crop_size}
 		trainset = get_segmentation_dataset(args.dataset, split=args.train_split, mode='train',
 										   **data_kwargs)
@@ -62,6 +63,8 @@ class Trainer():
 									   base_size = args.base_size, crop_size = args.crop_size)
 
 		# print(model)
+		# for (name,w) in model.named_parameters():
+		# 	print (name,w.requires_grad)
 		# optimizer using different LR
 		params_list = [{'params': model.pretrained.parameters(), 'lr': args.lr},]
 		# if hasattr(model, 'jpu'):
@@ -109,12 +112,12 @@ class Trainer():
 		train_loss = 0.0
 		self.model.train()
 		tbar = tqdm(self.trainloader)
-		for i, (image, target,labels) in enumerate(tbar):
+		for i, (image, dst,labels) in enumerate(tbar):
 			self.scheduler(self.optimizer, i, epoch, self.best_pred)
 			self.optimizer.zero_grad()
 			if torch_ver == "0.3":
 				image = Variable(image)
-				target = Variable(target)
+				# target = Variable(target)
 				labels = Variable(labels)
 			outputs,labeled = self.model(image)
 			labeled = labeled.type(torch.cuda.FloatTensor)
@@ -154,7 +157,7 @@ class Trainer():
 		self.model.eval()
 		total_inter, total_union, total_correct, total_label = 0, 0, 0, 0
 		tbar = tqdm(self.valloader, desc='\r')
-		for i, (image, target,labels) in enumerate(tbar):
+		for i, (image, dst,labels) in enumerate(tbar):
 			if torch_ver == "0.3":
 				image = Variable(image, volatile=True)
 				correct, labeled, inter, union = eval_batch(self.model, image, labels)
@@ -190,8 +193,8 @@ if __name__ == "__main__":
 	trainer = Trainer(args)
 	print('Starting Epoch:', trainer.args.start_epoch)
 	print('Total Epoches:', trainer.args.epochs)
-	# for epoch in range(trainer.args.start_epoch, trainer.args.epochs):
-	for epoch in range(1):
+	for epoch in range(trainer.args.start_epoch, trainer.args.epochs):
+	# for epoch in range(1):
 		trainer.training(epoch)
 		if not trainer.args.no_val:
 			trainer.validation(epoch)

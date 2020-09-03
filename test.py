@@ -5,7 +5,7 @@
 ###########################################################################
 
 import os
-
+import cv2
 import torch
 import torchvision.transforms as transform
 
@@ -19,7 +19,7 @@ from encoding.nn import BatchNorm
 from encoding.datasets import get_segmentation_dataset, test_batchify_fn
 from encoding.models import get_model, get_segmentation_model, MultiEvalModule
 
-from .option import Options
+from option import Options
 
 
 def test(args):
@@ -32,9 +32,12 @@ def test(args):
 	input_transform = transform.Compose([
 		transform.ToTensor(),
 		transform.Normalize([.485, .456, .406], [.229, .224, .225])])
+	label_transform = transform.ToTensor()
 	# dataset
-	testset = get_segmentation_dataset(args.dataset, split=args.split, mode=args.mode,
-									   transform=input_transform)
+	data_kwargs = {'transform': input_transform, 'target_transform':input_transform,
+						'label_transform':label_transform}
+	testset = get_segmentation_dataset(args.dataset, split=args.split, mode='val',
+										   **data_kwargs)
 	# dataloader
 	loader_kwargs = {'num_workers': args.workers, 'pin_memory': True} \
 		if args.cuda else {}
@@ -68,22 +71,24 @@ def test(args):
 	metric = utils.SegmentationMetric(testset.num_class)
 
 	tbar = tqdm(test_data)
-	for i, (image, dst) in enumerate(tbar):
+	ids = testset._load_image_set_index()
+	for i, (image,labels) in enumerate(tbar):
+		# pass
 		if 'val' in args.mode:
 			with torch.no_grad():
 				predicts = evaluator.parallel_forward(image)
-				metric.update(dst, predicts)
+				predicts = torch.argmax(predicts[0],dim=1)
+				metric.update(labels[0], predicts)
 				pixAcc, mIoU = metric.get()
 				tbar.set_description( 'pixAcc: %.4f, mIoU: %.4f' % (pixAcc, mIoU))
 		else:
 			with torch.no_grad():
 				outputs = evaluator.parallel_forward(image)
-				predicts = [testset.make_pred(torch.max(output, 1)[1].cpu().numpy())
-							for output in outputs]
-			for predict, impath in zip(predicts, dst):
+				predict = torch.argmax(outputs[0],1)[0]
+				print (predict.size())
 				mask = utils.get_mask_pallete(predict, args.dataset)
-				outname = os.path.splitext(impath)[0] + '.png'
-				mask.save(os.path.join(outdir, outname))
+				outname = str(ids[i]) + '.png'
+				cv2.imwrite(os.path.join(outdir, outname),mask)
 
 if __name__ == "__main__":
 	args = Options().parse()

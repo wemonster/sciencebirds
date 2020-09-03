@@ -28,6 +28,7 @@ class DeepLabV3(BaseNet):
 		x = self.head(c4)
 		x = F.interpolate(x, (h,w), **self._up_kwargs)
 		labeled = F.softmax(x,dim=1)
+		# print (torch.sum(x,dim=1))
 		# labeled = torch.argmax(labeled,dim=1)
 		# outputs.append(x)
 		# if self.aux:

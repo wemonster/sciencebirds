@@ -84,7 +84,7 @@ class SciencebirdSeg(BaseDataset):
 		if self.label_transform is not None:
 			labels = self.label_transform(labels)
 		# print (labels.size(),type(labels))
-		return img, mask,labels
+		return img,labels
 
 	def __len__(self):
 		return len(self.ids)

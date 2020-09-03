@@ -80,9 +80,9 @@ class Options():
         parser.add_argument('--mode', default='testval')
         parser.add_argument('--ms', action='store_true', default=False,
                             help='multi scale & flip')
-        parser.add_argument('--no-val', action='store_true', default= True,
+        parser.add_argument('--no-val', action='store_true', default= False,
                             help='skip validation during training')
-        parser.add_argument('--save-folder', type=str, default='experiments/segmentation/results',
+        parser.add_argument('--save-folder', type=str, default='../experiments/results',
                             help = 'path to save images')
 
         # the parser
@@ -106,7 +106,7 @@ class Options():
         if args.batch_size is None:
             args.batch_size = 2
         if args.test_batch_size is None:
-            args.test_batch_size = args.batch_size
+            args.test_batch_size = 1
         if args.lr is None:
             lrs = {
                 'coco': 0.01,
