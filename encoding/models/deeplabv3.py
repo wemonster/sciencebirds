@@ -14,6 +14,8 @@ class DeepLabV3(BaseNet):
 		super(DeepLabV3, self).__init__(nclass, backbone, aux, se_loss, norm_layer=norm_layer, **kwargs)
 
 		self.head = DeepLabV3Head(2048, nclass, norm_layer, self._up_kwargs)
+
+		# self.
 		if aux:
 			self.auxlayer = FCNHead(1024, nclass, norm_layer)
 

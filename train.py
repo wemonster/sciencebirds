@@ -112,7 +112,7 @@ class Trainer():
 		train_loss = 0.0
 		self.model.train()
 		tbar = tqdm(self.trainloader)
-		for i, (image, dst,labels) in enumerate(tbar):
+		for i, (image,labels) in enumerate(tbar):
 			self.scheduler(self.optimizer, i, epoch, self.best_pred)
 			self.optimizer.zero_grad()
 			if torch_ver == "0.3":
