@@ -66,9 +66,9 @@ class Trainer():
 		# for (name,w) in model.named_parameters():
 		# 	print (name,w.requires_grad)
 		# optimizer using different LR
-		params_list = [{'params': model.head.parameters(), 'lr': args.lr}]
-		params_list.append({'params':model.low_level.parameters(),'lr':args.lr})
-		params_list.append({'params':model.concat_conv.parameters(),'lr':args.lr})
+		params_list = [{'params': model.head.parameters(), 'lr': args.lr*10}]
+		params_list.append({'params':model.low_level.parameters(),'lr':args.lr*10})
+		params_list.append({'params':model.concat_conv.parameters(),'lr':args.lr*10})
 		# if hasattr(model, 'jpu'):
 		# 	params_list.append({'params': model.jpu.parameters(), 'lr': args.lr*10})
 		# if hasattr(model, 'head'):
