@@ -351,8 +351,13 @@ def resnet50(pretrained=False,**kwargs):
 	if pretrained:
 		state_dict = torch.load('pretrained.pkl')
 		model.load_state_dict(state_dict)
-		for (name,param) in model.named_parameters():
+		for name,param in model.named_parameters():
+			if name.startswith('avgpool') or name.startswith('fc'):
+				continue
 			param.requires_grad = False
+			param = state_dict[name]
+		# for (name,param) in model.named_parameters():
+		# 	param.requires_grad = False
 	# 	model.load_state_dict(state_dict)
 	#     from ..models.model_store import get_model_file
 		# model.load_state_dict(torch.load(
