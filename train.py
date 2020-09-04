@@ -133,7 +133,7 @@ class Trainer():
 			train_loss += loss.item()
 			tbar.set_description('Train loss: %.3f' % (train_loss / (i + 1)))
 			training_log.write("Iteration:{}, Loss:{:.3f}\n".format(i,train_loss/(i+1)))
-		log_file.write("Epoch:{}, Loss:{:.3f}\n".format(epoch,train_loss/(len(self.tbar))))
+		log_file.write("Epoch:{}, Loss:{:.3f}\n".format(epoch,train_loss/(i+1)))
 		training_log.close()
 		if self.args.no_val:
 			# save checkpoint every epoch
