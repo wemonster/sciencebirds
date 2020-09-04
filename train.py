@@ -66,11 +66,11 @@ class Trainer():
 		# for (name,w) in model.named_parameters():
 		# 	print (name,w.requires_grad)
 		# optimizer using different LR
-		params_list = [{'params': model.pretrained.parameters(), 'lr': args.lr},]
+		params_list = [{'params': model.pretrained.parameters(), 'lr': args.lr}]
 		# if hasattr(model, 'jpu'):
 		# 	params_list.append({'params': model.jpu.parameters(), 'lr': args.lr*10})
-		# if hasattr(model, 'head'):
-		# 	params_list.append({'params': model.head.parameters(), 'lr': args.lr*10})
+		if hasattr(model, 'head'):
+			params_list.append({'params': model.head.parameters(), 'lr': args.lr*10})
 		# if hasattr(model, 'auxlayer'):
 		# 	params_list.append({'params': model.auxlayer.parameters(), 'lr': args.lr*10})
 		optimizer = torch.optim.SGD(params_list, lr=args.lr,
@@ -108,7 +108,8 @@ class Trainer():
 		self.scheduler = utils.LR_Scheduler(args.lr_scheduler, args.lr,
 											args.epochs, len(self.trainloader))
 
-	def training(self, epoch):
+	def training(self, epoch,log_file):
+		training_log = open("logs/train/{}.txt".format(epoch),'w')
 		train_loss = 0.0
 		self.model.train()
 		tbar = tqdm(self.trainloader)
@@ -131,6 +132,9 @@ class Trainer():
 			self.optimizer.step()
 			train_loss += loss.item()
 			tbar.set_description('Train loss: %.3f' % (train_loss / (i + 1)))
+			training_log.write("Iteration:{}, Loss:{:.3f}\n".format(i,train_loss/(i+1)))
+		log_file.write("Epoch:{}, Loss:{:.3f}\n".format(epoch,train_loss/(len(self.tbar))))
+		training_log.close()
 		if self.args.no_val:
 			# save checkpoint every epoch
 			is_best = False
@@ -142,8 +146,9 @@ class Trainer():
 			}, self.args, is_best, filename='checkpoint_{}.pth.tar'.format(epoch))
 
 
-	def validation(self, epoch):
+	def validation(self, epoch,log_file):
 		# Fast test during the training
+		val_log = open("logs/val/{}.txt".format(epoch),'w')
 		def eval_batch(model, image, target):
 			labeled,outputs = model(image)
 			outputs = gather(outputs, 0, dim=0)
@@ -157,7 +162,7 @@ class Trainer():
 		self.model.eval()
 		total_inter, total_union, total_correct, total_label = 0, 0, 0, 0
 		tbar = tqdm(self.valloader, desc='\r')
-		for i, (image, dst,labels) in enumerate(tbar):
+		for i, (image,labels) in enumerate(tbar):
 			if torch_ver == "0.3":
 				image = Variable(image, volatile=True)
 				correct, labeled, inter, union = eval_batch(self.model, image, labels)
@@ -174,11 +179,13 @@ class Trainer():
 			mIoU = IoU.mean()
 			tbar.set_description(
 				'pixAcc: %.3f, mIoU: %.3f' % (pixAcc, mIoU))
-
+			val_log.write("Iteration:{}, pixAcc:{:.3f}, mIoU:{:.3f}\n".format(i,pixAcc,mIoU))
+		val_log.close()
 		new_pred = (pixAcc + mIoU)/2
 		if new_pred > self.best_pred:
 			is_best = True
 			self.best_pred = new_pred
+		log_file.write("Epoch:{}, pixAcc:{:.3f}, mIoU:{:.3f}, Overall:{:.3f}\n".format(epoch,pixAcc,mIoU,new_pred))
 		utils.save_checkpoint({
 			'epoch': epoch + 1,
 			'state_dict': self.model.module.state_dict(),
@@ -193,8 +200,12 @@ if __name__ == "__main__":
 	trainer = Trainer(args)
 	print('Starting Epoch:', trainer.args.start_epoch)
 	print('Total Epoches:', trainer.args.epochs)
+	train_log_file = open("logs/training_log.txt",'w')
+	val_log_file = open("logs/val_log.txt",'w')
 	for epoch in range(trainer.args.start_epoch, trainer.args.epochs):
 	# for epoch in range(1):
-		trainer.training(epoch)
+		trainer.training(epoch,train_log_file)
 		if not trainer.args.no_val:
-			trainer.validation(epoch)
+			trainer.validation(epoch,val_log_file)
+	train_log_file.close()
+	val_log_file.close()
