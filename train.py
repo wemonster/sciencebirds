@@ -66,13 +66,14 @@ class Trainer():
 		# for (name,w) in model.named_parameters():
 		# 	print (name,w.requires_grad)
 		# optimizer using different LR
-		params_list = [{'params': model.head.parameters(), 'lr': args.lr*10}]
+		# params_list = model.parameters()
+		params_list = [{'params': model.parameters(), 'lr': args.lr*10}]
 		params_list.append({'params':model.low_level.parameters(),'lr':args.lr*10})
 		params_list.append({'params':model.concat_conv.parameters(),'lr':args.lr*10})
 		# if hasattr(model, 'jpu'):
 		# 	params_list.append({'params': model.jpu.parameters(), 'lr': args.lr*10})
-		# if hasattr(model, 'head'):
-		# 	params_list.append({'params': model.head.parameters(), 'lr': args.lr*10})
+		if hasattr(model, 'head'):
+			params_list.append({'params': model.head.parameters(), 'lr': args.lr*10})
 		# if hasattr(model, 'auxlayer'):
 		# 	params_list.append({'params': model.auxlayer.parameters(), 'lr': args.lr*10})
 		optimizer = torch.optim.SGD(params_list, lr=args.lr,
@@ -184,7 +185,7 @@ class Trainer():
 			val_log.write("Iteration:{}, pixAcc:{:.3f}, mIoU:{:.3f}\n".format(i,pixAcc,mIoU))
 		val_log.close()
 		new_pred = (pixAcc + mIoU)/2
-		if new_pred > self.best_pred:
+		if new_pred >= self.best_pred:
 			is_best = True
 			self.best_pred = new_pred
 		log_file.write("Epoch:{}, pixAcc:{:.3f}, mIoU:{:.3f}, Overall:{:.3f}\n".format(epoch,pixAcc,mIoU,new_pred))
