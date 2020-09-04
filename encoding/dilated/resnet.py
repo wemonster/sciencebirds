@@ -350,7 +350,7 @@ def resnet50(pretrained=False,**kwargs):
 	model = ResNet(Bottleneck,[3,4,6,3],**kwargs)
 	if pretrained:
 		state_dict = torch.load('pretrained.pkl')
-		model.load_state_dict(state_dict)
+		# model.load_state_dict(state_dict)
 		for name,param in model.named_parameters():
 			if name.startswith('avgpool') or name.startswith('fc'):
 				continue
