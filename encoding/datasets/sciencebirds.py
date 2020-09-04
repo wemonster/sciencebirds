@@ -9,7 +9,7 @@ import torchvision.transforms as transform
 from .base import BaseDataset
 
 class SciencebirdSeg(BaseDataset):
-	NUM_CLASS = 14
+	NUM_CLASS = 13
 	CAT_LIST = [0, 5, 2, 16, 9, 44, 6, 3, 17, 62, 21, 67, 18, 19, 4,
 		1, 64, 20, 63, 7, 72]
 	def __init__(self, root='dataset', split='train',

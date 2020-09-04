@@ -55,15 +55,22 @@ class BaseNet(nn.Module):
             self.jpu = JPU_X([512, 1024, 2048], width=512, norm_layer=norm_layer, up_kwargs=up_kwargs)
 
     def base_forward(self, x):
+        # print (x.size())
         x = self.pretrained.conv1(x)
         x = self.pretrained.bn1(x)
         x = self.pretrained.relu(x)
+        # print (x.size())
         x = self.pretrained.maxpool(x)
+        # print (x.size())
         c1 = self.pretrained.layer1(x)
+        # print (c1.size())
         c2 = self.pretrained.layer2(c1)
+        # print (c2.size())
         c3 = self.pretrained.layer3(c2)
+        # print (c3.size())
         c4 = self.pretrained.layer4(c3)
-
+        # print (c4.size())
+        # print ('-'*20)
         if self.jpu:
             return self.jpu(c1, c2, c3, c4)
         else:

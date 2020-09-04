@@ -15,21 +15,31 @@ class DeepLabV3(BaseNet):
 
 		self.head = DeepLabV3Head(2048, nclass, norm_layer, self._up_kwargs)
 
-		# self.
+		self.low_level = nn.Conv2d(256,256,1,bias=False)
+		self.concat_conv = nn.Conv2d(512,nclass,3,padding=1,bias=False)
 		if aux:
 			self.auxlayer = FCNHead(1024, nclass, norm_layer)
 
 	def forward(self, x):
 		#Space for decoder
 		_, _, h, w = x.size()
-		_, _, c3, c4 = self.base_forward(x)
+		c1, c2, c3, c4 = self.base_forward(x)
 
 		outputs = []
 		# print (x)
 
+		low_level_features = self.low_level(c1)
+
 		x = self.head(c4)
-		x = F.interpolate(x, (h,w), **self._up_kwargs)
+
+		x = F.interpolate(x,(h//4,w//4),**self._up_kwargs)
+
+		concated = torch.cat((low_level_features,x),1)
+		concated = self.concat_conv(concated)
+
+		x = F.interpolate(concated, (h,w), **self._up_kwargs)
 		labeled = F.softmax(x,dim=1)
+
 		# print (torch.sum(x,dim=1))
 		# labeled = torch.argmax(labeled,dim=1)
 		# outputs.append(x)
@@ -57,7 +67,7 @@ class DeepLabV3Head(nn.Module):
 
 	def forward(self, x):
 		x = self.aspp(x)
-		x = self.block(x)
+		# x = self.block(x)
 		return x
 
 

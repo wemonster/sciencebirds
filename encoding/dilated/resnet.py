@@ -348,8 +348,11 @@ def resnet50(pretrained=False,**kwargs):
 	"""
 	# model = myNet(13,[3,4,6,3])
 	model = ResNet(Bottleneck,[3,4,6,3],**kwargs)
-	# if pretrained:
-	# 	state_dict = torch.load('mynet.pkl')
+	if pretrained:
+		state_dict = torch.load('pretrained.pkl')
+		model.load_state_dict(state_dict)
+		for (name,param) in model.named_parameters():
+			param.requires_grad = False
 	# 	model.load_state_dict(state_dict)
 	#     from ..models.model_store import get_model_file
 		# model.load_state_dict(torch.load(
