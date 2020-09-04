@@ -1,0 +1,2 @@
+Iteration:0, Loss:2.557
+Iteration:1, Loss:2.148

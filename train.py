@@ -66,11 +66,13 @@ class Trainer():
 		# for (name,w) in model.named_parameters():
 		# 	print (name,w.requires_grad)
 		# optimizer using different LR
-		params_list = [{'params': model.pretrained.parameters(), 'lr': args.lr}]
+		params_list = [{'params': model.head.parameters(), 'lr': args.lr}]
+		params_list.append({'params':model.low_level.parameters(),'lr':args.lr})
+		params_list.append({'params':model.concat_conv.parameters(),'lr':args.lr})
 		# if hasattr(model, 'jpu'):
 		# 	params_list.append({'params': model.jpu.parameters(), 'lr': args.lr*10})
-		if hasattr(model, 'head'):
-			params_list.append({'params': model.head.parameters(), 'lr': args.lr*10})
+		# if hasattr(model, 'head'):
+		# 	params_list.append({'params': model.head.parameters(), 'lr': args.lr*10})
 		# if hasattr(model, 'auxlayer'):
 		# 	params_list.append({'params': model.auxlayer.parameters(), 'lr': args.lr*10})
 		optimizer = torch.optim.SGD(params_list, lr=args.lr,
