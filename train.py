@@ -199,7 +199,7 @@ class Trainer():
 			'state_dict': self.model.module.state_dict(),
 			'optimizer': self.optimizer.state_dict(),
 			'best_pred': new_pred,
-		}, self.args, is_best)
+		}, self.args, is_best,"checkpoint_{}.pth.tar".format(epoch+1))
 
 
 if __name__ == "__main__":

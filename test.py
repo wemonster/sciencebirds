@@ -85,8 +85,9 @@ def test(args):
 			with torch.no_grad():
 				outputs = evaluator.parallel_forward(image)
 				print (outputs.size())
-				predict = torch.argmax(outputs[0],1)
-				print (predict.size())
+				predict = torch.argmax(outputs[0],1)[0]
+				print (predict)
+				print (labels)
 				mask = utils.get_mask_pallete(predict, args.dataset)
 				outname = str(ids[i]) + '.png'
 				cv2.imwrite(os.path.join(outdir, outname),mask)
