@@ -67,8 +67,8 @@ class Trainer():
 		# 	print (name,w.requires_grad)
 		# optimizer using different LR
 		params_list = [{'params': model.pretrained.parameters(), 'lr': args.lr}]
-		params_list.append({'params':model.low_level.parameters(),'lr':args.lr*10})
-		params_list.append({'params':model.concat_conv.parameters(),'lr':args.lr*10})
+		params_list.append({'params':model.low_level.parameters(),'lr':args.lr})
+		params_list.append({'params':model.concat_conv.parameters(),'lr':args.lr})
 		# if hasattr(model, 'jpu'):
 		# 	params_list.append({'params': model.jpu.parameters(), 'lr': args.lr*10})
 		if hasattr(model, 'head'): 
@@ -123,16 +123,22 @@ class Trainer():
 				# target = Variable(target)
 				labels = Variable(labels)
 			outputs,labeled = self.model(image)
+			# test_image = transform.ToPILImage()(image[0])
+			# test_label = transform.ToPILImage()(labels[0])
+			# test_image.save("2.png")
+			# test_label.save("3.png")
 			labeled = labeled.type(torch.cuda.FloatTensor)
 			
 			labels = torch.squeeze(labels)
 			labels = labels.to(dtype=torch.int64)
+			# print (labeled[0,:,0,0])
 			# print (labeled.type(),labels.type())
 			# print (labeled.size(),labels.size())
 			loss = self.criterion(labeled, labels)
 			loss.backward()
 			self.optimizer.step()
 			train_loss += loss.item()
+			print (loss.item(),train_loss)
 			tbar.set_description('Train loss: %.3f' % (train_loss / (i + 1)))
 			training_log.write("Iteration:{}, Loss:{:.3f}\n".format(i,train_loss/(i+1)))
 		log_file.write("Epoch:{}, Loss:{:.3f}\n".format(epoch,train_loss/(i+1)))

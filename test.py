@@ -84,7 +84,8 @@ def test(args):
 		else:
 			with torch.no_grad():
 				outputs = evaluator.parallel_forward(image)
-				predict = torch.argmax(outputs[0],1)[0]
+				print (outputs.size())
+				predict = torch.argmax(outputs[0],1)
 				print (predict.size())
 				mask = utils.get_mask_pallete(predict, args.dataset)
 				outname = str(ids[i]) + '.png'

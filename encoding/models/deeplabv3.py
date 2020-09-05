@@ -15,8 +15,22 @@ class DeepLabV3(BaseNet):
 
 		self.head = DeepLabV3Head(2048, nclass, norm_layer, self._up_kwargs)
 
-		self.low_level = nn.Conv2d(256,256,1,bias=False)
-		self.concat_conv = nn.Conv2d(512,nclass,3,padding=1,bias=False)
+		self.low_level = nn.Sequential(
+			nn.Conv2d(256,48,1,bias=False),
+			norm_layer(48),
+			nn.ReLU(True)
+			)
+		
+		self.concat_conv = nn.Sequential(
+			nn.Conv2d(304,256,kernel_size=3,stride=1,padding=1,bias=False),
+			norm_layer(256),
+			nn.ReLU(True),
+			nn.Conv2d(256,256,kernel_size=3,stride=1,padding=1,bias=False),
+			norm_layer(256),
+			nn.ReLU(True),
+			nn.Conv2d(256,nclass,kernel_size=1,stride=1)
+			)
+		
 		if aux:
 			self.auxlayer = FCNHead(1024, nclass, norm_layer)
 
@@ -38,7 +52,8 @@ class DeepLabV3(BaseNet):
 		concated = self.concat_conv(concated)
 
 		x = F.interpolate(concated, (h,w), **self._up_kwargs)
-		labeled = F.softmax(x,dim=1)
+		# labeled = F.softmax(x,dim=1)
+		labeled = x
 
 		# print (torch.sum(x,dim=1))
 		# labeled = torch.argmax(labeled,dim=1)
@@ -111,8 +126,9 @@ class ASPP_Module(nn.Module):
 		self.project = nn.Sequential(
 			nn.Conv2d(5*out_channels, out_channels, 1, bias=False),
 			norm_layer(out_channels),
-			nn.ReLU(True),
-			nn.Dropout2d(0.5, False))
+			nn.ReLU(True)
+			# nn.Dropout2d(0.5, False)
+			)
 
 	def forward(self, x):
 		feat0 = self.b0(x)
