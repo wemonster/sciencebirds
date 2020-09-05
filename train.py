@@ -212,7 +212,7 @@ if __name__ == "__main__":
 	val_log_file = open("logs/val_log.txt",'w')
 	for epoch in range(trainer.args.start_epoch, trainer.args.epochs):
 	# for epoch in range(1):
-		trainer.training(epoch,train_log_file)
+		# trainer.training(epoch,train_log_file)
 		if not trainer.args.no_val:
 			trainer.validation(epoch,val_log_file)
 	train_log_file.close()
