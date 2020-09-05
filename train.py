@@ -138,7 +138,6 @@ class Trainer():
 			loss.backward()
 			self.optimizer.step()
 			train_loss += loss.item()
-			# print (loss.item(),train_loss)
 			tbar.set_description('Train loss: %.3f' % (train_loss / (i + 1)))
 			training_log.write("Iteration:{}, Loss:{:.3f}\n".format(i,train_loss/(i+1)))
 		log_file.write("Epoch:{}, Loss:{:.3f}\n".format(epoch,train_loss/(i+1)))
@@ -159,9 +158,12 @@ class Trainer():
 		val_log = open("logs/val/{}.txt".format(epoch),'w')
 		def eval_batch(model, image, target):
 			labeled,outputs = model(image)
-			outputs = gather(outputs, 0, dim=0)
-			pred = outputs[0]
-			target = target.cuda()
+			# outputs = gather(outputs, 0, dim=0)
+			# pred = outputs[0]
+			pred = torch.argmax(outputs,dim=1)
+			# print (pred.size())
+			target = target.squeeze().cuda()
+			# print (pred.data.size(),target.size())
 			correct, labeled = utils.batch_pix_accuracy(pred.data, target)
 			inter, union = utils.batch_intersection_union(pred.data, target, self.nclass)
 			return correct, labeled, inter, union
@@ -212,7 +214,7 @@ if __name__ == "__main__":
 	val_log_file = open("logs/val_log.txt",'w')
 	for epoch in range(trainer.args.start_epoch, trainer.args.epochs):
 	# for epoch in range(1):
-		# trainer.training(epoch,train_log_file)
+		trainer.training(epoch,train_log_file)
 		if not trainer.args.no_val:
 			trainer.validation(epoch,val_log_file)
 	train_log_file.close()

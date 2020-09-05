@@ -70,14 +70,16 @@ def batch_pix_accuracy(output, target):
 		predict: input 4D tensor
 		target: label 3D tensor
 	"""
-	_, predict = torch.max(output, 1)
-
+	# _, predict = torch.max(output, 1)
+	predict = output
 	predict = predict.cpu().numpy().astype('int64') + 1
 	target = target.cpu().numpy().astype('int64') + 1
-
+	# print (predict.size(),target.size())
+	# print (predict)
+	# print (target)
 	pixel_labeled = np.sum(target >= 0)
 	pixel_correct = np.sum((predict == target)*(target >= 0))
-	print (pixel_labeled,pixel_correct)
+	# print (pixel_labeled,pixel_correct)
 	assert pixel_correct <= pixel_labeled, \
 		"Correct area should be smaller than Labeled"
 	return pixel_correct, pixel_labeled
