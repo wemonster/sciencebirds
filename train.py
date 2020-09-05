@@ -138,7 +138,7 @@ class Trainer():
 			loss.backward()
 			self.optimizer.step()
 			train_loss += loss.item()
-			print (loss.item(),train_loss)
+			# print (loss.item(),train_loss)
 			tbar.set_description('Train loss: %.3f' % (train_loss / (i + 1)))
 			training_log.write("Iteration:{}, Loss:{:.3f}\n".format(i,train_loss/(i+1)))
 		log_file.write("Epoch:{}, Loss:{:.3f}\n".format(epoch,train_loss/(i+1)))

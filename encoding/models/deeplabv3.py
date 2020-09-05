@@ -126,8 +126,8 @@ class ASPP_Module(nn.Module):
 		self.project = nn.Sequential(
 			nn.Conv2d(5*out_channels, out_channels, 1, bias=False),
 			norm_layer(out_channels),
-			nn.ReLU(True)
-			# nn.Dropout2d(0.5, False)
+			nn.ReLU(True),
+			nn.Dropout2d(0.5, False)
 			)
 
 	def forward(self, x):
