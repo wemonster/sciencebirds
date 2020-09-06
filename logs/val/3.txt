@@ -1,0 +1,2 @@
+Iteration:0, pixAcc:1.000, mIoU:0.077
+Iteration:1, pixAcc:1.000, mIoU:0.077

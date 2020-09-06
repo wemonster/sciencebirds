@@ -77,6 +77,7 @@ def batch_pix_accuracy(output, target):
 	# print (predict.size(),target.size())
 	# print (predict)
 	# print (target)
+	print (predict[predict==target],np.sum(predict==target))
 	pixel_labeled = np.sum(target >= 0)
 	pixel_correct = np.sum((predict == target)*(target >= 0))
 	# print (pixel_labeled,pixel_correct)

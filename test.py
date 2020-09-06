@@ -66,7 +66,8 @@ def test(args):
 		[0.5, 0.75, 1.0, 1.25, 1.5, 1.75]
 	if not args.ms:
 		scales = [1.0]
-	evaluator = MultiEvalModule(model, testset.num_class, scales=scales, flip=args.ms).cuda()
+	#evaluator = MultiEvalModule(model, testset.num_class, scales=scales, flip=args.ms).cuda()
+	evaluator = model
 	evaluator.eval()
 	metric = utils.SegmentationMetric(testset.num_class)
 
@@ -83,10 +84,12 @@ def test(args):
 				tbar.set_description( 'pixAcc: %.4f, mIoU: %.4f' % (pixAcc, mIoU))
 		else:
 			with torch.no_grad():
-				outputs = evaluator.parallel_forward(image)
-				print (outputs.size())
-				predict = torch.argmax(outputs[0],1)[0]
-				print (predict)
+				#print (image)
+				outputs,labels = evaluator(image[0])
+				#print (outputs.size())
+				#print (outputs[0],outputs[0].size(),torch.argmax(outputs[0],1).size())
+				predict = torch.argmax(outputs,1)
+				print (predict.size())
 				print (labels)
 				mask = utils.get_mask_pallete(predict, args.dataset)
 				outname = str(ids[i]) + '.png'
