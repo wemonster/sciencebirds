@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import cv2
 
 import torch
 
@@ -82,7 +83,12 @@ class SciencebirdSeg(BaseDataset):
 			mask = self.target_transform(mask)
 		# print (labels.size,type(labels))
 		if self.label_transform is not None:
-			labels = self.label_transform(labels)
+			# print (labels.load())
+			a = cv2.imread(os.path.join(self.label_files,str(img_id)+'.png'))
+			# print (a[a!=0])
+			labels = self.label_transform(labels) * 255
+			labels = labels.type(torch.LongTensor)
+			# print (labels[labels!=0])
 		# print (labels.size(),type(labels))
 		return img,labels
 
