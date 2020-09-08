@@ -43,7 +43,7 @@ num_epochs = 50
 
 feature_extract = True
 
-def train_model(model,dataloaders,criterion,optimizer,num_epochs=25,is_inception=False):
+def train_model(model,dataloaders,criterion,optimizer,output_model,num_epochs=25,is_inception=False):
 	since = time.time()
 	val_acc_history = []
 	best_model_wts = copy.deepcopy(model.state_dict())
@@ -111,7 +111,7 @@ def train_model(model,dataloaders,criterion,optimizer,num_epochs=25,is_inception
 	time_elapsed = time.time() - since
 	print ("Training complete in {:.0f}m {:.0f}s".format(time_elapsed//60,time_elapsed % 60))
 	model.load_state_dict(best_model_wts)
-	torch.save(best_model_wts,"pretrained.pkl")
+	torch.save(best_model_wts,"../models/resnet/pretrained_{}.pkl".format(output_model))
 	info = {'training_loss':train_loss,
 			'training_acc':train_acc,
 			'val_loss':val_loss,
@@ -164,7 +164,7 @@ def load_pretrained_weights(model,state_dict):
 	model.load_state_dict(state_dict)
 	return model
 
-def load_data(folder,batch_size):
+def load_data(folder,batch_size,ratio):
 	data_transforms = {
 	'train':transforms.Compose([
 
@@ -180,6 +180,9 @@ def load_data(folder,batch_size):
 		])
 	}
 	files = os.listdir(folder)
+	classes = os.listdir(os.path.join(folder,"train"))
+	number_knowns = int(len(classes) * (1-ratio))
+	files = random.sample(classes,number_knowns)
 	# imgs = [cv2.imread(os.path.join(folder,i)) for i in files]
 	imgs = {x:datasets.ImageFolder(os.path.join(folder,x),transform=data_transforms[x]) 
 	for x in ['train','val']}
@@ -188,7 +191,7 @@ def load_data(folder,batch_size):
 	# image_datasets = {'train':data_transforms['train']}
 	# for inputs,label in dataloaders_dict:
 	# 	print (inputs,label)
-	return dataloaders_dict,data_transforms
+	return dataloaders_dict,data_transforms,files
 
 
 def optimizer(model):
@@ -281,12 +284,19 @@ def test_model(model,weights):
 
 if __name__ == "__main__":
 
-	model = initialise_model(num_classes,feature_extract)
-
-	dataloaders_dict,data_transforms = load_data('dataset/characters',8)
-	criterion = nn.CrossEntropyLoss()
-	optimizer_model = optimizer(model)
-	model,info = train_model(model,dataloaders_dict,criterion,optimizer_model,num_epochs)
+	close_ratios = [0,0.1,0.3,0.5,0.7,0.9]
+	if not os.path.exists("../models/resnet"):
+		os.mkdir("../models/resnet")
+	resnet_log = open("logs/resnet.txt",'w')
+	for i in range(len(close_ratios)):
+		model = initialise_model(num_classes,feature_extract)
+		dataloaders_dict,data_transforms,classes = load_data('dataset/characters',8,close_ratios[i])
+		resnet_log.write("ratio:{}|known:{}\n".format(close_ratios[i],','.join(classes)))
+		criterion = nn.CrossEntropyLoss()
+		optimizer_model = optimizer(model)
+		output_model = str(close_ratios[i] * 10)
+		model,info = train_model(model,dataloaders_dict,criterion,optimizer_model,num_epochs,output_model)
+	resnet_log.close()
 	# test_model(model,"mynet.pkl")
 	# plot_info("batchnorm",'logs/log.txt')
 	# plot_info('instance norm','logs/instance_norm_log.txt')

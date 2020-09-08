@@ -67,6 +67,26 @@ class DeepLabV3(BaseNet):
 		# print (x)
 		return x,labeled
 
+	def val_forward(self,x):
+		_, _, h, w = x.size()
+		c1, c2, c3, c4 = self.base_forward(x)
+
+		outputs = []
+		# print (x)
+
+		low_level_features = self.low_level(c1)
+
+		x = self.head(c4)
+
+		x = F.interpolate(x,(h//4,w//4),**self._up_kwargs)
+
+		concated = torch.cat((low_level_features,x),1)
+		concated = self.concat_conv(concated)
+
+		x = F.interpolate(concated, (h,w), **self._up_kwargs)
+		# labeled = F.softmax(x,dim=1)
+		labeled = x
+		return x
 
 class DeepLabV3Head(nn.Module):
 	def __init__(self, in_channels, out_channels, norm_layer, up_kwargs, atrous_rates=(12, 24, 36)):

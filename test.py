@@ -5,6 +5,7 @@
 ###########################################################################
 
 import os
+import time
 import cv2
 import torch
 import torchvision.transforms as transform
@@ -73,6 +74,7 @@ def test(args):
 
 	tbar = tqdm(test_data)
 	ids = testset._load_image_set_index()
+	test_log = open("logs/{}.txt".format(args.experiment),'w')
 	for i, (image,labels) in enumerate(tbar):
 		# pass
 		if 'val' in args.mode:
@@ -84,16 +86,22 @@ def test(args):
 				tbar.set_description( 'pixAcc: %.4f, mIoU: %.4f' % (pixAcc, mIoU))
 		else:
 			with torch.no_grad():
-				#print (image)
+				tic = time.time()
 				outputs,labels = evaluator(image[0])
-				#print (outputs.size())
-				#print (outputs[0],outputs[0].size(),torch.argmax(outputs[0],1).size())
 				predict = torch.argmax(outputs,1)
-				print (predict.size())
-				print (labels)
+				toc = time.time()
 				mask = utils.get_mask_pallete(predict, args.dataset)
+
+				#record the accuracy
+				metric.update(labels[0], predicts)
+				pixAcc, mIoU = metric.get()
+				test_log.write('pixAcc:{:.4f},mIoU:{:.4f},cost:{:.3f}s\n'.format(pixAcc, mIoU,toc-tic))
+
+				#write the output
 				outname = str(ids[i]) + '.png'
 				cv2.imwrite(os.path.join(outdir, outname),mask)
+		test_log.close()
+
 
 if __name__ == "__main__":
 	args = Options().parse()

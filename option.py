@@ -85,6 +85,9 @@ class Options():
         parser.add_argument('--save-folder', type=str, default='../experiments/results',
                             help = 'path to save images')
 
+        parser.add_argument('--experiment', type=str, default='close0',
+                            help = 'filename for test results')
+
         # the parser
         self.parser = parser
 
