@@ -23,13 +23,15 @@ from encoding.datasets import get_segmentation_dataset
 from encoding.models import get_segmentation_model
 
 from option import Options
+from maskimage import generate_dataset
 
 torch_ver = torch.__version__[:3]
 if torch_ver == '0.3':
 	from torch.autograd import Variable
 
 class Trainer():
-	def __init__(self, args):
+	def __init__(self,info,args):
+		self.ratio,self.classes = info[0],info[1]
 		self.args = args
 		# data transforms
 		input_transform = transform.Compose([
@@ -41,10 +43,10 @@ class Trainer():
 		data_kwargs = {'transform': input_transform, 'target_transform':input_transform,
 						'label_transform':label_transform,
 						 'base_size': args.base_size,'crop_size': args.crop_size}
-		trainset = get_segmentation_dataset(args.dataset, split=args.train_split, mode='train',
+		trainset = get_segmentation_dataset(self.ratio,args.dataset, split=args.train_split, mode='train',
 										   **data_kwargs)
 
-		testset = get_segmentation_dataset(args.dataset, split='val', mode ='val',
+		testset = get_segmentation_dataset(self.ratio,args.dataset, split='val', mode ='val',
 										   **data_kwargs)
 		print ("finish loading the dataset")
 		# dataloader
@@ -111,6 +113,7 @@ class Trainer():
 											args.epochs, len(self.trainloader))
 
 	def training(self, epoch,log_file):
+
 		training_log = open("logs/train/{}.txt".format(epoch),'w')
 		train_loss = 0.0
 		self.model.train()
@@ -120,20 +123,13 @@ class Trainer():
 			self.optimizer.zero_grad()
 			if torch_ver == "0.3":
 				image = Variable(image)
-				# target = Variable(target)
 				labels = Variable(labels)
 			outputs,labeled = self.model(image)
-			# test_image = transform.ToPILImage()(image[0])
-			# test_label = transform.ToPILImage()(labels[0])
-			# test_image.save("2.png")
-			# test_label.save("3.png")
 			labeled = labeled.type(torch.cuda.FloatTensor)
 			
 			labels = torch.squeeze(labels)
 			labels = labels.to(dtype=torch.int64)
-			# print (labeled[0,:,0,0])
-			# print (labeled.type(),labels.type())
-			# print (labeled.size(),labels.size())
+
 			loss = self.criterion(labeled, labels)
 			loss.backward()
 			self.optimizer.step()
@@ -158,15 +154,9 @@ class Trainer():
 		val_log = open("logs/val/{}.txt".format(epoch),'w')
 		def eval_batch(model, image, target):
 			labeled,outputs = model(image)
-			# outputs = gather(outputs, 0, dim=0)
-			# pred = outputs[0]
 			pred = torch.argmax(outputs,dim=1)
-			# print (pred.size())
 			target = target.squeeze().cuda()
-			# print (pred[pred!=0],target[target!=0])
-			# print (pred.data.size(),target.size())
 			correct, labeled = utils.batch_pix_accuracy(pred.data, target)
-			# print (correct,labeled)
 			inter, union = utils.batch_intersection_union(pred.data, target, self.nclass)
 			return correct, labeled, inter, union
 
@@ -205,19 +195,31 @@ class Trainer():
 			'best_pred': new_pred,
 		}, self.args, is_best,"checkpoint_{}.pth.tar".format(epoch+1))
 
-
+def get_class_lists():
+	data = open("logs/resnet.txt",'r').readlines()
+	class_info = []
+	for i in data:
+		ratio,classes = i.split('|')
+		ratio = float(ratio.split(':')[1])
+		classes = classes.strip().split(',')
+		class_info.append((ratio,classes))
+	return class_info
 if __name__ == "__main__":
 	args = Options().parse()
 	torch.manual_seed(args.seed)
-	trainer = Trainer(args)
+	
 	print('Starting Epoch:', trainer.args.start_epoch)
 	print('Total Epoches:', trainer.args.epochs)
 	train_log_file = open("logs/training_log.txt",'w')
 	val_log_file = open("logs/val_log.txt",'w')
-	for epoch in range(trainer.args.start_epoch, trainer.args.epochs):
-	# for epoch in range(1):
-		trainer.training(epoch,train_log_file)
-		if not trainer.args.no_val:
-			trainer.validation(epoch,val_log_file)
+	class_info = get_class_lists()
+	for i in range(len(class_info)):
+		trainer = Trainer(class_info[i],args)
+		generate_dataset(class_info[i][1])
+		for epoch in range(trainer.args.start_epoch, trainer.args.epochs):
+		# for epoch in range(1):
+			trainer.training(info,epoch,train_log_file)
+			if not trainer.args.no_val:
+				trainer.validation(epoch,val_log_file)
 	train_log_file.close()
 	val_log_file.close()

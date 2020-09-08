@@ -10,7 +10,7 @@ from .base import BaseNet
 __all__ = ['DeepLabV3', 'get_deeplab']
 
 class DeepLabV3(BaseNet):
-	def __init__(self, nclass, backbone, aux=True, se_loss=False, norm_layer=nn.BatchNorm2d, **kwargs):
+	def __init__(self,ratio,nclass, backbone, aux=True, se_loss=False, norm_layer=nn.BatchNorm2d, **kwargs):
 		super(DeepLabV3, self).__init__(nclass, backbone, aux, se_loss, norm_layer=norm_layer, **kwargs)
 
 		self.head = DeepLabV3Head(2048, nclass, norm_layer, self._up_kwargs)
@@ -162,11 +162,11 @@ class ASPP_Module(nn.Module):
 		return self.project(y)
 
 
-def get_deeplab(dataset='sciencebirds', backbone='resnet50', pretrained=False,
+def get_deeplab(ratio,dataset='sciencebirds', backbone='resnet50', pretrained=False,
 				root='~/.encoding/models', **kwargs):
 	# infer number of classes
 	from ..datasets import datasets
-	model = DeepLabV3(datasets[dataset.lower()].NUM_CLASS, backbone=backbone, root=root, **kwargs)
+	model = DeepLabV3(ratio,datasets[dataset.lower()].NUM_CLASS, backbone=backbone, root=root, **kwargs)
 	if pretrained:
 		raise NotImplementedError
 
