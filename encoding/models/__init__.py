@@ -7,7 +7,7 @@ from .encnet import *
 from .deeplabv3 import *
 
 
-def get_segmentation_model(ratio,name, **kwargs):
+def get_segmentation_model(ratio,nclass,name, **kwargs):
     from .fcn import get_fcn
     models = {
         'fcn': get_fcn,
@@ -15,4 +15,4 @@ def get_segmentation_model(ratio,name, **kwargs):
         'encnet': get_encnet,
         'deeplab': get_deeplab
     }
-    return models[name.lower()](ratio,**kwargs)
+    return models[name.lower()](ratio,nclass,**kwargs)

@@ -10,7 +10,7 @@ from .base import BaseNet
 __all__ = ['DeepLabV3', 'get_deeplab']
 
 class DeepLabV3(BaseNet):
-	def __init__(self,ratio,nclass=13, backbone, aux=True, se_loss=False, norm_layer=nn.BatchNorm2d, **kwargs):
+	def __init__(self,ratio,nclass, backbone, aux=True, se_loss=False, norm_layer=nn.BatchNorm2d, **kwargs):
 		super(DeepLabV3, self).__init__(nclass, backbone, aux, se_loss, norm_layer=norm_layer, **kwargs)
 
 		self.head = DeepLabV3Head(2048, nclass, norm_layer, self._up_kwargs)

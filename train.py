@@ -43,10 +43,10 @@ class Trainer():
 		data_kwargs = {'transform': input_transform, 'target_transform':input_transform,
 						'label_transform':label_transform,
 						 'base_size': args.base_size,'crop_size': args.crop_size}
-		trainset = get_segmentation_dataset(self.ratio,args.dataset, split=args.train_split, mode='train',
+		trainset = get_segmentation_dataset(args.dataset, split=args.train_split, mode='train',
 										   **data_kwargs)
 
-		testset = get_segmentation_dataset(self.ratio,args.dataset, split='val', mode ='val',
+		testset = get_segmentation_dataset(args.dataset, split='val', mode ='val',
 										   **data_kwargs)
 		print ("finish loading the dataset")
 		# dataloader
@@ -58,7 +58,7 @@ class Trainer():
 										 drop_last=False, shuffle=False, **kwargs)
 		self.nclass = trainset.num_class
 		# model
-		model = get_segmentation_model(args.model, dataset = args.dataset,
+		model = get_segmentation_model(self.ratio,self.nclass,args.model, dataset = args.dataset,
 									   backbone = args.backbone, dilated = args.dilated,
 									   lateral = args.lateral, jpu = args.jpu, aux = args.aux,
 									   se_loss = args.se_loss, #norm_layer = SyncBatchNorm,
