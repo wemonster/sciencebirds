@@ -112,6 +112,9 @@ class Trainer():
 		self.scheduler = utils.LR_Scheduler(args.lr_scheduler, args.lr,
 											args.epochs, len(self.trainloader))
 
+		self.correct_features = torch.tensor([])
+		self.corresponding_class = torch.tensor([])
+
 	def training(self, epoch,log_file):
 
 		training_log = open("logs/train/{}.txt".format(epoch),'w')
@@ -152,13 +155,37 @@ class Trainer():
 	def validation(self, epoch,log_file):
 		# Fast test during the training
 		val_log = open("logs/val/{}.txt".format(epoch),'w')
+		def collect_features(features,position):
+			'''
+			features: 304 x H x W
+			position: (#correctly classified) x 2:(x,y)
+			
+			return: 304 x (#correctly classified)
+			'''
+			print (features.size(),position.size())
+			result = []
+			for i in range(position.size()[0]):
+				pos = position[i]
+				result.append(features[:,pos[0],pos[1]])
+			if len(self.correct_features) == 0:
+				self.correct_features = torch.stack(result)
+			else:
+				self.correct_features = torch.cat((self.correct_features,result))
+
+
+
+
+
 		def eval_batch(model, image, target):
 			labeled,features = model.val_forward(image)
 			pred = torch.argmax(labeled,dim=1)
 			target = target.squeeze().cuda()
-			correct, labeled = utils.batch_pix_accuracy(pred.data, target,features)
-			inter, union = utils.batch_intersection_union(pred.data, target, self.nclass,features)
-			return correct, labeled, inter, union
+			correct, labeled,correct_classified = utils.batch_pix_accuracy(pred.data, target)
+			collect_features(features,position)
+			inter, union = utils.batch_intersection_union(pred.data, target, self.nclass)
+			return correct, labeled, inter, union,targets
+
+		
 
 		is_best = False
 		self.model.eval()
@@ -208,17 +235,19 @@ if __name__ == "__main__":
 	args = Options().parse()
 	torch.manual_seed(args.seed)
 	
-	print('Starting Epoch:', trainer.args.start_epoch)
-	print('Total Epoches:', trainer.args.epochs)
+	
 	train_log_file = open("logs/training_log.txt",'w')
 	val_log_file = open("logs/val_log.txt",'w')
 	class_info = get_class_lists()
+	print (class_info)
 	for i in range(len(class_info)):
 		trainer = Trainer(class_info[i],args)
+		print('Starting Epoch:', trainer.args.start_epoch)
+		print('Total Epoches:', trainer.args.epochs)
 		generate_dataset(class_info[i][1])
 		for epoch in range(trainer.args.start_epoch, trainer.args.epochs):
 		# for epoch in range(1):
-			trainer.training(info,epoch,train_log_file)
+			# trainer.training(info,epoch,train_log_file)
 			if not trainer.args.no_val:
 				trainer.validation(epoch,val_log_file)
 	train_log_file.close()

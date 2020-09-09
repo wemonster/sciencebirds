@@ -71,19 +71,20 @@ def batch_pix_accuracy(output, target):
 		target: label 3D tensor
 	"""
 	# _, predict = torch.max(output, 1)
-	predict = output
+	predict = target
 	predict = predict.cpu().numpy().astype('int64') + 1
 	target = target.cpu().numpy().astype('int64') + 1
 	# print (predict.size(),target.size())
 	# print (predict)
 	# print (target)
 	# print (predict[predict==target],np.sum(predict==target))
-	pixel_labeled = np.sum(target >= 0)
-	pixel_correct = np.sum((predict == target)*(target >= 0))
+	correct_classified = (predict == target).nonzero()
+	pixel_labeled = np.sum(target > 1)
+	pixel_correct = np.sum((predict == target)*(target > 1))
 	# print (pixel_labeled,pixel_correct)
 	assert pixel_correct <= pixel_labeled, \
 		"Correct area should be smaller than Labeled"
-	return pixel_correct, pixel_labeled
+	return pixel_correct, pixel_labeled,correct_classified
 
 
 def batch_intersection_union(output, target, nclass):
@@ -100,7 +101,7 @@ def batch_intersection_union(output, target, nclass):
 	nbins = nclass
 	predict = predict.cpu().numpy().astype('int64') + 1
 	target = target.cpu().numpy().astype('int64') + 1
-	predict = predict * (target >= 0).astype(predict.dtype)
+	predict = predict * (target > 1).astype(predict.dtype)
 	intersection = predict * (predict == target)
 	# areas of intersection and union
 	area_inter, _ = np.histogram(intersection, bins=nbins, range=(mini, maxi))
