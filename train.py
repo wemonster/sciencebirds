@@ -184,16 +184,16 @@ class Trainer():
 			val_log.write("Iteration:{}, pixAcc:{:.3f}, mIoU:{:.3f}\n".format(i,pixAcc,mIoU))
 		val_log.close()
 		new_pred = (pixAcc + mIoU)/2
+		log_file.write("Epoch:{}, pixAcc:{:.3f}, mIoU:{:.3f}, Overall:{:.3f}\n".format(epoch,pixAcc,mIoU,new_pred))
 		if new_pred >= self.best_pred:
 			is_best = True
 			self.best_pred = new_pred
-		log_file.write("Epoch:{}, pixAcc:{:.3f}, mIoU:{:.3f}, Overall:{:.3f}\n".format(epoch,pixAcc,mIoU,new_pred))
-		utils.save_checkpoint({
-			'epoch': epoch + 1,
-			'state_dict': self.model.module.state_dict(),
-			'optimizer': self.optimizer.state_dict(),
-			'best_pred': new_pred,
-		}, self.args, is_best,"checkpoint_{}.pth.tar".format(epoch+1))
+			utils.save_checkpoint({
+				'epoch': epoch + 1,
+				'state_dict': self.model.module.state_dict(),
+				'optimizer': self.optimizer.state_dict(),
+				'best_pred': new_pred,
+			}, self.args, is_best,self.ratio,"checkpoint_{}.pth.tar".format(epoch+1))
 
 def get_class_lists():
 	data = open("logs/resnet.txt",'r').readlines()

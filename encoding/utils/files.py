@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 __all__ = ['save_checkpoint', 'download', 'mkdir', 'check_sha1']
 
-def save_checkpoint(state, args, is_best, filename='checkpoint.pth.tar'):
+def save_checkpoint(state, args, is_best,ratio,filename='checkpoint.pth.tar'):
 	"""Saves checkpoint to disk"""
 	directory = "../experiments/runs/"
 	if not os.path.exists(directory):
@@ -18,7 +18,7 @@ def save_checkpoint(state, args, is_best, filename='checkpoint.pth.tar'):
 	filename = directory + filename
 	torch.save(state, filename)
 	if is_best:
-		shutil.copyfile(filename, directory + 'model_best.pth.tar')
+		shutil.copyfile(filename, directory + 'model_best_{}.pth.tar'.format(str(ratio*10)))
 
 
 def download(url, path=None, overwrite=False, sha1_hash=None):
