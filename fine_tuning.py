@@ -293,7 +293,7 @@ if __name__ == "__main__":
 		criterion = nn.CrossEntropyLoss()
 		optimizer_model = optimizer(model)
 		output_model = str(close_ratios[i] * 10)
-		model,info = train_model(model,dataloaders_dict,criterion,optimizer_model,num_epochs,output_model)
+		train_model(model,dataloaders_dict,criterion,optimizer_model,output_model,num_epochs)
 	resnet_log.close()
 	# test_model(model,"mynet.pkl")
 	# plot_info("batchnorm",'logs/log.txt')
