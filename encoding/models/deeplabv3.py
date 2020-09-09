@@ -39,8 +39,6 @@ class DeepLabV3(BaseNet):
 		_, _, h, w = x.size()
 		c1, c2, c3, c4 = self.base_forward(x)
 
-		outputs = []
-		# print (x)
 
 		low_level_features = self.low_level(c1)
 
@@ -71,8 +69,6 @@ class DeepLabV3(BaseNet):
 		_, _, h, w = x.size()
 		c1, c2, c3, c4 = self.base_forward(x)
 
-		outputs = []
-		# print (x)
 
 		low_level_features = self.low_level(c1)
 

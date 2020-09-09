@@ -173,15 +173,12 @@ class Trainer():
 				self.correct_features = torch.cat((self.correct_features,result))
 
 
-
-
-
 		def eval_batch(model, image, target):
-			labeled,features = model.val_forward(image)
+			labeled,features = model.module.val_forward(image)
 			pred = torch.argmax(labeled,dim=1)
 			target = target.squeeze().cuda()
 			correct, labeled,correct_classified = utils.batch_pix_accuracy(pred.data, target)
-			collect_features(features,position)
+			collect_features(features,correct_classified)
 			inter, union = utils.batch_intersection_union(pred.data, target, self.nclass)
 			return correct, labeled, inter, union,targets
 

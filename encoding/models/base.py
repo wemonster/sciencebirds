@@ -78,6 +78,9 @@ class BaseNet(nn.Module):
         else:
             return c1, c2, c3, c4
 
+    def val_forward(self,x):
+        pass
+
     def evaluate(self, x, target=None):
         pred = self.forward(x)
         if isinstance(pred, (tuple, list)):
