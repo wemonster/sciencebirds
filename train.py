@@ -153,11 +153,11 @@ class Trainer():
 		# Fast test during the training
 		val_log = open("logs/val/{}.txt".format(epoch),'w')
 		def eval_batch(model, image, target):
-			labeled,outputs = model(image)
-			pred = torch.argmax(outputs,dim=1)
+			labeled,features = model.val_forward(image)
+			pred = torch.argmax(labeled,dim=1)
 			target = target.squeeze().cuda()
-			correct, labeled = utils.batch_pix_accuracy(pred.data, target)
-			inter, union = utils.batch_intersection_union(pred.data, target, self.nclass)
+			correct, labeled = utils.batch_pix_accuracy(pred.data, target,features)
+			inter, union = utils.batch_intersection_union(pred.data, target, self.nclass,features)
 			return correct, labeled, inter, union
 
 		is_best = False

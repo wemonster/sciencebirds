@@ -28,9 +28,7 @@ WHITEBIRD = 'whiteBird'
 PIG = 'pig'
 ICE = 'ice'
 WOOD = 'wood'
-ROUNDWOOD = 'roundWood'
 STONE = 'stone'
-TERRAIN = 'terrain'
 TNT = 'TNT'
 
 folder = "dataset/characters"

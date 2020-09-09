@@ -22,7 +22,7 @@ up_kwargs = {'mode': 'bilinear', 'align_corners': True}
 __all__ = ['BaseNet', 'MultiEvalModule']
 
 class BaseNet(nn.Module):
-    def __init__(self, ratio,nclass, backbone, aux, se_loss, jpu=True, dilated=False, norm_layer=None,
+    def __init__(self, ratio,nclass=13, backbone, aux, se_loss, jpu=True, dilated=False, norm_layer=None,
                  base_size=520, crop_size=480, mean=[.485, .456, .406],
                  std=[.229, .224, .225], root='~/.encoding/models', **kwargs):
         super(BaseNet, self).__init__()
@@ -35,7 +35,7 @@ class BaseNet(nn.Module):
         self.crop_size = crop_size
         # copying modules from pretrained models
         pretrained_model = "../models/resnet/pretrained_{}.pkl".format((1-ratio)*10)
-        num_classes = int(nclass * (1-ratio))
+        self.nclass = math.floor(nclass * (1-ratio)) + 1
         if backbone == 'resnet50':
             self.pretrained = resnet.resnet50(pretrained_model,num_classes,pretrained=True)
         elif backbone == 'resnet101':

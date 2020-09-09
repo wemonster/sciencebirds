@@ -40,6 +40,7 @@ gameObjectType = {
 	'YELLOWBIRD':10,
 	'SLING':11,
 	'TNT':12,
+	'UNKNOWN':13
 }
 
 id_to_cat = {
@@ -55,7 +56,8 @@ id_to_cat = {
 	9:'WOOD',
 	10:'YELLOWBIRD',
 	11:'SLING',
-	12:'TNT'
+	12:'TNT',
+	13:'UNKNOWN'
 }
 
 
@@ -72,7 +74,8 @@ colormap = {
 	'WOOD':[192,0,0],
 	'YELLOWBIRD':[64,128,128],
 	'SLING':[192,128,128],
-	'TNT':[64,128,128]
+	'TNT':[64,128,128],
+	'UNKNOWN':[255,255,255]
 }
 
 
@@ -105,8 +108,8 @@ def generate_dataset(classes):
 			width = int(info[3])
 			vertices = info[4]
 			game_type = str(info[5]).strip().split('.')[1]
-			if game_type == 'UNKNOWN' or game_type in classes:
-				continue
+			if game_type not in classes:
+				game_type = 'UNKNOWN'
 			startPoint = (X,Y)
 			endPoint = (X + height,Y+width)
 			to_ret = np.zeros((480,840)).astype(np.uint8)

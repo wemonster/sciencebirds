@@ -1,0 +1,7 @@
+easydict
+pytorch
+pytorchvision
+opencv-python
+scipy
+numpy
+
