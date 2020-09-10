@@ -155,31 +155,28 @@ class Trainer():
 	def validation(self, epoch,log_file):
 		# Fast test during the training
 		val_log = open("logs/val/{}.txt".format(epoch),'w')
-		def collect_features(features,position):
+		def collect_features(features,position,pred):
 			'''
-			features: 304 x H x W
+			features: batch_size x 304 x H x W
 			position: 
 			
 			return: 304 x (#correctly classified)
 			'''
-			result = []
-			for i in range(position.size()[0]):
-				pos = position[i]
-				result.append(features[:,pos[0],pos[1]])
-			if len(self.correct_features) == 0:
-				self.correct_features = torch.stack(result)
-			else:
-				self.correct_features = torch.cat((self.correct_features,result))
-
+			img = position[0]
+			x = position[1]
+			y = position[2]
+			result = features[img,:,x,y]
+			self.correct_features = torch.stack((self.correct_features,result))
+			self.corresponding_class = pred[x,y]
 
 		def eval_batch(model, image, target):
 			labeled,features = model.module.val_forward(image)
 			pred = torch.argmax(labeled,dim=1)
 			target = target.squeeze().cuda()
 			correct, labeled,correct_classified = utils.batch_pix_accuracy(pred.data, target)
-			collect_features(features,correct_classified)
+			collect_features(features,correct_classified,pred)
 			inter, union = utils.batch_intersection_union(pred.data, target, self.nclass)
-			return correct, labeled, inter, union,targets
+			return correct, labeled, inter, union
 
 		
 
