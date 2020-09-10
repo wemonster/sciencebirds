@@ -78,7 +78,9 @@ def batch_pix_accuracy(output, target):
 	# print (predict)
 	# print (target)
 	# print (predict[predict==target],np.sum(predict==target))
-	correct_classified = (predict == target).nonzero()
+	print (predict.shape,target.shape)
+	correct_classified = np.nonzero(predict==target)
+	print (correct_classified)
 	pixel_labeled = np.sum(target > 1)
 	pixel_correct = np.sum((predict == target)*(target > 1))
 	# print (pixel_labeled,pixel_correct)
@@ -101,7 +103,7 @@ def batch_intersection_union(output, target, nclass):
 	nbins = nclass
 	predict = predict.cpu().numpy().astype('int64') + 1
 	target = target.cpu().numpy().astype('int64') + 1
-	predict = predict * (target > 1).astype(predict.dtype)
+	predict = predict * (target >= 1).astype(predict.dtype)
 	intersection = predict * (predict == target)
 	# areas of intersection and union
 	area_inter, _ = np.histogram(intersection, bins=nbins, range=(mini, maxi))

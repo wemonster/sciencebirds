@@ -189,6 +189,7 @@ class Trainer():
 		total_inter, total_union, total_correct, total_label = 0, 0, 0, 0
 		tbar = tqdm(self.valloader, desc='\r')
 		for i, (image,labels) in enumerate(tbar):
+			image = image.type(torch.cuda.FloatTensor)
 			if torch_ver == "0.3":
 				image = Variable(image, volatile=True)
 				correct, labeled, inter, union = eval_batch(self.model, image, labels)
