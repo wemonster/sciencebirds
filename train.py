@@ -158,11 +158,10 @@ class Trainer():
 		def collect_features(features,position):
 			'''
 			features: 304 x H x W
-			position: (#correctly classified) x 2:(x,y)
+			position: 
 			
 			return: 304 x (#correctly classified)
 			'''
-			print (features.size(),position.size())
 			result = []
 			for i in range(position.size()[0]):
 				pos = position[i]
