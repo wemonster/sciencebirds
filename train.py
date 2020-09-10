@@ -158,7 +158,7 @@ class Trainer():
 		def collect_features(features,position,pred):
 			'''
 			features: batch_size x 304 x H x W
-			position: 
+			position: (tuple1,tuple2,tuple3); tuple1 = img_id, tuple2 = x, tuple3 = y
 			
 			return: 304 x (#correctly classified)
 			'''
@@ -166,9 +166,12 @@ class Trainer():
 			x = position[1]
 			y = position[2]
 			result = features[img,:,x,y]
-			self.corresponding_class = pred[x,y]
+			if len(self.corresponding_class) == 0:
+				self.corresponding_class = pred[img,x,y]
+			else:
+				self.corresponding_class = torch.cat((self.corresponding_class,pred[img,x,y]))
 			if len(self.correct_features) == 0:
-				self.correct_features = torch.stack(result)
+				self.correct_features = result
 			else:
 				self.correct_features = torch.cat((self.correct_features,result))
 			print (self.correct_features.size(),self.corresponding_class.size())
