@@ -166,8 +166,12 @@ class Trainer():
 			x = position[1]
 			y = position[2]
 			result = features[img,:,x,y]
-			self.correct_features = torch.stack((self.correct_features,result))
 			self.corresponding_class = pred[x,y]
+			if len(self.correct_features) == 0:
+				self.correct_features = torch.stack(result)
+			else:
+				self.correct_features = torch.cat((self.correct_features,result))
+			print (self.correct_features.size(),self.corresponding_class.size())
 
 		def eval_batch(model, image, target):
 			labeled,features = model.module.val_forward(image)
