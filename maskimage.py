@@ -156,9 +156,5 @@ def generate_imagesets(ratio):
 	train_file.close()
 	val_file.close()
 
-def convert_class_to_category(class_name):
-	return gameObjectType[class_name]
 
-def convert_category_to_class(category_id):
-	return id_to_cat[category_id]
 # generate_imagesets(0.8)

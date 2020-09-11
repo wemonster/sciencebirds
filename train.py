@@ -32,8 +32,9 @@ if torch_ver == '0.3':
 	from torch.autograd import Variable
 
 class Trainer():
-	def __init__(self,info,args):
+	def __init__(self,info,id_info,args):
 		self.ratio,self.classes = info[0],info[1]
+		self.categories = id_info
 		self.args = args
 		# data transforms
 		input_transform = transform.Compose([
@@ -58,7 +59,7 @@ class Trainer():
 										   drop_last=True, shuffle=True, **kwargs)
 		self.valloader = data.DataLoader(testset, batch_size=args.batch_size,
 										 drop_last=False, shuffle=False, **kwargs)
-		self.nclass = int((1-self.ratio) * 10)
+		self.nclass = int((1-self.ratio) * 10) + 2
 		# model
 		model = get_segmentation_model(self.ratio,self.nclass,args.model, dataset = args.dataset,
 									   backbone = args.backbone, dilated = args.dilated,
@@ -115,8 +116,8 @@ class Trainer():
 											args.epochs, len(self.trainloader))
 
 		self.correct_features = torch.tensor([])
-		self.class_mean = torch.tensor([[0 for _ in range(304)] for _ in range(self.nclass)]) #k x 304
-		self.class_var = torch.tensor([[] for _ in range(self.nclass)]) # k x 304 x 304
+		self.class_mean = torch.tensor([[0.0 for _ in range(304)] for _ in range(self.nclass)]).cuda() #k x 304
+		self.class_var = torch.tensor([[] for _ in range(self.nclass)]).cuda() # k x 304 x 304
 		self.corresponding_class = torch.tensor([])
 
 	def training(self, epoch,log_file):
@@ -257,7 +258,9 @@ class Trainer():
 
 	def build_gaussian_model(self):
 		occurrance = self.corresponding_class.cpu().numpy()
+		print (self.nclass)
 		(category,occurrance) = np.unique(occurrance,return_counts=True)
+		print (self.class_mean.size(),self.class_var.size())
 		for i in range(len(self.corresponding_class)):
 			target_category = self.corresponding_class[i]
 			self.class_mean[target_category] += self.correct_features[i,:]
@@ -281,6 +284,49 @@ class Trainer():
 	def save_gaussian_model(self):
 		pass
 
+class Category:
+	def __init__(self,classes):
+		self.gameObjectType = {
+			'BACKGROUND':0,
+			'UNKNOWN':1
+		}
+
+		self.id_to_cat = {
+			0:'BACKGROUND',
+			1:'UNKNOWN'
+		}
+		self.colormap = {
+			'BACKGROUND':[0,0,0],
+			'BLACKBIRD':[128,0,0],
+			'BLUEBIRD':[0,128,0],
+			'HILL':[128,128,0],
+			'ICE':[0,0,128],
+			'PIG':[128,0,128],
+			'REDBIRD':[0,128,128],
+			'STONE':[128,128,128],
+			'WHITEBIRD':[64,0,0],
+			'WOOD':[192,0,0],
+			'YELLOWBIRD':[64,128,128],
+			'SLING':[192,128,128],
+			'TNT':[64,128,128],
+			'UNKNOWN':[255,255,255]
+		}
+		for i in range(len(classes)):
+			self.gameObjectType[classes[i]] = i+2
+			self.id_to_cat[i+2] = classes[i]
+
+	@property
+	def ids(self):
+		return self.id_to_cat.keys()
+	
+
+	def convert_class_to_category(class_name):
+		return self.gameObjectType[class_name]
+
+	def convert_category_to_class(category_id):
+		return self.id_to_cat[category_id]
+
+
 def get_class_lists():
 	data = open("logs/resnet.txt",'r').readlines()
 	class_info = []
@@ -290,6 +336,8 @@ def get_class_lists():
 		classes = classes.strip().split(',')
 		class_info.append((ratio,classes))
 	return class_info
+
+
 if __name__ == "__main__":
 	args = Options().parse()
 	torch.manual_seed(args.seed)
@@ -299,11 +347,14 @@ if __name__ == "__main__":
 	val_log_file = open("logs/val_log.txt",'w')
 	class_info = get_class_lists()
 	print (class_info)
+
 	for i in range(len(class_info)):
-		trainer = Trainer(class_info[i],args)
+		id_info = Category(class_info[i][1])
+		trainer = Trainer(class_info[i],id_info,args)
 		print('Starting Epoch:', trainer.args.start_epoch)
 		print('Total Epoches:', trainer.args.epochs)
 		generate_dataset(class_info[i][1])
+
 		for epoch in range(trainer.args.start_epoch, trainer.args.epochs):
 		# for epoch in range(1):
 			# trainer.training(info,epoch,train_log_file)
