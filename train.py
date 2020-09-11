@@ -259,6 +259,8 @@ class Trainer():
 		(category,occurrance) = np.unique(occurrance,return_counts=True)
 		class_mean = {}
 		class_var = {}
+		if not os.path.exists("../models/gaussian"):
+			os.mkdir("../models/gaussian")
 		for i in range(len(self.corresponding_class)):
 			target_category = self.corresponding_class[i]
 			if target_category not in class_mean:
@@ -267,19 +269,19 @@ class Trainer():
 				class_mean["mean_{}".format(target_category)] += self.correct_features[i,:]
 
 		#calculate mean for each class
-		for i in range(len(occurrance)):
-			class_mean["mean_{}".format(i)] /= occurrance[i]
+		for i in range(len(category)):
+			class_mean["mean_{}".format(category[i])] /= occurrance[i]
 
 		#calculate var for each class
 		for i in category:
 			target_id = i
 			target_category = (self.corresponding_class == target_id).nonzero()
-
 			if len(target_category) != 0: #that class exists in our
 				matched_features = self.correct_features[target_category,:].cpu().numpy().squeeze(axis=1)
 				class_var["cov_{}".format(target_id)] = 1/(len(target_category) - 1) * np.dot(matched_features.T,matched_features)
-	def save_gaussian_model(self):
-		pass
+
+		torch.save(os.path.join("../models/gaussian","mean_{}.pt".format(ratio*10)),class_mean)
+		torch.save(os.path.join("../models/gaussian","var_{}.pt".format(ratio*10)),class_var)
 
 class Category:
 	def __init__(self,classes):
@@ -353,7 +355,6 @@ if __name__ == "__main__":
 		generate_dataset(class_info[i][1])
 
 		for epoch in range(trainer.args.start_epoch, trainer.args.epochs):
-		# for epoch in range(1):
 			# trainer.training(info,epoch,train_log_file)
 			if not trainer.args.no_val:
 				trainer.validation(epoch,val_log_file)
