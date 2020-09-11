@@ -113,6 +113,8 @@ class Trainer():
 											args.epochs, len(self.trainloader))
 
 		self.correct_features = torch.tensor([])
+		self.class_mean = torch.tensor([[] for _ in range(self.nclass)])
+		self.class_var = torch.tensor([[] for _ in range(self.nclass)])
 		self.corresponding_class = torch.tensor([])
 
 	def training(self, epoch,log_file):
@@ -165,13 +167,20 @@ class Trainer():
 			img = position[0]
 			x = position[1]
 			y = position[2]
-			result = features[img,:,x,y]
+
+			#random sampling for 100 samples during each validation
+			number_matched = len(img)
+			chosen = 1000
+			random_samples = random.sample(list(range(number_matched)),min(number_matched,chosen))
+			img = img[random_samples]
+			x = x[random_samples]
+			y = y[random_samples]
 			if len(self.corresponding_class) == 0:
 				self.corresponding_class = pred[img,x,y]
 			else:
 				self.corresponding_class = torch.cat((self.corresponding_class,pred[img,x,y]))
 			if len(self.correct_features) == 0:
-				self.correct_features = result
+				self.correct_features = features[img,:,x,y]
 			else:
 				self.correct_features = torch.cat((self.correct_features,result))
 			print (self.correct_features.size(),self.corresponding_class.size())
