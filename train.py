@@ -25,7 +25,7 @@ from encoding.datasets import get_segmentation_dataset
 from encoding.models import get_segmentation_model
 
 from option import Options
-from maskimage import generate_dataset,convert_class_to_category,convert_category_to_class
+from maskimage import generate_dataset
 
 torch_ver = torch.__version__[:3]
 if torch_ver == '0.3':
@@ -59,7 +59,7 @@ class Trainer():
 										   drop_last=True, shuffle=True, **kwargs)
 		self.valloader = data.DataLoader(testset, batch_size=args.batch_size,
 										 drop_last=False, shuffle=False, **kwargs)
-		self.nclass = int((1-self.ratio) * 10) + 2
+		self.nclass = int((1-self.ratio) * 12) + 2
 		# model
 		model = get_segmentation_model(self.ratio,self.nclass,args.model, dataset = args.dataset,
 									   backbone = args.backbone, dilated = args.dilated,
@@ -267,12 +267,12 @@ class Trainer():
 
 		#calculate mean for each class
 		for i in self.classes:
-			ids = convert_class_to_category(i)
+			ids = self.categories.convert_class_to_category(i)
 			self.class_mean[target_category] = self.class_mean / occurrance[ids]
 
 		#calculate var for each class
 		for i in self.classes:
-			target_id = convert_class_to_category(i)
+			target_id = self.categories.convert_class_to_category(i)
 			target_category = (self.corresponding_class == target_id).nonzero()
 
 			if len(target_category) != 0: #that class exists in our
@@ -320,10 +320,10 @@ class Category:
 		return self.id_to_cat.keys()
 	
 
-	def convert_class_to_category(class_name):
+	def convert_class_to_category(self,class_name):
 		return self.gameObjectType[class_name]
 
-	def convert_category_to_class(category_id):
+	def convert_category_to_class(self,category_id):
 		return self.id_to_cat[category_id]
 
 
