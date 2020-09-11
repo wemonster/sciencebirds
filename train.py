@@ -116,8 +116,6 @@ class Trainer():
 											args.epochs, len(self.trainloader))
 
 		self.correct_features = torch.tensor([])
-		self.class_mean = torch.tensor([[0.0 for _ in range(304)] for _ in range(self.nclass)]).cuda() #k x 304
-		self.class_var = torch.tensor([[] for _ in range(self.nclass)]).cuda() # k x 304 x 304
 		self.corresponding_class = torch.tensor([])
 
 	def training(self, epoch,log_file):
@@ -258,29 +256,28 @@ class Trainer():
 
 	def build_gaussian_model(self):
 		occurrance = self.corresponding_class.cpu().numpy()
-		print (self.nclass)
 		(category,occurrance) = np.unique(occurrance,return_counts=True)
-		print (self.class_mean.size(),self.class_var.size())
+		class_mean = {}
+		class_var = {}
 		for i in range(len(self.corresponding_class)):
 			target_category = self.corresponding_class[i]
-			self.class_mean[target_category] += self.correct_features[i,:]
+			if target_category not in class_mean:
+				class_mean["mean_{}".format(target_category)] = self.correct_features[i,:]
+			else:
+				class_mean["mean_{}".format(target_category)] += self.correct_features[i,:]
 
 		#calculate mean for each class
-		for i in self.classes:
-			ids = self.categories.convert_class_to_category(i)
-			self.class_mean[target_category] = self.class_mean / occurrance[ids]
+		for i in range(len(occurrance)):
+			class_mean["mean_{}".format(i)] /= occurrance[i]
 
 		#calculate var for each class
-		for i in self.classes:
-			target_id = self.categories.convert_class_to_category(i)
+		for i in category:
+			target_id = i
 			target_category = (self.corresponding_class == target_id).nonzero()
 
 			if len(target_category) != 0: #that class exists in our
-				matched_features = self.correct_features[target_category,:].cpu().numpy()
-				cov_k = 1/(len(target_category) - 1) * np.dot(matched_features.T,matched_features)
-				self.class_var[target_id] = copy.deepcopy(cov_k)
-
-		print (self.class_mean.size(),self.class_var.size())
+				matched_features = self.correct_features[target_category,:].cpu().numpy().squeeze(axis=1)
+				class_var["cov_{}".format(target_id)] = 1/(len(target_category) - 1) * np.dot(matched_features.T,matched_features)
 	def save_gaussian_model(self):
 		pass
 
