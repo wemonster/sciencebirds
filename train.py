@@ -7,7 +7,9 @@
 import os
 import numpy as np
 from tqdm import tqdm
+import copy
 import cv2
+import random
 from PIL import Image
 
 
@@ -23,7 +25,7 @@ from encoding.datasets import get_segmentation_dataset
 from encoding.models import get_segmentation_model
 
 from option import Options
-from maskimage import generate_dataset
+from maskimage import generate_dataset,convert_class_to_category,convert_category_to_class
 
 torch_ver = torch.__version__[:3]
 if torch_ver == '0.3':
@@ -56,7 +58,7 @@ class Trainer():
 										   drop_last=True, shuffle=True, **kwargs)
 		self.valloader = data.DataLoader(testset, batch_size=args.batch_size,
 										 drop_last=False, shuffle=False, **kwargs)
-		self.nclass = trainset.num_class
+		self.nclass = int((1-self.ratio) * 10)
 		# model
 		model = get_segmentation_model(self.ratio,self.nclass,args.model, dataset = args.dataset,
 									   backbone = args.backbone, dilated = args.dilated,
@@ -113,8 +115,8 @@ class Trainer():
 											args.epochs, len(self.trainloader))
 
 		self.correct_features = torch.tensor([])
-		self.class_mean = torch.tensor([[] for _ in range(self.nclass)])
-		self.class_var = torch.tensor([[] for _ in range(self.nclass)])
+		self.class_mean = torch.tensor([[0 for _ in range(304)] for _ in range(self.nclass)]) #k x 304
+		self.class_var = torch.tensor([[] for _ in range(self.nclass)]) # k x 304 x 304
 		self.corresponding_class = torch.tensor([])
 
 	def training(self, epoch,log_file):
@@ -164,26 +166,47 @@ class Trainer():
 			
 			return: 304 x (#correctly classified)
 			'''
-			img = position[0]
-			x = position[1]
-			y = position[2]
+			if len(position) == 3:
+				img = position[0]
+				x = position[1]
+				y = position[2]
 
-			#random sampling for 100 samples during each validation
-			number_matched = len(img)
-			chosen = 1000
-			random_samples = random.sample(list(range(number_matched)),min(number_matched,chosen))
-			img = img[random_samples]
-			x = x[random_samples]
-			y = y[random_samples]
-			if len(self.corresponding_class) == 0:
-				self.corresponding_class = pred[img,x,y]
+				#random sampling for 100 samples during each validation
+				number_matched = len(img)
+				chosen = 100
+				random_samples = random.sample(list(range(number_matched)),min(number_matched,chosen))
+				img = img[random_samples]
+				x = x[random_samples]
+				y = y[random_samples]
+				if len(self.corresponding_class) == 0:
+					self.corresponding_class = pred[img,x,y]
+				else:
+					self.corresponding_class = torch.cat((self.corresponding_class,pred[img,x,y]))
+				if len(self.correct_features) == 0:
+					self.correct_features = features[img,:,x,y]
+				else:
+					self.correct_features = torch.cat((self.correct_features,features[img,:,x,y]))
+				print (self.correct_features.size(),self.corresponding_class.size())
 			else:
-				self.corresponding_class = torch.cat((self.corresponding_class,pred[img,x,y]))
-			if len(self.correct_features) == 0:
-				self.correct_features = features[img,:,x,y]
-			else:
-				self.correct_features = torch.cat((self.correct_features,result))
-			print (self.correct_features.size(),self.corresponding_class.size())
+				#there is only 1 image in the batch
+				x = position[0]
+				y = position[1]
+				#random sampling for 100 samples during each validation
+				number_matched = len(x)
+				chosen = 100
+				random_samples = random.sample(list(range(number_matched)),min(number_matched,chosen))
+				x = x[random_samples]
+				y = y[random_samples]
+				if len(self.corresponding_class) == 0:
+					self.corresponding_class = pred[x,y]
+				else:
+					self.corresponding_class = torch.cat((self.corresponding_class,pred[x,y]))
+				if len(self.correct_features) == 0:
+					self.correct_features = features[:,x,y]
+				else:
+					self.correct_features = torch.cat((self.correct_features,features[:,x,y]))
+				print (self.correct_features.size(),self.corresponding_class.size())
+
 
 		def eval_batch(model, image, target):
 			labeled,features = model.module.val_forward(image)
@@ -232,6 +255,32 @@ class Trainer():
 				'best_pred': new_pred,
 			}, self.args, is_best,self.ratio,"checkpoint_{}.pth.tar".format(epoch+1))
 
+	def build_gaussian_model(self):
+		occurrance = self.corresponding_class.cpu().numpy()
+		(category,occurrance) = np.unique(occurrance,return_counts=True)
+		for i in range(len(self.corresponding_class)):
+			target_category = self.corresponding_class[i]
+			self.class_mean[target_category] += self.correct_features[i,:]
+
+		#calculate mean for each class
+		for i in self.classes:
+			ids = convert_class_to_category(i)
+			self.class_mean[target_category] = self.class_mean / occurrance[ids]
+
+		#calculate var for each class
+		for i in self.classes:
+			target_id = convert_class_to_category(i)
+			target_category = (self.corresponding_class == target_id).nonzero()
+
+			if len(target_category) != 0: #that class exists in our
+				matched_features = self.correct_features[target_category,:].cpu().numpy()
+				cov_k = 1/(len(target_category) - 1) * np.dot(matched_features.T,matched_features)
+				self.class_var[target_id] = copy.deepcopy(cov_k)
+
+		print (self.class_mean.size(),self.class_var.size())
+	def save_gaussian_model(self):
+		pass
+
 def get_class_lists():
 	data = open("logs/resnet.txt",'r').readlines()
 	class_info = []
@@ -260,5 +309,7 @@ if __name__ == "__main__":
 			# trainer.training(info,epoch,train_log_file)
 			if not trainer.args.no_val:
 				trainer.validation(epoch,val_log_file)
+		trainer.build_gaussian_model()
+		trainer.save_gaussian_model()
 	train_log_file.close()
 	val_log_file.close()
