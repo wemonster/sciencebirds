@@ -91,7 +91,7 @@ def generate_dataset(classes):
 	gtimage_root = "dataset/rawdata/groundtruthimage"
 	gtimages = sorted(os.listdir(gtimage_root),key=lambda x:int(x.split('.')[0]))
 	print (len(gts),len(gtimages))
-	for j in range(1):
+	for j in range(len(gts)):
 		truth = open(os.path.join(gts_root,gts[j]),'r').readlines()
 		im = cv2.imread(os.path.join(gtimage_root,gtimages[j]))
 		cv2.imwrite("dataset/images/{}".format(gtimages[j]),im)
@@ -131,9 +131,8 @@ def generate_dataset(classes):
 					target_colormap = colormap[id_to_cat[temp[m,n]]]
 					temp3d[m,n,:] = copy.deepcopy(target_colormap)
 			mask[Y:Y+width,X:X+height,:] = temp3d
-		print(label.shape)
-		# cv2.imwrite("dataset/masks/{}".format(gtimages[j]),mask)
-		# cv2.imwrite('dataset/labels/{}'.format(gtimages[j]),label)
+		cv2.imwrite("dataset/masks/{}".format(gtimages[j]),mask)
+		cv2.imwrite('dataset/labels/{}'.format(gtimages[j]),label)
 		print ("finish writing images {}".format(j))
 	
 

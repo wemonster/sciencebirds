@@ -185,7 +185,7 @@ class Trainer():
 					self.correct_features = features[img,:,x,y]
 				else:
 					self.correct_features = torch.cat((self.correct_features,features[img,:,x,y]))
-				print (self.correct_features.size(),self.corresponding_class.size())
+
 			else:
 				#there is only 1 image in the batch
 				x = position[0]
@@ -204,7 +204,7 @@ class Trainer():
 					self.correct_features = features[:,x,y]
 				else:
 					self.correct_features = torch.cat((self.correct_features,features[:,x,y]))
-				print (self.correct_features.size(),self.corresponding_class.size())
+
 
 
 		def eval_batch(model, image, target):
@@ -353,8 +353,9 @@ if __name__ == "__main__":
 		print('Starting Epoch:', trainer.args.start_epoch)
 		print('Total Epoches:', trainer.args.epochs)
 		generate_dataset(class_info[i][1])
+		print ("Dataset is generated")
 		for epoch in range(trainer.args.start_epoch, trainer.args.epochs):
-			trainer.training(info,epoch,train_log_file)
+			trainer.training(epoch,train_log_file)
 			if not trainer.args.no_val:
 				trainer.validation(epoch,val_log_file)
 		trainer.build_gaussian_model()
