@@ -12,7 +12,7 @@ from PIL import Image
 import os
 import cv2
 import copy
-import time
+import time,math
 import numpy as np
 import random
 import encoding.dilated as resnet
@@ -179,7 +179,7 @@ def load_data(folder,batch_size,ratio):
 	}
 	files = os.listdir(folder)
 	classes = os.listdir(os.path.join(folder,"train"))
-	number_knowns = floor(len(classes) * (1-ratio))
+	number_knowns = math.floor(len(classes) * (1-ratio))
 	files = random.sample(classes,number_knowns)
 	# imgs = [cv2.imread(os.path.join(folder,i)) for i in files]
 	imgs = {x:datasets.ImageFolder(os.path.join(folder,x),transform=data_transforms[x]) 
