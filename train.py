@@ -280,8 +280,8 @@ class Trainer():
 				matched_features = self.correct_features[target_category,:].cpu().numpy().squeeze(axis=1)
 				class_var["cov_{}".format(target_id)] = 1/(len(target_category) - 1) * np.dot(matched_features.T,matched_features)
 
-		torch.save(os.path.join("../models/gaussian","mean_{}.pt".format(ratio*10)),class_mean)
-		torch.save(os.path.join("../models/gaussian","var_{}.pt".format(ratio*10)),class_var)
+		torch.save(class_mean,os.path.join("../models/gaussian","mean_{}.pt".format(int(self.ratio*10))))
+		torch.save(class_var,os.path.join("../models/gaussian","var_{}.pt".format(int(self.ratio*10))))
 
 class Category:
 	def __init__(self,classes):
@@ -353,12 +353,10 @@ if __name__ == "__main__":
 		print('Starting Epoch:', trainer.args.start_epoch)
 		print('Total Epoches:', trainer.args.epochs)
 		generate_dataset(class_info[i][1])
-
 		for epoch in range(trainer.args.start_epoch, trainer.args.epochs):
-			# trainer.training(info,epoch,train_log_file)
+			trainer.training(info,epoch,train_log_file)
 			if not trainer.args.no_val:
 				trainer.validation(epoch,val_log_file)
 		trainer.build_gaussian_model()
-		trainer.save_gaussian_model()
 	train_log_file.close()
 	val_log_file.close()
