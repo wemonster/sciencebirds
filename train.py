@@ -90,8 +90,10 @@ class Trainer():
 		self.model, self.optimizer = model, optimizer
 		# using cuda
 		if args.cuda:
-			self.model = DataParallelModel(self.model).cuda()
-			self.criterion = DataParallelCriterion(self.criterion).cuda()
+			self.model = self.model.cuda()
+			self.criterion = self.criterion.cuda()
+		# 	self.model = DataParallelModel(self.model).cuda()
+		# 	self.criterion = DataParallelCriterion(self.criterion).cuda()
 		# resuming checkpoint
 		self.best_pred = 0.0
 		if args.resume is not None:
@@ -125,16 +127,14 @@ class Trainer():
 		self.model.train()
 		tbar = tqdm(self.trainloader)
 		for i, (image,labels) in enumerate(tbar):
+			image = image.type(torch.cuda.FloatTensor)
 			self.scheduler(self.optimizer, i, epoch, self.best_pred)
 			self.optimizer.zero_grad()
-			if torch_ver == "0.3":
-				image = Variable(image)
-				labels = Variable(labels)
 			outputs,labeled = self.model(image)
 			labeled = labeled.type(torch.cuda.FloatTensor)
 			
 			labels = torch.squeeze(labels)
-			labels = labels.to(dtype=torch.int64)
+			labels = labels.to(dtype=torch.int64).cuda()
 
 			loss = self.criterion(labeled, labels)
 			loss.backward()

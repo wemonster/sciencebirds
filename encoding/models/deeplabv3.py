@@ -161,7 +161,7 @@ def get_deeplab(ratio,nclass,dataset='sciencebirds', backbone='resnet50', pretra
 				root='~/.encoding/models', **kwargs):
 	# infer number of classes
 	from ..datasets import datasets
-	model = DeepLabV3(ratio,datasets[dataset.lower()].NUM_CLASS, backbone=backbone, root=root, **kwargs)
+	model = DeepLabV3(ratio,nclass, backbone=backbone, root=root, **kwargs)
 	if pretrained:
 		raise NotImplementedError
 
