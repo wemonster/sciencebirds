@@ -103,7 +103,7 @@ class Options():
                 'pascal_aug': 50,
                 'pcontext': 80,
                 'ade20k': 120,
-                'sciencebirds':20
+                'sciencebirds':30
             }
             args.epochs = epoches[args.dataset.lower()]
         if args.batch_size is None:

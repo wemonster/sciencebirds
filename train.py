@@ -307,7 +307,7 @@ if __name__ == "__main__":
 	class_info = get_class_lists()
 	print (class_info)
 
-	for i in range(len(class_info)):
+	for i in range(2,len(class_info)):
 		id_info = Category(class_info[i][1])
 		trainer = Trainer(class_info[i],id_info,args)
 		print('Starting Epoch:', trainer.args.start_epoch)
