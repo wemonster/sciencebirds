@@ -7,7 +7,7 @@
 import os
 import numpy as np
 from tqdm import tqdm
-import copy
+import copy,math
 import cv2
 import random
 from PIL import Image
@@ -26,7 +26,7 @@ from encoding.models import get_segmentation_model
 
 from option import Options
 from maskimage import generate_dataset
-
+from classlabel import Category
 torch_ver = torch.__version__[:3]
 if torch_ver == '0.3':
 	from torch.autograd import Variable
@@ -59,7 +59,7 @@ class Trainer():
 										   drop_last=True, shuffle=True, **kwargs)
 		self.valloader = data.DataLoader(testset, batch_size=args.batch_size,
 										 drop_last=False, shuffle=False, **kwargs)
-		self.nclass = int((1-self.ratio) * 12) + 2
+		self.nclass = math.floor((1-self.ratio) * 12) + 2
 		# model
 		model = get_segmentation_model(self.ratio,self.nclass,args.model, dataset = args.dataset,
 									   backbone = args.backbone, dilated = args.dilated,
@@ -283,47 +283,7 @@ class Trainer():
 		torch.save(class_mean,os.path.join("../models/gaussian","mean_{}.pt".format(int(self.ratio*10))))
 		torch.save(class_var,os.path.join("../models/gaussian","var_{}.pt".format(int(self.ratio*10))))
 
-class Category:
-	def __init__(self,classes):
-		self.gameObjectType = {
-			'BACKGROUND':0,
-			'UNKNOWN':1
-		}
 
-		self.id_to_cat = {
-			0:'BACKGROUND',
-			1:'UNKNOWN'
-		}
-		self.colormap = {
-			'BACKGROUND':[0,0,0],
-			'BLACKBIRD':[128,0,0],
-			'BLUEBIRD':[0,128,0],
-			'HILL':[128,128,0],
-			'ICE':[0,0,128],
-			'PIG':[128,0,128],
-			'REDBIRD':[0,128,128],
-			'STONE':[128,128,128],
-			'WHITEBIRD':[64,0,0],
-			'WOOD':[192,0,0],
-			'YELLOWBIRD':[64,128,128],
-			'SLING':[192,128,128],
-			'TNT':[64,128,128],
-			'UNKNOWN':[255,255,255]
-		}
-		for i in range(len(classes)):
-			self.gameObjectType[classes[i]] = i+2
-			self.id_to_cat[i+2] = classes[i]
-
-	@property
-	def ids(self):
-		return self.id_to_cat.keys()
-	
-
-	def convert_class_to_category(self,class_name):
-		return self.gameObjectType[class_name]
-
-	def convert_category_to_class(self,category_id):
-		return self.id_to_cat[category_id]
 
 
 def get_class_lists():
@@ -332,7 +292,7 @@ def get_class_lists():
 	for i in data:
 		ratio,classes = i.split('|')
 		ratio = float(ratio.split(':')[1])
-		classes = classes.strip().split(',')
+		classes = classes.strip().split(':')[1].split(',')
 		class_info.append((ratio,classes))
 	return class_info
 
