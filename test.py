@@ -43,7 +43,7 @@ def build_gaussian(mean_weights,var_weights):
 		var_cat = "cov_{}".format(category)
 		small_diag = np.ones(var_weights[var_cat].shape) * 0.01
 		var = var_weights[var_cat] + np.diag(np.diag(small_diag))
-		gaussians[category] = multivariate_normal(mean=val.cpu().numpy(),cov=var.cpu.numpy())
+		gaussians[category] = multivariate_normal(mean=val.cpu().numpy(),cov=var)
 	return gaussians
 
 def thresholding(gaussians,features,position,pred):
@@ -59,9 +59,9 @@ def thresholding(gaussians,features,position,pred):
 		y = position[2]
 
 		# category = pred[img,x,y]
-		(category,occurrance) = np.unique(occurrance,return_counts=True)
+		(category,occurrance) = np.unique(pred.cpu().numpy(),return_counts=True)
 		print (category)
-		print (pred==category)
+		print (pred==category[0])
 	# 	gaussian = gaussians[category]
 	# 	prob = 1 - gaussian.cdf(features[img,:,x,y])
 	# 	if len(self.corresponding_class) == 0:
@@ -93,7 +93,7 @@ def test(args,classes):
 	# dataset
 	data_kwargs = {'transform': input_transform, 'target_transform':input_transform,
 						'label_transform':label_transform}
-	testset = get_segmentation_dataset(args.dataset,args.ratio,args.size split=args.split, mode='test',
+	testset = get_segmentation_dataset(args.dataset,args.ratio,args.size, split=args.split, mode='test',
 										   **data_kwargs)
 	# dataloader
 	loader_kwargs = {'num_workers': args.workers, 'pin_memory': True} \
@@ -136,7 +136,7 @@ def test(args,classes):
 	mean_weights = torch.load("../models/gaussian/mean_{}.pt".format(int(args.ratio*10)))
 	var_weights = torch.load("../models/gaussian/var_{}.pt".format(int(args.ratio*10)))
 	gaussians = build_gaussian(mean_weights,var_weights)
-	for i, (image,labels) in enumerate(tbar):
+	for i, (image,labels,foregrounds) in enumerate(tbar):
 		image = image.type(torch.cuda.FloatTensor)
 		# pass
 		if 'val' in args.mode:
@@ -161,7 +161,7 @@ def test(args,classes):
 				mask = utils.get_mask_pallete(predict[0], args.dataset)
 				labels = labels.squeeze().cuda()
 				pixAcc,mIoU,correct_classified = utils.batch_pix_accuracy(predict.data, labels)
-				thresholding(features,correct_classified,predict)
+				thresholding(gaussians,features,correct_classified,predict)
 				test_log.write('pixAcc:{:.4f},mIoU:{:.4f},cost:{:.3f}s\n'.format(pixAcc, mIoU,toc-tic))
 				
 				#record the accuracy
