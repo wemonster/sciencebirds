@@ -15,10 +15,14 @@ import encoding.utils as utils
 from tqdm import tqdm
 
 from torch.utils import data
+from scipy.stats import multivariate_normal
+
+
 
 from encoding.nn import BatchNorm
 from encoding.datasets import get_segmentation_dataset, test_batchify_fn
 from encoding.models import get_model, get_segmentation_model, MultiEvalModule
+
 
 from option import Options
 
@@ -31,6 +35,47 @@ def get_class_lists():
 		classes = classes.strip().split(':')[1].split(',')
 		class_info.append((ratio,classes))
 	return class_info
+
+def build_gaussian(mean_weights,var_weights):
+	gaussians = {}
+	for key,val in enumerate(mean_weights):
+		category = int(key.split('_')[1])
+		var_cat = "cov_{}".format(category)
+		var = var_weights[var_cat]
+		gaussians[category] = multivariate_normal(mean=val,var=var)
+	return gaussians
+
+def thresholding(gaussians,features,position,pred):
+	'''
+	features: batch_size x 304 x H x W
+	position: (tuple1,tuple2,tuple3); tuple1 = img_id, tuple2 = x, tuple3 = y
+	pred: batch_size x H x W
+	return: 304 x (#correctly classified)
+	'''
+	print (pred.size())
+	# if len(position) == 3:
+	# 	img = position[0]
+	# 	x = position[1]
+	# 	y = position[2]
+
+	# 	category = pred[img,x,y]
+	# 	gaussian = gaussians[category]
+	# 	prob = 1 - gaussian.cdf(features[img,:,x,y])
+	# 	if len(self.corresponding_class) == 0:
+	# 		self.corresponding_class = pred[img,x,y]
+	# 	else:
+	# 		self.corresponding_class = torch.cat((self.corresponding_class,pred[img,x,y]))
+	# 	if len(self.correct_features) == 0:
+	# 		self.correct_features = features[img,:,x,y]
+	# 	else:
+	# 		self.correct_features = torch.cat((self.correct_features,features[img,:,x,y]))
+
+	# else:
+	# 	#there is only 1 image in the batch
+	# 	x = position[0]
+	# 	y = position[1]
+		#random sampling for 100 samples during each validation
+
 def test(args,classes):
 	# output folder
 	outdir = os.path.join(args.save_folder,str(int(args.ratio*10)))
@@ -81,13 +126,13 @@ def test(args,classes):
 
 	tbar = tqdm(test_data)
 	ids = testset._load_image_set_index()
-	test_log = open("logs/{}.txt".format(args.experiment),'w')
+	test_log = open("logs/{}.txt".format(int(args.ratio*10)),'w')
 	overallpix = 0.0
 	overallmIoU = 0.0
 	#load gaussian model
 	mean_weights = torch.load("../models/gaussian/mean_{}.pt".format(int(args.ratio*10)))
 	var_weights = torch.load("../models/gaussian/var_{}.pt".format(int(args.ratio*10)))
-
+	gaussians = build_gaussian(mean_weights,var_weights)
 	for i, (image,labels) in enumerate(tbar):
 		image = image.type(torch.cuda.FloatTensor)
 		# pass
@@ -111,17 +156,21 @@ def test(args,classes):
 				#thresholding here
 				toc = time.time()
 				mask = utils.get_mask_pallete(predict[0], args.dataset)
-
+				labels = labels.squeeze().cuda()
+				pixAcc,mIoU,correct_classified = utils.batch_pix_accuracy(predict.data, labels)
+				thresholding(features,correct_classified,predict)
+				test_log.write('pixAcc:{:.4f},mIoU:{:.4f},cost:{:.3f}s\n'.format(pixAcc, mIoU,toc-tic))
+				
 				#record the accuracy
-				metric.update(labels.squeeze().cuda(), predict.data)
+				metric.update(labels, predict.data)
 				pixAcc, mIoU = metric.get()
 				overallpix += pixAcc
 				overallmIoU += mIoU
-				test_log.write('pixAcc:{:.4f},mIoU:{:.4f},cost:{:.3f}s\n'.format(pixAcc, mIoU,toc-tic))
+				
 				#write the output
 				outname = str(ids[i]) + '.png'
 				cv2.imwrite(os.path.join(outdir, outname),mask)
-		print ("Overall pixel accuracy:{:.4f},Overall mIoU:{:.4f}".format(overallpix/(i+1),mIoU/(i+1)))
+		print ("Overall pixel accuracy:{:.4f},Overall mIoU:{:.4f}".format(pixAcc,mIoU))
 	test_log.close()
 
 

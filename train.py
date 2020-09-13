@@ -295,14 +295,15 @@ if __name__ == "__main__":
 	torch.manual_seed(args.seed)
 	class_info = get_class_lists()
 	print (class_info)
-	root = "logs/{}".format(size)
-	os.mkdir(root)
+	root = "logs/{}".format(args.size)
+	if not os.path.exist(root):
+		os.mkdir(root)
 	for i in range(len(class_info)):
 		id_info = Category(class_info[i][1])
 		trainer = Trainer(class_info[i],id_info,args)
 		ratio = class_info[i][0]
-		train_log_file = open(os.path.join(ratio_folder,"training_{}_log.txt".format(int(ratio*10))),'w')
-		val_log_file = open(os.path.join(ratio_folder,"val_{}_log.txt".format(int(ratio*10))),'w')
+		train_log_file = open(os.path.join(root,"training_{}_log.txt".format(int(ratio*10))),'w')
+		val_log_file = open(os.path.join(root,"val_{}_log.txt".format(int(ratio*10))),'w')
 		print('Starting Epoch:', trainer.args.start_epoch)
 		print('Total Epoches:', trainer.args.epochs)
 		for epoch in range(trainer.args.start_epoch, trainer.args.epochs):

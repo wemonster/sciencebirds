@@ -124,7 +124,7 @@ class Options():
 				'pascal_aug': 0.001,
 				'pcontext': 0.001,
 				'ade20k': 0.01,
-				'sciencebirds':0.0001,
+				'sciencebirds':0.001,
 			}
 			args.lr = lrs[args.dataset.lower()] / 16 * args.batch_size
 			# args.lr = lrs[args.dataset.lower()]

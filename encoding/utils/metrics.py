@@ -37,7 +37,7 @@ class SegmentationMetric(object):
 			return correct_classified
 
 		if isinstance(preds, torch.Tensor):
-			evaluate_worker(self, labels, preds)
+			return evaluate_worker(self, labels, preds)
 		elif isinstance(preds, (list, tuple)):
 			threads = [threading.Thread(target=evaluate_worker,
 										args=(self, label, pred),
