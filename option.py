@@ -88,7 +88,7 @@ class Options():
         parser.add_argument('--experiment', type=str, default='close0',
                             help = 'filename for test results')
 
-        parser.add_argument('--ratio', type=float, defualt='0.0',
+        parser.add_argument('--ratio', type=float, default='0.0',
                             help = 'close ratio')
 
         # the parser

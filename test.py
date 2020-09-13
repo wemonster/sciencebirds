@@ -22,8 +22,16 @@ from encoding.models import get_model, get_segmentation_model, MultiEvalModule
 
 from option import Options
 
-
-def test(args):
+def get_class_lists():
+	data = open("logs/resnet.txt",'r').readlines()
+	class_info = []
+	for i in data:
+		ratio,classes = i.split('|')
+		ratio = float(ratio.split(':')[1])
+		classes = classes.strip().split(':')[1].split(',')
+		class_info.append((ratio,classes))
+	return class_info
+def test(args,classes):
 	# output folder
 	outdir = os.path.join(args.save_folder,str(int(args.ratio*10)))
 	# outdir = "../results"
@@ -46,10 +54,11 @@ def test(args):
 								drop_last=False, shuffle=False,
 								collate_fn=test_batchify_fn, **loader_kwargs)
 	# model
+	self.nclass = len(classes)
 	if args.model_zoo is not None:
 		model = get_model(args.model_zoo, pretrained=True)
 	else:
-		model = get_segmentation_model(args.model, dataset = args.dataset,
+		model = get_segmentation_model(args.ratio,self.nclass,args.model, dataset = args.dataset,
 									   backbone = args.backbone, dilated = args.dilated,
 									   lateral = args.lateral, jpu = args.jpu, aux = args.aux,
 									   se_loss = args.se_loss, norm_layer = BatchNorm,
@@ -119,4 +128,6 @@ if __name__ == "__main__":
 	args = Options().parse()
 	torch.manual_seed(args.seed)
 	args.test_batch_size = torch.cuda.device_count()
-	test(args)
+	class_info = get_class_lists()
+
+	test(args,class_info[0][1])
