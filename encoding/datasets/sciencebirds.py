@@ -18,18 +18,18 @@ class SciencebirdSeg(BaseDataset):
 		folder = os.path.join(root,"{}/{}".format(size,int(ratio*10)))
 		if self.mode == 'train':
 			print ('train set')
-			self.ids_file = os.path.join(root,'ImageSets/train.txt')
+			self.ids_file = os.path.join("dataset",'ImageSets/train.txt')
 		elif self.mode == 'test':
 			print ("test set")
-			self.ids_file = os.path.join(root,'ImageSets/test.txt')
-			self.unknowns_files = os.path.join(root,'unknowns')
+			self.ids_file = os.path.join("dataset",'ImageSets/test.txt')
+			self.unknowns_files = os.path.join("dataset",'unknowns')
 		else:
 			print ('val set')
-			self.ids_file = os.path.join(root,'ImageSets/val.txt')
+			self.ids_file = os.path.join("dataset",'ImageSets/val.txt')
 		self.ids = self._load_image_set_index()
 		self.image_files = "dataset/rawdata/groundtruthimage"
-		self.label_files = os.path.join(root,'masks')
-		self.foreground_files = os.path.join(root,'foregrounds')
+		self.label_files = os.path.join(folder,'masks')
+		self.foreground_files = os.path.join(folder,'foregrounds')
 		# if split == 'train':
 		# 	print('train set')
 		# 	ann_file = os.path.join(root, 'annotations/instances_train2017.json')

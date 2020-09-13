@@ -46,10 +46,10 @@ class Trainer():
 		data_kwargs = {'transform': input_transform, 'target_transform':input_transform,
 						'label_transform':label_transform,
 						 'base_size': args.base_size,'crop_size': args.crop_size}
-		trainset = get_segmentation_dataset(self.ratio,args.size,args.dataset, split=args.train_split, mode='train',
+		trainset = get_segmentation_dataset(args.dataset,self.ratio,args.size, split=args.train_split, mode='train',
 										   **data_kwargs)
 
-		testset = get_segmentation_dataset(self.ratio,args.size,args.dataset, split='val', mode ='val',
+		testset = get_segmentation_dataset(args.dataset,self.ratio,args.size, split='val', mode ='val',
 										   **data_kwargs)
 		print ("finish loading the dataset")
 		# dataloader
@@ -121,8 +121,6 @@ class Trainer():
 		self.corresponding_class = torch.tensor([])
 
 	def training(self, epoch,log_file):
-
-		training_log = open("logs/train/{}.txt".format(epoch),'w')
 		train_loss = 0.0
 		self.model.train()
 		tbar = tqdm(self.trainloader)
@@ -141,9 +139,7 @@ class Trainer():
 			self.optimizer.step()
 			train_loss += loss.item()
 			tbar.set_description('Train loss: %.3f' % (train_loss / (i + 1)))
-			training_log.write("Iteration:{}, Loss:{:.3f}\n".format(i,train_loss/(i+1)))
 		log_file.write("Epoch:{}, Loss:{:.3f}\n".format(epoch,train_loss/(i+1)))
-		training_log.close()
 		if self.args.no_val:
 			# save checkpoint every epoch
 			is_best = False
@@ -157,7 +153,6 @@ class Trainer():
 
 	def validation(self, epoch,log_file):
 		# Fast test during the training
-		val_log = open("logs/val/{}.txt".format(epoch),'w')
 		def collect_features(features,position,pred):
 			'''
 			features: batch_size x 304 x H x W
@@ -240,8 +235,6 @@ class Trainer():
 			mIoU = IoU.mean()
 			tbar.set_description(
 				'pixAcc: %.3f, mIoU: %.3f' % (pixAcc, mIoU))
-			val_log.write("Iteration:{}, pixAcc:{:.3f}, mIoU:{:.3f}\n".format(i,pixAcc,mIoU))
-		val_log.close()
 		new_pred = (pixAcc + mIoU)/2
 		log_file.write("Epoch:{}, pixAcc:{:.3f}, mIoU:{:.3f}, Overall:{:.3f}\n".format(epoch,pixAcc,mIoU,new_pred))
 		if new_pred >= self.best_pred:
@@ -300,24 +293,22 @@ def get_class_lists():
 if __name__ == "__main__":
 	args = Options().parse()
 	torch.manual_seed(args.seed)
-	
-	
-	train_log_file = open("logs/training_log.txt",'w')
-	val_log_file = open("logs/val_log.txt",'w')
 	class_info = get_class_lists()
 	print (class_info)
-
-	for i in range(2,len(class_info)):
+	root = "logs/{}".format(size)
+	os.mkdir(root)
+	for i in range(len(class_info)):
 		id_info = Category(class_info[i][1])
 		trainer = Trainer(class_info[i],id_info,args)
+		ratio = class_info[i][0]
+		train_log_file = open(os.path.join(ratio_folder,"training_{}_log.txt".format(int(ratio*10))),'w')
+		val_log_file = open(os.path.join(ratio_folder,"val_{}_log.txt".format(int(ratio*10))),'w')
 		print('Starting Epoch:', trainer.args.start_epoch)
 		print('Total Epoches:', trainer.args.epochs)
-		# generate_dataset(class_info[i][1])
-		# print ("Dataset is generated")
 		for epoch in range(trainer.args.start_epoch, trainer.args.epochs):
 			trainer.training(epoch,train_log_file)
 			if not trainer.args.no_val:
 				trainer.validation(epoch,val_log_file)
 		trainer.build_gaussian_model()
-	train_log_file.close()
-	val_log_file.close()
+		train_log_file.close()
+		val_log_file.close()
