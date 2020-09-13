@@ -50,15 +50,13 @@ def test(args,classes):
 	# dataloader
 	loader_kwargs = {'num_workers': args.workers, 'pin_memory': True} \
 		if args.cuda else {}
-	test_data = data.DataLoader(testset, batch_size=args.test_batch_size,
-								drop_last=False, shuffle=False,
-								collate_fn=test_batchify_fn, **loader_kwargs)
+	test_data = data.DataLoader(testset, batch_size=args.test_batch_size,shuffle=False, **loader_kwargs)
 	# model
-	self.nclass = len(classes)
+	nclass = len(classes) + 1
 	if args.model_zoo is not None:
 		model = get_model(args.model_zoo, pretrained=True)
 	else:
-		model = get_segmentation_model(args.ratio,self.nclass,args.model, dataset = args.dataset,
+		model = get_segmentation_model(args.ratio,nclass,args.model, dataset = args.dataset,
 									   backbone = args.backbone, dilated = args.dilated,
 									   lateral = args.lateral, jpu = args.jpu, aux = args.aux,
 									   se_loss = args.se_loss, norm_layer = BatchNorm,
@@ -104,15 +102,16 @@ def test(args,classes):
 		else:
 			with torch.no_grad():
 				tic = time.time()
-				outputs,labels = evaluator(image[0])
+				print (image.size())
+				outputs,_ = evaluator(image)
 				predict = torch.argmax(outputs,1)
-				
+				print (predict.size())
 				#thresholding here
 				toc = time.time()
 				mask = utils.get_mask_pallete(predict, args.dataset)
 
 				#record the accuracy
-				metric.update(labels[0], predicts)
+				metric.update(labels, predict.data)
 				pixAcc, mIoU = metric.get()
 				overallpix += pixAcc
 				overallmIoU += mIoU
