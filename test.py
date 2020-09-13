@@ -50,9 +50,9 @@ def test(args,classes):
 	# dataloader
 	loader_kwargs = {'num_workers': args.workers, 'pin_memory': True} \
 		if args.cuda else {}
-	test_data = data.DataLoader(testset, batch_size=args.test_batch_size,shuffle=False, **loader_kwargs)
+	test_data = data.DataLoader(testset, batch_size=8,shuffle=False, **loader_kwargs)
 	# model
-	nclass = len(classes) + 1
+	nclass = len(classes) + 2
 	if args.model_zoo is not None:
 		model = get_model(args.model_zoo, pretrained=True)
 	else:
@@ -68,14 +68,14 @@ def test(args,classes):
 		# strict=False, so that it is compatible with old pytorch saved models
 		model.load_state_dict(checkpoint['state_dict'])
 		print("=> loaded checkpoint '{}' (epoch {})".format(args.resume, checkpoint['epoch']))
-
-	print(model)
+	print (args.test_batch_size)
+	#print(model)
 	scales = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25] if args.dataset == 'citys' else \
 		[0.5, 0.75, 1.0, 1.25, 1.5, 1.75]
 	if not args.ms:
 		scales = [1.0]
 	#evaluator = MultiEvalModule(model, testset.num_class, scales=scales, flip=args.ms).cuda()
-	evaluator = model
+	evaluator = model.cuda()
 	evaluator.eval()
 	metric = utils.SegmentationMetric(testset.num_class)
 
@@ -85,16 +85,18 @@ def test(args,classes):
 	overallpix = 0.0
 	overallmIoU = 0.0
 	#load gaussian model
-	mean_weights = torch.load("../models/gaussian/mean_{}.pt".format(int(args.ratio*10)))
-	var_weights = torch.load("../models/gaussian/var_{}.pt".format(int(args.ratio*10)))
+	#mean_weights = torch.load("../models/gaussian/mean_{}.pt".format(int(args.ratio*10)))
+	#var_weights = torch.load("../models/gaussian/var_{}.pt".format(int(args.ratio*10)))
 
 	for i, (image,labels) in enumerate(tbar):
+		image = image.type(torch.cuda.FloatTensor)
 		# pass
 		if 'val' in args.mode:
 			with torch.no_grad():
 				predicts = evaluator.parallel_forward(image)
 				predicts = torch.argmax(predicts[0],dim=1)
 				metric.update(labels[0], predicts)
+
 				pixAcc, mIoU = metric.get()
 				overallpix += pixAcc
 				overallmIoU += mIoU
@@ -103,15 +105,15 @@ def test(args,classes):
 			with torch.no_grad():
 				tic = time.time()
 				print (image.size())
-				outputs,_ = evaluator(image)
+				outputs,features = evaluator.val_forward(image)
 				predict = torch.argmax(outputs,1)
 				print (predict.size())
 				#thresholding here
 				toc = time.time()
-				mask = utils.get_mask_pallete(predict, args.dataset)
+				mask = utils.get_mask_pallete(predict[0], args.dataset)
 
 				#record the accuracy
-				metric.update(labels, predict.data)
+				metric.update(labels.squeeze().cuda(), predict.data)
 				pixAcc, mIoU = metric.get()
 				overallpix += pixAcc
 				overallmIoU += mIoU
@@ -120,7 +122,7 @@ def test(args,classes):
 				outname = str(ids[i]) + '.png'
 				cv2.imwrite(os.path.join(outdir, outname),mask)
 		print ("Overall pixel accuracy:{:.4f},Overall mIoU:{:.4f}".format(overallpix/(i+1),mIoU/(i+1)))
-		test_log.close()
+	test_log.close()
 
 
 if __name__ == "__main__":
