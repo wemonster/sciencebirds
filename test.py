@@ -15,8 +15,8 @@ import encoding.utils as utils
 from tqdm import tqdm
 
 from torch.utils import data
-from scipy.stats import multivariate_normal
-
+# from scipy.stats import multivariate_normal
+from torch.distribution import MultivariateNormal
 
 
 from encoding.nn import BatchNorm
@@ -25,7 +25,7 @@ from encoding.models import get_model, get_segmentation_model, MultiEvalModule
 
 
 from option import Options
-
+from classlabel import Category
 def get_class_lists():
 	data = open("logs/resnet.txt",'r').readlines()
 	class_info = []
@@ -42,11 +42,12 @@ def build_gaussian(mean_weights,var_weights):
 		category = int(key.split('_')[1])
 		var_cat = "cov_{}".format(category)
 		small_diag = np.ones(var_weights[var_cat].shape) * 0.01
-		var = var_weights[var_cat] + np.diag(np.diag(small_diag))
-		gaussians[category] = multivariate_normal(mean=val.cpu().numpy(),cov=var)
+		var = torch.tensor(var_weights[var_cat] + np.diag(np.diag(small_diag)))
+		var = var.type(torch.cuda.FloatTensor)
+		gaussians[category] = MultivariateNormal(mean=val.cuda(),cov=var)
 	return gaussians
 
-def thresholding(gaussians,features,position,pred):
+def thresholding(gaussians,category,threshold,features,position,pred):
 	'''
 	features: batch_size x 304 x H x W
 	position: (tuple1,tuple2,tuple3); tuple1 = img_id, tuple2 = x, tuple3 = y
@@ -54,14 +55,20 @@ def thresholding(gaussians,features,position,pred):
 	return: 304 x (#correctly classified)
 	'''
 	if len(position) == 3:
-		img = position[0]
-		x = position[1]
-		y = position[2]
 
-		# category = pred[img,x,y]
 		(category,occurrance) = np.unique(pred.cpu().numpy(),return_counts=True)
 		print (category)
-		print (pred==category[0])
+		for i in category[1:]:
+			matched = np.nonzero(pred==i) #matched x 3 (imgid,x,y)
+			img = matched[:,0]
+			x = matched[:,1]
+			y = matched[:,2]
+			matched_features = features[img,:,x,y] #matched x 304
+			print (matched_features.size())
+			prob = 1 - gaussians[i].cdf(matched_features[:2]) #matched x 1
+			print (prob)
+			# pred[prob<threshold] = category.gameObjectType['UNKNOWN']
+
 	# 	gaussian = gaussians[category]
 	# 	prob = 1 - gaussian.cdf(features[img,:,x,y])
 	# 	if len(self.corresponding_class) == 0:
@@ -136,6 +143,7 @@ def test(args,classes):
 	mean_weights = torch.load("../models/gaussian/mean_{}.pt".format(int(args.ratio*10)))
 	var_weights = torch.load("../models/gaussian/var_{}.pt".format(int(args.ratio*10)))
 	gaussians = build_gaussian(mean_weights,var_weights)
+	category = Category(classes,True)
 	for i, (image,labels,foregrounds) in enumerate(tbar):
 		image = image.type(torch.cuda.FloatTensor)
 		# pass
