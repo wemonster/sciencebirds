@@ -45,7 +45,7 @@ def test(args,classes):
 	# dataset
 	data_kwargs = {'transform': input_transform, 'target_transform':input_transform,
 						'label_transform':label_transform}
-	testset = get_segmentation_dataset(args.dataset, split=args.split, mode='val',
+	testset = get_segmentation_dataset(args.dataset, split=args.split, mode='test',
 										   **data_kwargs)
 	# dataloader
 	loader_kwargs = {'num_workers': args.workers, 'pin_memory': True} \
@@ -85,8 +85,8 @@ def test(args,classes):
 	overallpix = 0.0
 	overallmIoU = 0.0
 	#load gaussian model
-	#mean_weights = torch.load("../models/gaussian/mean_{}.pt".format(int(args.ratio*10)))
-	#var_weights = torch.load("../models/gaussian/var_{}.pt".format(int(args.ratio*10)))
+	mean_weights = torch.load("../models/gaussian/mean_{}.pt".format(int(args.ratio*10)))
+	var_weights = torch.load("../models/gaussian/var_{}.pt".format(int(args.ratio*10)))
 
 	for i, (image,labels) in enumerate(tbar):
 		image = image.type(torch.cuda.FloatTensor)

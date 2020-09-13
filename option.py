@@ -91,6 +91,9 @@ class Options():
 		parser.add_argument('--ratio', type=float, default='0.0',
 							help = 'close ratio')
 
+		parser.add_argument('--size', type=str, default='small',
+							help = 'size of dataset')
+
 		# the parser
 		self.parser = parser
 

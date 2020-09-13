@@ -10,27 +10,26 @@ import torchvision.transforms as transform
 from .base import BaseDataset
 
 class SciencebirdSeg(BaseDataset):
-	NUM_CLASS = 13
-	CAT_LIST = [0, 5, 2, 16, 9, 44, 6, 3, 17, 62, 21, 67, 18, 19, 4,
-		1, 64, 20, 63, 7, 72]
-	def __init__(self, root='dataset', split='train',
+	def __init__(self, ratio,size='small', root='dataset/images',split='train',
 				 mode=None, transform=None, target_transform=None,label_transform=None, **kwargs):
 		super(SciencebirdSeg, self).__init__(
 			root, split, mode, transform, target_transform, **kwargs)
 		
+		folder = os.path.join(root,"{}/{}".format(size,int(ratio*10)))
 		if self.mode == 'train':
 			print ('train set')
 			self.ids_file = os.path.join(root,'ImageSets/train.txt')
 		elif self.mode == 'test':
 			print ("test set")
 			self.ids_file = os.path.join(root,'ImageSets/test.txt')
+			self.unknowns_files = os.path.join(root,'unknowns')
 		else:
 			print ('val set')
 			self.ids_file = os.path.join(root,'ImageSets/val.txt')
 		self.ids = self._load_image_set_index()
-		self.image_files = os.path.join(root,'images')
-		self.mask_files = os.path.join(root,'masks')
-		self.label_files = os.path.join(root,'labels')
+		self.image_files = "dataset/rawdata/groundtruthimage"
+		self.label_files = os.path.join(root,'masks')
+		self.foreground_files = os.path.join(root,'foregrounds')
 		# if split == 'train':
 		# 	print('train set')
 		# 	ann_file = os.path.join(root, 'annotations/instances_train2017.json')
@@ -60,37 +59,20 @@ class SciencebirdSeg(BaseDataset):
 		return image_index
 
 	def __getitem__(self, index):
-		# coco = self.coco
 		img_id = self.ids[index]
 		img = Image.open(os.path.join(self.image_files, str(img_id)+'.png')).convert('RGB')
-		# cocotarget = coco.loadAnns(coco.getAnnIds(imgIds=img_id))
-		# mask = Image.fromarray(self._gen_seg_mask(
-		# 	cocotarget, img_metadata['height'], img_metadata['width']))
-		mask = Image.open(os.path.join(self.mask_files,str(img_id)+'.png')).convert('RGB')
 		labels = Image.open(os.path.join(self.label_files,str(img_id)+'.png'))
-		# synchrosized transform
-		# if self.mode == 'train':
-		# 	img, mask = self._sync_transform(img, mask)
-		# elif self.mode == 'val':
-		# 	img, mask = self._val_sync_transform(img, mask)
-		# else:
-		# 	assert self.mode == 'testval'
-		# 	mask = self._mask_transform(mask)
-		# general resize, normalize and toTensor
+		foregrounds = Image.open(os.path.join(self.foreground_files,str(img_id)+'.png')).convert('RGB')
+		if self.mode == 'test':
+			labels = Image.open(os.path.join(self.unknowns_files,str(img_id)+'.png'))
 		if self.transform is not None:
 			img = self.transform(img)
 		if self.target_transform is not None:
-			mask = self.target_transform(mask)
-		# print (labels.size,type(labels))
+			foregrounds = self.target_transform(foregrounds)
 		if self.label_transform is not None:
-			# print (labels.load())
-			a = cv2.imread(os.path.join(self.label_files,str(img_id)+'.png'))
-			# print (a[a!=0])
 			labels = self.label_transform(labels) * 255
 			labels = labels.type(torch.LongTensor)
-			# print (labels[labels!=0])
-		# print (labels.size(),type(labels))
-		return img,labels
+		return img,labels,foregrounds
 
 	def __len__(self):
 		return len(self.ids)

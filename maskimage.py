@@ -170,29 +170,32 @@ def generate_dataset(classes,ratio):
 	
 
 def generate_imagesets(ratio):
-	annotation_folder = "dataset/images"
+	annotation_folder = "dataset/rawdata/groundtruthimage"
 	files = os.listdir(annotation_folder)
 	# print (files)
 	filename = [str(int(x.split('.')[0]))+'\n' for x in files]
 	train_file = open('dataset/ImageSets/train.txt','w')
 	val_file = open('dataset/ImageSets/val.txt','w')
-
+	test_file = open('dataset/ImageSets/test.txt','w')
 	for i in filename:
 		if int(i) >= 2400 and int(i) <= 2425:
 			continue
 		prob = random.random()
 		if prob <= ratio:
 			train_file.write("{}".format(i))
-		else:
+		elif prob > ratio and prob < ratio+0.1:
 			val_file.write('{}'.format(i))
+		else:
+			test_file.write('{}'.format(i))
 	train_file.close()
 	val_file.close()
+	test_file.close()
 
-data = open("logs/resnet.txt",'r').readlines()
-class_info = []
-for i in data:
-	ratio,classes = i.split('|')
-	ratio = float(ratio.split(':')[1])
-	classes = classes.strip().split(':')[1].split(',')
-	generate_dataset(classes,ratio)
-# generate_imagesets(0.8)
+# data = open("logs/resnet.txt",'r').readlines()
+# class_info = []
+# for i in data:
+# 	ratio,classes = i.split('|')
+# 	ratio = float(ratio.split(':')[1])
+# 	classes = classes.strip().split(':')[1].split(',')
+# 	generate_dataset(classes,ratio)
+generate_imagesets(0.8)

@@ -46,10 +46,10 @@ class Trainer():
 		data_kwargs = {'transform': input_transform, 'target_transform':input_transform,
 						'label_transform':label_transform,
 						 'base_size': args.base_size,'crop_size': args.crop_size}
-		trainset = get_segmentation_dataset(args.dataset, split=args.train_split, mode='train',
+		trainset = get_segmentation_dataset(self.ratio,args.size,args.dataset, split=args.train_split, mode='train',
 										   **data_kwargs)
 
-		testset = get_segmentation_dataset(args.dataset, split='val', mode ='val',
+		testset = get_segmentation_dataset(self.ratio,args.size,args.dataset, split='val', mode ='val',
 										   **data_kwargs)
 		print ("finish loading the dataset")
 		# dataloader
@@ -126,7 +126,7 @@ class Trainer():
 		train_loss = 0.0
 		self.model.train()
 		tbar = tqdm(self.trainloader)
-		for i, (image,labels) in enumerate(tbar):
+		for i, (image,labels,foregrounds) in enumerate(tbar):
 			image = image.type(torch.cuda.FloatTensor)
 			self.scheduler(self.optimizer, i, epoch, self.best_pred)
 			self.optimizer.zero_grad()
@@ -222,7 +222,7 @@ class Trainer():
 		self.model.eval()
 		total_inter, total_union, total_correct, total_label = 0, 0, 0, 0
 		tbar = tqdm(self.valloader, desc='\r')
-		for i, (image,labels) in enumerate(tbar):
+		for i, (image,labels,foregrounds) in enumerate(tbar):
 			image = image.type(torch.cuda.FloatTensor)
 			if torch_ver == "0.3":
 				image = Variable(image, volatile=True)
@@ -312,8 +312,8 @@ if __name__ == "__main__":
 		trainer = Trainer(class_info[i],id_info,args)
 		print('Starting Epoch:', trainer.args.start_epoch)
 		print('Total Epoches:', trainer.args.epochs)
-		generate_dataset(class_info[i][1])
-		print ("Dataset is generated")
+		# generate_dataset(class_info[i][1])
+		# print ("Dataset is generated")
 		for epoch in range(trainer.args.start_epoch, trainer.args.epochs):
 			trainer.training(epoch,train_log_file)
 			if not trainer.args.no_val:
