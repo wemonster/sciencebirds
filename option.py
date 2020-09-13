@@ -88,6 +88,9 @@ class Options():
         parser.add_argument('--experiment', type=str, default='close0',
                             help = 'filename for test results')
 
+        parser.add_argument('--ratio', type=float, defualt='0.0',
+                            help = 'close ratio')
+
         # the parser
         self.parser = parser
 
@@ -107,7 +110,7 @@ class Options():
             }
             args.epochs = epoches[args.dataset.lower()]
         if args.batch_size is None:
-            args.batch_size = 16
+            args.batch_size = 8
         if args.test_batch_size is None:
             args.test_batch_size = 1
         if args.lr is None:

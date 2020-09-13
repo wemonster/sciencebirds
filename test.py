@@ -25,7 +25,7 @@ from option import Options
 
 def test(args):
 	# output folder
-	outdir = args.save_folder
+	outdir = os.path.join(args.save_folder,str(int(args.ratio*10)))
 	# outdir = "../results"
 	if not os.path.exists(outdir):
 		os.makedirs(outdir)
@@ -75,6 +75,12 @@ def test(args):
 	tbar = tqdm(test_data)
 	ids = testset._load_image_set_index()
 	test_log = open("logs/{}.txt".format(args.experiment),'w')
+	overallpix = 0.0
+	overallmIoU = 0.0
+	#load gaussian model
+	mean_weights = torch.load("../models/gaussian/mean_{}.pt".format(int(args.ratio*10)))
+	var_weights = torch.load("../models/gaussian/var_{}.pt".format(int(args.ratio*10)))
+
 	for i, (image,labels) in enumerate(tbar):
 		# pass
 		if 'val' in args.mode:
@@ -83,23 +89,29 @@ def test(args):
 				predicts = torch.argmax(predicts[0],dim=1)
 				metric.update(labels[0], predicts)
 				pixAcc, mIoU = metric.get()
+				overallpix += pixAcc
+				overallmIoU += mIoU
 				tbar.set_description( 'pixAcc: %.4f, mIoU: %.4f' % (pixAcc, mIoU))
 		else:
 			with torch.no_grad():
 				tic = time.time()
 				outputs,labels = evaluator(image[0])
 				predict = torch.argmax(outputs,1)
+				
+				#thresholding here
 				toc = time.time()
 				mask = utils.get_mask_pallete(predict, args.dataset)
 
 				#record the accuracy
 				metric.update(labels[0], predicts)
 				pixAcc, mIoU = metric.get()
+				overallpix += pixAcc
+				overallmIoU += mIoU
 				test_log.write('pixAcc:{:.4f},mIoU:{:.4f},cost:{:.3f}s\n'.format(pixAcc, mIoU,toc-tic))
-
 				#write the output
 				outname = str(ids[i]) + '.png'
 				cv2.imwrite(os.path.join(outdir, outname),mask)
+		print ("Overall pixel accuracy:{:.4f},Overall mIoU:{:.4f}".format(overallpix/(i+1),mIoU/(i+1)))
 		test_log.close()
 
 

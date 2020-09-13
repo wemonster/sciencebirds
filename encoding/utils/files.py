@@ -18,7 +18,7 @@ def save_checkpoint(state, args, is_best,ratio,filename='checkpoint.pth.tar'):
 	filename = directory + filename
 	torch.save(state, filename)
 	if is_best:
-		shutil.copyfile(filename, directory + 'model_best_{}.pth.tar'.format(str(ratio*10)))
+		shutil.copyfile(filename, directory + 'model_best_{}.pth.tar'.format(int(ratio*10)))
 
 
 def download(url, path=None, overwrite=False, sha1_hash=None):

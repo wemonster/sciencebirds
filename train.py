@@ -59,7 +59,7 @@ class Trainer():
 										   drop_last=True, shuffle=True, **kwargs)
 		self.valloader = data.DataLoader(testset, batch_size=args.batch_size,
 										 drop_last=False, shuffle=False, **kwargs)
-		self.nclass = math.floor((1-self.ratio) * 12) + 2
+		self.nclass = math.floor((1-self.ratio) * 12) + 1
 		# model
 		model = get_segmentation_model(self.ratio,self.nclass,args.model, dataset = args.dataset,
 									   backbone = args.backbone, dilated = args.dilated,
@@ -102,7 +102,7 @@ class Trainer():
 			checkpoint = torch.load(args.resume)
 			args.start_epoch = checkpoint['epoch']
 			if args.cuda:
-				self.model.module.load_state_dict(checkpoint['state_dict'])
+				self.model.load_state_dict(checkpoint['state_dict'])
 			else:
 				self.model.load_state_dict(checkpoint['state_dict'])
 			if not args.ft:
@@ -149,7 +149,7 @@ class Trainer():
 			is_best = False
 			utils.save_checkpoint({
 				'epoch': epoch + 1,
-				'state_dict': self.model.module.state_dict(),
+				'state_dict': self.model.state_dict(),
 				'optimizer': self.optimizer.state_dict(),
 				'best_pred': self.best_pred,
 			}, self.args, is_best, filename='checkpoint_{}.pth.tar'.format(epoch))
@@ -208,7 +208,7 @@ class Trainer():
 
 
 		def eval_batch(model, image, target):
-			labeled,features = model.module.val_forward(image)
+			labeled,features = model.val_forward(image)
 			pred = torch.argmax(labeled,dim=1)
 			target = target.squeeze().cuda()
 			correct, labeled,correct_classified = utils.batch_pix_accuracy(pred.data, target)
@@ -249,7 +249,7 @@ class Trainer():
 			self.best_pred = new_pred
 			utils.save_checkpoint({
 				'epoch': epoch + 1,
-				'state_dict': self.model.module.state_dict(),
+				'state_dict': self.model.state_dict(),
 				'optimizer': self.optimizer.state_dict(),
 				'best_pred': new_pred,
 			}, self.args, is_best,self.ratio,"checkpoint_{}.pth.tar".format(epoch+1))
