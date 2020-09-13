@@ -22,7 +22,7 @@ class SciencebirdSeg(BaseDataset):
 		elif self.mode == 'test':
 			print ("test set")
 			self.ids_file = os.path.join("dataset",'ImageSets/test.txt')
-			self.unknowns_files = os.path.join("dataset",'unknowns')
+			self.unknowns_files = os.path.join(folder,'unknowns')
 		else:
 			print ('val set')
 			self.ids_file = os.path.join("dataset",'ImageSets/val.txt')

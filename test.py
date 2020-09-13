@@ -9,7 +9,7 @@ import time
 import cv2
 import torch
 import torchvision.transforms as transform
-
+import numpy as np
 import encoding.utils as utils
 
 from tqdm import tqdm
@@ -38,11 +38,12 @@ def get_class_lists():
 
 def build_gaussian(mean_weights,var_weights):
 	gaussians = {}
-	for key,val in enumerate(mean_weights):
+	for key,val in mean_weights.items():
 		category = int(key.split('_')[1])
 		var_cat = "cov_{}".format(category)
-		var = var_weights[var_cat]
-		gaussians[category] = multivariate_normal(mean=val,var=var)
+		small_diag = np.ones(var_weights[var_cat].shape) * 0.01
+		var = var_weights[var_cat] + np.diag(np.diag(small_diag))
+		gaussians[category] = multivariate_normal(mean=val.cpu().numpy(),cov=var.cpu.numpy())
 	return gaussians
 
 def thresholding(gaussians,features,position,pred):
@@ -52,13 +53,15 @@ def thresholding(gaussians,features,position,pred):
 	pred: batch_size x H x W
 	return: 304 x (#correctly classified)
 	'''
-	print (pred.size())
-	# if len(position) == 3:
-	# 	img = position[0]
-	# 	x = position[1]
-	# 	y = position[2]
+	if len(position) == 3:
+		img = position[0]
+		x = position[1]
+		y = position[2]
 
-	# 	category = pred[img,x,y]
+		# category = pred[img,x,y]
+		(category,occurrance) = np.unique(occurrance,return_counts=True)
+		print (category)
+		print (pred==category)
 	# 	gaussian = gaussians[category]
 	# 	prob = 1 - gaussian.cdf(features[img,:,x,y])
 	# 	if len(self.corresponding_class) == 0:
@@ -74,7 +77,7 @@ def thresholding(gaussians,features,position,pred):
 	# 	#there is only 1 image in the batch
 	# 	x = position[0]
 	# 	y = position[1]
-		#random sampling for 100 samples during each validation
+		# random sampling for 100 samples during each validation
 
 def test(args,classes):
 	# output folder
@@ -90,14 +93,14 @@ def test(args,classes):
 	# dataset
 	data_kwargs = {'transform': input_transform, 'target_transform':input_transform,
 						'label_transform':label_transform}
-	testset = get_segmentation_dataset(args.dataset, split=args.split, mode='test',
+	testset = get_segmentation_dataset(args.dataset,args.ratio,args.size split=args.split, mode='test',
 										   **data_kwargs)
 	# dataloader
 	loader_kwargs = {'num_workers': args.workers, 'pin_memory': True} \
 		if args.cuda else {}
 	test_data = data.DataLoader(testset, batch_size=8,shuffle=False, **loader_kwargs)
 	# model
-	nclass = len(classes) + 2
+	nclass = len(classes) + 1
 	if args.model_zoo is not None:
 		model = get_model(args.model_zoo, pretrained=True)
 	else:
@@ -122,7 +125,7 @@ def test(args,classes):
 	#evaluator = MultiEvalModule(model, testset.num_class, scales=scales, flip=args.ms).cuda()
 	evaluator = model.cuda()
 	evaluator.eval()
-	metric = utils.SegmentationMetric(testset.num_class)
+	metric = utils.SegmentationMetric(nclass)
 
 	tbar = tqdm(test_data)
 	ids = testset._load_image_set_index()
