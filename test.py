@@ -16,7 +16,7 @@ from tqdm import tqdm
 
 from torch.utils import data
 # from scipy.stats import multivariate_normal
-from torch.distribution import MultivariateNormal
+from torch.distributions import MultivariateNormal
 
 
 from encoding.nn import BatchNorm
@@ -144,7 +144,9 @@ def test(args,classes):
 	var_weights = torch.load("../models/gaussian/var_{}.pt".format(int(args.ratio*10)))
 	gaussians = build_gaussian(mean_weights,var_weights)
 	category = Category(classes,True)
+	threshold = 0.5
 	for i, (image,labels,foregrounds) in enumerate(tbar):
+		image = foregrounds
 		image = image.type(torch.cuda.FloatTensor)
 		# pass
 		if 'val' in args.mode:
@@ -160,16 +162,14 @@ def test(args,classes):
 		else:
 			with torch.no_grad():
 				tic = time.time()
-				print (image.size())
 				outputs,features = evaluator.val_forward(image)
 				predict = torch.argmax(outputs,1)
-				print (predict.size())
 				#thresholding here
 				toc = time.time()
 				mask = utils.get_mask_pallete(predict[0], args.dataset)
 				labels = labels.squeeze().cuda()
 				pixAcc,mIoU,correct_classified = utils.batch_pix_accuracy(predict.data, labels)
-				thresholding(gaussians,features,correct_classified,predict)
+				thresholding(gaussians,category,threshold,features,correct_classified,predict)
 				test_log.write('pixAcc:{:.4f},mIoU:{:.4f},cost:{:.3f}s\n'.format(pixAcc, mIoU,toc-tic))
 				
 				#record the accuracy

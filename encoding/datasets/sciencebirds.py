@@ -27,9 +27,10 @@ class SciencebirdSeg(BaseDataset):
 			print ('val set')
 			self.ids_file = os.path.join("dataset",'ImageSets/val.txt')
 		self.ids = self._load_image_set_index()
-		self.image_files = "dataset/rawdata/groundtruthimage"
+		# self.image_files = "dataset/rawdata/groundtruthimage"
+		self.image_files = os.path.join(folder,"foregrounds")
 		self.label_files = os.path.join(folder,'masks')
-		self.foreground_files = os.path.join(folder,'foregrounds')
+		self.foreground_files = "dataset/rawdata/foregrounds"
 		# if split == 'train':
 		# 	print('train set')
 		# 	ann_file = os.path.join(root, 'annotations/instances_train2017.json')
@@ -60,11 +61,11 @@ class SciencebirdSeg(BaseDataset):
 
 	def __getitem__(self, index):
 		img_id = self.ids[index]
-		img = Image.open(os.path.join(self.image_files, str(img_id)+'.png')).convert('RGB')
+		img = Image.open(os.path.join(self.image_files, str(img_id)+'.png')).convert('RGB') #foregrounds only
 		labels = Image.open(os.path.join(self.label_files,str(img_id)+'.png'))
-		foregrounds = Image.open(os.path.join(self.foreground_files,str(img_id)+'.png')).convert('RGB')
 		if self.mode == 'test':
 			labels = Image.open(os.path.join(self.unknowns_files,str(img_id)+'.png'))
+		foregrounds = np.multiply(img,labels)
 		if self.transform is not None:
 			img = self.transform(img)
 		if self.target_transform is not None:
