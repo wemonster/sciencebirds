@@ -155,8 +155,8 @@ class Trainer():
 			loss.backward()
 			self.optimizer.step()
 			train_loss += loss.item()
-			tbar.set_description('Train loss:{:.3f}\n,objectness loss:{:.3f}\n,class loss:{:.3f}\n'
-				.format(train_loss / (i + 1),objectness_loss.item(),class_loss.item()))
+			tbar.set_description('Train loss:{:.3f}\n'
+				.format(train_loss / (i + 1)))
 		log_file.write("Epoch:{}, Loss:{:.3f}\n".format(epoch,train_loss/(i+1)))
 		if self.args.no_val:
 			# save checkpoint every epoch
