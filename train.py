@@ -74,6 +74,7 @@ class Trainer():
 		params_list = [{'params': model.pretrained.parameters(), 'lr': args.lr}]
 		params_list.append({'params':model.low_level.parameters(),'lr':args.lr})
 		params_list.append({'params':model.concat_conv.parameters(),'lr':args.lr})
+		params_list.append({'params':model.objectness.parameters(),'lr':args.lr})
 		# if hasattr(model, 'jpu'):
 		# 	params_list.append({'params': model.jpu.parameters(), 'lr': args.lr*10})
 		if hasattr(model, 'head'): 
@@ -255,7 +256,7 @@ class Trainer():
 			total_object += correct_object
 			total_object_label += labeled_object
 			pixAcc = 1.0 * total_correct / (np.spacing(1) + total_label)
-			objAcc = 1.0 * total_object / (np.spaceing(1) + total_object_label)
+			objAcc = 1.0 * total_object / (np.spacing(1) + total_object_label)
 			IoU = 1.0 * total_inter / (np.spacing(1) + total_union)
 			mIoU = IoU.mean()
 			tbar.set_description(
