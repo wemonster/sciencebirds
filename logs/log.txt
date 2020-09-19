@@ -1,200 +1,200 @@
-train Loss: 2.7726 Acc: 175/629,0.2782 cost: 10.4967s
+train Loss: 2.3433 Acc: 204/629,0.3243 cost: 9.5134s
 
-val Loss: 3.5391 Acc: 52/151,0.3444 cost: 1.0890s
+val Loss: 1.8259 Acc: 55/151,0.3642 cost: 0.9486s
 
-train Loss: 1.5565 Acc: 345/629,0.5485 cost: 10.5113s
+train Loss: 1.6101 Acc: 369/629,0.5866 cost: 9.5144s
 
-val Loss: 1.1001 Acc: 109/151,0.7219 cost: 1.0560s
+val Loss: 0.9910 Acc: 117/151,0.7748 cost: 0.9542s
 
-train Loss: 1.2673 Acc: 425/629,0.6757 cost: 10.5135s
+train Loss: 1.0780 Acc: 444/629,0.7059 cost: 9.5600s
 
-val Loss: 0.5377 Acc: 135/151,0.8940 cost: 1.0757s
+val Loss: 0.4304 Acc: 129/151,0.8543 cost: 0.9488s
 
-train Loss: 1.0641 Acc: 437/629,0.6948 cost: 10.4940s
+train Loss: 0.9683 Acc: 459/629,0.7297 cost: 9.5179s
 
-val Loss: 0.3332 Acc: 136/151,0.9007 cost: 1.0704s
+val Loss: 1.1004 Acc: 130/151,0.8609 cost: 0.9491s
 
-train Loss: 0.7842 Acc: 487/629,0.7742 cost: 10.4879s
+train Loss: 0.6909 Acc: 490/629,0.7790 cost: 9.5032s
 
-val Loss: 0.4899 Acc: 135/151,0.8940 cost: 1.0709s
+val Loss: 0.5403 Acc: 133/151,0.8808 cost: 0.9481s
 
-train Loss: 0.5847 Acc: 524/629,0.8331 cost: 10.5169s
+train Loss: 0.5358 Acc: 530/629,0.8426 cost: 9.5035s
 
-val Loss: 0.2608 Acc: 129/151,0.8543 cost: 1.0660s
+val Loss: 0.1346 Acc: 145/151,0.9603 cost: 0.9490s
 
-train Loss: 0.4164 Acc: 548/629,0.8712 cost: 10.5241s
+train Loss: 0.4768 Acc: 554/629,0.8808 cost: 9.5120s
 
-val Loss: 0.2927 Acc: 143/151,0.9470 cost: 1.0663s
+val Loss: 0.6779 Acc: 126/151,0.8344 cost: 0.9667s
 
-train Loss: 0.3971 Acc: 566/629,0.8998 cost: 10.5577s
+train Loss: 0.4553 Acc: 551/629,0.8760 cost: 9.5414s
 
-val Loss: 0.1178 Acc: 146/151,0.9669 cost: 1.1431s
+val Loss: 0.1875 Acc: 146/151,0.9669 cost: 0.9516s
 
-train Loss: 0.3068 Acc: 569/629,0.9046 cost: 10.5474s
+train Loss: 0.2812 Acc: 575/629,0.9141 cost: 9.5161s
 
-val Loss: 0.0792 Acc: 147/151,0.9735 cost: 1.0612s
+val Loss: 0.0427 Acc: 150/151,0.9934 cost: 0.9520s
 
-train Loss: 0.3261 Acc: 569/629,0.9046 cost: 10.5438s
+train Loss: 0.2813 Acc: 584/629,0.9285 cost: 9.5121s
 
-val Loss: 0.1560 Acc: 147/151,0.9735 cost: 1.0720s
+val Loss: 0.1012 Acc: 148/151,0.9801 cost: 0.9500s
 
-train Loss: 0.4572 Acc: 560/629,0.8903 cost: 10.5356s
+train Loss: 0.2453 Acc: 579/629,0.9205 cost: 9.5070s
 
-val Loss: 0.0686 Acc: 148/151,0.9801 cost: 1.0694s
+val Loss: 0.0952 Acc: 148/151,0.9801 cost: 0.9503s
 
-train Loss: 0.2228 Acc: 593/629,0.9428 cost: 10.6725s
+train Loss: 0.2404 Acc: 589/629,0.9364 cost: 9.5039s
 
-val Loss: 0.3399 Acc: 144/151,0.9536 cost: 1.0754s
+val Loss: 0.0365 Acc: 150/151,0.9934 cost: 0.9501s
 
-train Loss: 0.3077 Acc: 582/629,0.9253 cost: 10.5722s
+train Loss: 0.1750 Acc: 599/629,0.9523 cost: 9.5073s
 
-val Loss: 0.0436 Acc: 148/151,0.9801 cost: 1.0545s
+val Loss: 0.0206 Acc: 150/151,0.9934 cost: 0.9511s
 
-train Loss: 0.2065 Acc: 588/629,0.9348 cost: 10.5108s
+train Loss: 0.2010 Acc: 592/629,0.9412 cost: 9.5096s
 
-val Loss: 0.1993 Acc: 146/151,0.9669 cost: 1.2329s
+val Loss: 0.1889 Acc: 142/151,0.9404 cost: 0.9527s
 
-train Loss: 0.1349 Acc: 603/629,0.9587 cost: 10.5063s
+train Loss: 0.1405 Acc: 603/629,0.9587 cost: 9.5227s
 
-val Loss: 0.0135 Acc: 151/151,1.0000 cost: 1.2711s
+val Loss: 0.0183 Acc: 150/151,0.9934 cost: 0.9497s
 
-train Loss: 0.2183 Acc: 586/629,0.9316 cost: 10.4350s
+train Loss: 0.2560 Acc: 588/629,0.9348 cost: 9.5139s
 
-val Loss: 0.3383 Acc: 144/151,0.9536 cost: 1.0916s
+val Loss: 0.2112 Acc: 146/151,0.9669 cost: 0.9504s
 
-train Loss: 0.1495 Acc: 601/629,0.9555 cost: 10.4764s
+train Loss: 0.1695 Acc: 599/629,0.9523 cost: 9.5403s
 
-val Loss: 0.0273 Acc: 150/151,0.9934 cost: 1.0863s
+val Loss: 0.1767 Acc: 146/151,0.9669 cost: 0.9497s
 
-train Loss: 0.1567 Acc: 601/629,0.9555 cost: 10.4522s
+train Loss: 0.0986 Acc: 617/629,0.9809 cost: 9.5258s
 
-val Loss: 0.0254 Acc: 149/151,0.9868 cost: 1.0929s
+val Loss: 0.1479 Acc: 146/151,0.9669 cost: 0.9501s
 
-train Loss: 0.0918 Acc: 614/629,0.9762 cost: 10.5824s
+train Loss: 0.0962 Acc: 612/629,0.9730 cost: 9.5454s
 
-val Loss: 0.0349 Acc: 150/151,0.9934 cost: 1.0681s
+val Loss: 0.0080 Acc: 150/151,0.9934 cost: 0.9506s
 
-train Loss: 0.0778 Acc: 618/629,0.9825 cost: 10.5286s
+train Loss: 0.0985 Acc: 605/629,0.9618 cost: 9.5433s
 
-val Loss: 0.0839 Acc: 147/151,0.9735 cost: 1.0645s
+val Loss: 0.0187 Acc: 150/151,0.9934 cost: 0.9495s
 
-train Loss: 0.0890 Acc: 612/629,0.9730 cost: 10.4068s
+train Loss: 0.1171 Acc: 606/629,0.9634 cost: 9.5267s
 
-val Loss: 0.0133 Acc: 150/151,0.9934 cost: 1.0591s
+val Loss: 0.0022 Acc: 151/151,1.0000 cost: 0.9516s
 
-train Loss: 0.0525 Acc: 617/629,0.9809 cost: 10.5599s
+train Loss: 0.0607 Acc: 614/629,0.9762 cost: 9.5148s
 
-val Loss: 0.0162 Acc: 150/151,0.9934 cost: 1.0803s
+val Loss: 0.0089 Acc: 151/151,1.0000 cost: 0.9517s
 
-train Loss: 0.0519 Acc: 614/629,0.9762 cost: 10.5729s
+train Loss: 0.0354 Acc: 623/629,0.9905 cost: 9.5520s
 
-val Loss: 0.0286 Acc: 149/151,0.9868 cost: 1.0583s
+val Loss: 0.0008 Acc: 151/151,1.0000 cost: 0.9509s
 
-train Loss: 0.0479 Acc: 618/629,0.9825 cost: 10.6675s
+train Loss: 0.0721 Acc: 611/629,0.9714 cost: 9.5351s
 
-val Loss: 0.0375 Acc: 148/151,0.9801 cost: 2.0763s
+val Loss: 0.0095 Acc: 150/151,0.9934 cost: 0.9509s
 
-train Loss: 0.0451 Acc: 619/629,0.9841 cost: 11.0922s
+train Loss: 0.0430 Acc: 620/629,0.9857 cost: 9.5256s
 
-val Loss: 0.0237 Acc: 149/151,0.9868 cost: 1.1368s
+val Loss: 0.0940 Acc: 147/151,0.9735 cost: 0.9502s
 
-train Loss: 0.0608 Acc: 619/629,0.9841 cost: 10.5222s
+train Loss: 0.0565 Acc: 619/629,0.9841 cost: 9.5245s
 
-val Loss: 0.0387 Acc: 149/151,0.9868 cost: 1.3175s
+val Loss: 0.0034 Acc: 151/151,1.0000 cost: 0.9501s
 
-train Loss: 0.0440 Acc: 621/629,0.9873 cost: 10.4366s
+train Loss: 0.0522 Acc: 617/629,0.9809 cost: 9.5195s
 
-val Loss: 0.0218 Acc: 149/151,0.9868 cost: 1.1565s
+val Loss: 0.1147 Acc: 147/151,0.9735 cost: 0.9509s
 
-train Loss: 0.0137 Acc: 627/629,0.9968 cost: 10.6566s
+train Loss: 0.0506 Acc: 620/629,0.9857 cost: 9.5143s
 
-val Loss: 0.0003 Acc: 151/151,1.0000 cost: 1.2060s
+val Loss: 0.1041 Acc: 149/151,0.9868 cost: 0.9500s
 
-train Loss: 0.1019 Acc: 606/629,0.9634 cost: 10.7358s
+train Loss: 0.0613 Acc: 618/629,0.9825 cost: 9.5178s
 
-val Loss: 0.0025 Acc: 151/151,1.0000 cost: 1.2214s
+val Loss: 0.1399 Acc: 144/151,0.9536 cost: 0.9513s
 
-train Loss: 0.0783 Acc: 611/629,0.9714 cost: 10.8103s
+train Loss: 0.0418 Acc: 622/629,0.9889 cost: 9.5161s
 
-val Loss: 0.0103 Acc: 151/151,1.0000 cost: 1.1772s
+val Loss: 0.0053 Acc: 151/151,1.0000 cost: 0.9500s
 
-train Loss: 0.0301 Acc: 624/629,0.9921 cost: 10.7474s
+train Loss: 0.0391 Acc: 622/629,0.9889 cost: 9.5114s
 
-val Loss: 0.0009 Acc: 151/151,1.0000 cost: 1.1681s
+val Loss: 0.0066 Acc: 151/151,1.0000 cost: 0.9484s
 
-train Loss: 0.0658 Acc: 617/629,0.9809 cost: 10.7074s
+train Loss: 0.0393 Acc: 623/629,0.9905 cost: 9.5197s
 
-val Loss: 0.0009 Acc: 151/151,1.0000 cost: 1.1825s
+val Loss: 0.0235 Acc: 149/151,0.9868 cost: 0.9492s
 
-train Loss: 0.0154 Acc: 626/629,0.9952 cost: 10.6780s
+train Loss: 0.0356 Acc: 624/629,0.9921 cost: 9.5204s
 
-val Loss: 0.0004 Acc: 151/151,1.0000 cost: 1.1494s
+val Loss: 0.0085 Acc: 151/151,1.0000 cost: 0.9503s
 
-train Loss: 0.0292 Acc: 622/629,0.9889 cost: 10.7424s
+train Loss: 0.0939 Acc: 612/629,0.9730 cost: 9.5155s
 
-val Loss: 0.0011 Acc: 151/151,1.0000 cost: 1.1205s
+val Loss: 0.2238 Acc: 149/151,0.9868 cost: 0.9499s
 
-train Loss: 0.0296 Acc: 626/629,0.9952 cost: 10.5556s
+train Loss: 0.0240 Acc: 625/629,0.9936 cost: 9.5124s
 
-val Loss: 0.0026 Acc: 151/151,1.0000 cost: 1.1624s
+val Loss: 0.0003 Acc: 151/151,1.0000 cost: 0.9498s
 
-train Loss: 0.0223 Acc: 623/629,0.9905 cost: 10.7070s
+train Loss: 0.0085 Acc: 628/629,0.9984 cost: 9.5046s
 
-val Loss: 0.0002 Acc: 151/151,1.0000 cost: 1.1572s
+val Loss: 0.0002 Acc: 151/151,1.0000 cost: 0.9511s
 
-train Loss: 0.0285 Acc: 621/629,0.9873 cost: 10.5270s
+train Loss: 0.0092 Acc: 629/629,1.0000 cost: 9.5140s
 
-val Loss: 0.0223 Acc: 149/151,0.9868 cost: 1.1773s
+val Loss: 0.0001 Acc: 151/151,1.0000 cost: 0.9522s
 
-train Loss: 0.0767 Acc: 617/629,0.9809 cost: 10.5690s
+train Loss: 0.0514 Acc: 623/629,0.9905 cost: 9.5254s
 
-val Loss: 0.0009 Acc: 151/151,1.0000 cost: 1.1896s
+val Loss: 0.0006 Acc: 151/151,1.0000 cost: 0.9487s
 
-train Loss: 0.0129 Acc: 627/629,0.9968 cost: 10.8740s
+train Loss: 0.0324 Acc: 620/629,0.9857 cost: 9.5103s
 
-val Loss: 0.0204 Acc: 149/151,0.9868 cost: 1.1392s
+val Loss: 0.0003 Acc: 151/151,1.0000 cost: 0.9483s
 
-train Loss: 0.0151 Acc: 628/629,0.9984 cost: 10.5166s
+train Loss: 0.0368 Acc: 621/629,0.9873 cost: 9.5118s
 
-val Loss: 0.0736 Acc: 149/151,0.9868 cost: 1.0737s
+val Loss: 0.0079 Acc: 150/151,0.9934 cost: 0.9486s
 
-train Loss: 0.0235 Acc: 625/629,0.9936 cost: 10.6418s
+train Loss: 0.0068 Acc: 628/629,0.9984 cost: 9.5116s
 
-val Loss: 0.0018 Acc: 151/151,1.0000 cost: 1.0861s
+val Loss: 0.0002 Acc: 151/151,1.0000 cost: 0.9485s
 
-train Loss: 0.0835 Acc: 625/629,0.9936 cost: 11.0120s
+train Loss: 0.0319 Acc: 623/629,0.9905 cost: 9.5042s
 
-val Loss: 0.0631 Acc: 146/151,0.9669 cost: 1.1776s
+val Loss: 0.0001 Acc: 151/151,1.0000 cost: 0.9499s
 
-train Loss: 0.1009 Acc: 612/629,0.9730 cost: 10.8261s
+train Loss: 0.0083 Acc: 628/629,0.9984 cost: 9.5169s
 
-val Loss: 0.0052 Acc: 151/151,1.0000 cost: 1.1452s
+val Loss: 0.0001 Acc: 151/151,1.0000 cost: 0.9493s
 
-train Loss: 0.0365 Acc: 624/629,0.9921 cost: 10.9492s
+train Loss: 0.0090 Acc: 627/629,0.9968 cost: 9.5421s
 
-val Loss: 0.0003 Acc: 151/151,1.0000 cost: 1.1433s
+val Loss: 0.0422 Acc: 149/151,0.9868 cost: 0.9491s
 
-train Loss: 0.0099 Acc: 628/629,0.9984 cost: 10.6411s
+train Loss: 0.0073 Acc: 628/629,0.9984 cost: 9.5363s
 
-val Loss: 0.0003 Acc: 151/151,1.0000 cost: 1.0197s
+val Loss: 0.0039 Acc: 151/151,1.0000 cost: 0.9493s
 
-train Loss: 0.0048 Acc: 629/629,1.0000 cost: 10.1649s
+train Loss: 0.0071 Acc: 628/629,0.9984 cost: 9.5289s
 
-val Loss: 0.0002 Acc: 151/151,1.0000 cost: 1.2520s
+val Loss: 0.0001 Acc: 151/151,1.0000 cost: 0.9515s
 
-train Loss: 0.0060 Acc: 629/629,1.0000 cost: 10.7876s
+train Loss: 0.0021 Acc: 629/629,1.0000 cost: 9.5614s
 
-val Loss: 0.0002 Acc: 151/151,1.0000 cost: 1.2359s
+val Loss: 0.0001 Acc: 151/151,1.0000 cost: 0.9491s
 
-train Loss: 0.0036 Acc: 629/629,1.0000 cost: 10.2637s
+train Loss: 0.0484 Acc: 619/629,0.9841 cost: 9.5290s
 
-val Loss: 0.0001 Acc: 151/151,1.0000 cost: 1.0876s
+val Loss: 0.0025 Acc: 151/151,1.0000 cost: 0.9487s
 
-train Loss: 0.0017 Acc: 629/629,1.0000 cost: 10.5097s
+train Loss: 0.0232 Acc: 625/629,0.9936 cost: 9.5230s
 
-val Loss: 0.0002 Acc: 151/151,1.0000 cost: 1.0684s
+val Loss: 0.0100 Acc: 150/151,0.9934 cost: 0.9525s
 
-train Loss: 0.0051 Acc: 629/629,1.0000 cost: 10.6590s
+train Loss: 0.0065 Acc: 628/629,0.9984 cost: 9.5191s
 
-val Loss: 0.0022 Acc: 151/151,1.0000 cost: 1.0684s
+val Loss: 0.0011 Acc: 151/151,1.0000 cost: 0.9498s
 
