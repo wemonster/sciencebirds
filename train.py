@@ -134,10 +134,14 @@ class Trainer():
 		
 			labels = torch.squeeze(labels)
 			labels = labels.to(dtype=torch.int64).cuda()
+
+			objectness = torch.squeeze(objectness)
+			objectness = objectness.to(dtype=torch.int64).cuda()
 			#only takes account those foregrounds
 			foregrounds = torch.nonzero(labels > 0)
-			labeled = labeled[foregrounds]
-			labels = labels[foregrounds]
+			batch,x,y = foregrounds[:,0],foregrounds[:,1],foregrounds[:,2]
+			labeled = labeled[batch,x,y]
+			labels = labels[batch,x,y]
 			class_loss = self.criterion(labeled, labels)
 			objectness_loss = self.criterion(pixel_wise,objectness)
 			loss = class_loss.mean() + objectness_loss.mean()
