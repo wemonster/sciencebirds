@@ -25,7 +25,7 @@ from encoding.datasets import get_segmentation_dataset
 from encoding.models import get_segmentation_model
 
 from option import Options
-from maskimage import generate_dataset
+# from maskimage import generate_dataset
 from classlabel import Category
 torch_ver = torch.__version__[:3]
 if torch_ver == '0.3':
@@ -48,7 +48,7 @@ class Trainer():
 						 'base_size': args.base_size,'crop_size': args.crop_size}
 		trainset = get_segmentation_dataset(args.dataset,self.ratio,args.size, split=args.train_split, mode='train',
 										   **data_kwargs)
-
+		print (trainset[0])
 		testset = get_segmentation_dataset(args.dataset,self.ratio,args.size, split='val', mode ='val',
 										   **data_kwargs)
 		print ("finish loading the dataset")
@@ -296,20 +296,20 @@ if __name__ == "__main__":
 	class_info = get_class_lists()
 	print (class_info)
 	root = "logs/{}".format(args.size)
-	if not os.path.exist(root):
+	if not os.path.exists(root):
 		os.mkdir(root)
-	for i in range(len(class_info)):
+	for i in range(1):
 		id_info = Category(class_info[i][1])
 		trainer = Trainer(class_info[i],id_info,args)
-		ratio = class_info[i][0]
-		train_log_file = open(os.path.join(root,"training_{}_log.txt".format(int(ratio*10))),'w')
-		val_log_file = open(os.path.join(root,"val_{}_log.txt".format(int(ratio*10))),'w')
-		print('Starting Epoch:', trainer.args.start_epoch)
-		print('Total Epoches:', trainer.args.epochs)
-		for epoch in range(trainer.args.start_epoch, trainer.args.epochs):
-			trainer.training(epoch,train_log_file)
-			if not trainer.args.no_val:
-				trainer.validation(epoch,val_log_file)
-		trainer.build_gaussian_model()
-		train_log_file.close()
-		val_log_file.close()
+		# ratio = class_info[i][0]
+		# train_log_file = open(os.path.join(root,"training_{}_log.txt".format(int(ratio*10))),'w')
+		# val_log_file = open(os.path.join(root,"val_{}_log.txt".format(int(ratio*10))),'w')
+		# print('Starting Epoch:', trainer.args.start_epoch)
+		# print('Total Epoches:', trainer.args.epochs)
+		# for epoch in range(trainer.args.start_epoch, trainer.args.epochs):
+		# 	trainer.training(epoch,train_log_file)
+		# 	if not trainer.args.no_val:
+		# 		trainer.validation(epoch,val_log_file)
+		# trainer.build_gaussian_model()
+		# train_log_file.close()
+		# val_log_file.close()

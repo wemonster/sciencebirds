@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import cv2
-
+import copy
 import torch
 
 from PIL import Image
@@ -63,9 +63,11 @@ class SciencebirdSeg(BaseDataset):
 		img_id = self.ids[index]
 		img = Image.open(os.path.join(self.image_files, str(img_id)+'.png')).convert('RGB') #foregrounds only
 		labels = Image.open(os.path.join(self.label_files,str(img_id)+'.png'))
+		foregrounds = Image.open(os.path.join(self.foreground_files,str(img_id)+'.png')).convert('RGB')
 		if self.mode == 'test':
 			labels = Image.open(os.path.join(self.unknowns_files,str(img_id)+'.png'))
-		foregrounds = np.multiply(img,labels)
+		objectness = copy.deepcopy(labels)
+		objectness[objectness > 0] = 1
 		if self.transform is not None:
 			img = self.transform(img)
 		if self.target_transform is not None:
@@ -73,7 +75,11 @@ class SciencebirdSeg(BaseDataset):
 		if self.label_transform is not None:
 			labels = self.label_transform(labels) * 255
 			labels = labels.type(torch.LongTensor)
-		return img,labels,foregrounds
+			objectness = self.label_transform(objectness) * 255
+			objectness = objectness.type(torch.LongTensor)
+		if self.mode == 'test':
+			return img,labels,foregrounds
+		return img,labels,objectness
 
 	def __len__(self):
 		return len(self.ids)

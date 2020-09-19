@@ -44,7 +44,7 @@ def build_gaussian(mean_weights,var_weights):
 		small_diag = np.ones(var_weights[var_cat].shape) * 0.01
 		var = torch.tensor(var_weights[var_cat] + np.diag(np.diag(small_diag)))
 		var = var.type(torch.cuda.FloatTensor)
-		gaussians[category] = MultivariateNormal(mean=val.cuda(),cov=var)
+		gaussians[category] = MultivariateNormal(val.cuda(),var)
 	return gaussians
 
 def thresholding(gaussians,category,threshold,features,position,pred):
@@ -169,7 +169,7 @@ def test(args,classes):
 				mask = utils.get_mask_pallete(predict[0], args.dataset)
 				labels = labels.squeeze().cuda()
 				pixAcc,mIoU,correct_classified = utils.batch_pix_accuracy(predict.data, labels)
-				thresholding(gaussians,category,threshold,features,correct_classified,predict)
+				#thresholding(gaussians,category,threshold,features,correct_classified,predict)
 				test_log.write('pixAcc:{:.4f},mIoU:{:.4f},cost:{:.3f}s\n'.format(pixAcc, mIoU,toc-tic))
 				
 				#record the accuracy

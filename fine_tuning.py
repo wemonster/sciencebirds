@@ -282,7 +282,8 @@ def test_model(model,weights):
 
 if __name__ == "__main__":
 
-	close_ratios = [0,0.1,0.3,0.5,0.7,0.9]
+	# close_ratios = [0,0.1,0.3,0.5,0.7,0.9]
+	close_ratios = [0,0.1,0.2,0.3,0.4,0.5]
 	if not os.path.exists("../models/resnet"):
 		os.mkdir("../models/resnet")
 	resnet_log = open("logs/resnet.txt",'w')
