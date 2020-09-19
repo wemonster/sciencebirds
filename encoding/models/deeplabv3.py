@@ -31,6 +31,7 @@ class DeepLabV3(BaseNet):
 			nn.Conv2d(256,nclass,kernel_size=1,stride=1)
 			)
 		
+		self.objectness = nn.Conv2d(304,2,kernel_size=1,stride=1,padding=1,bias=False) #foreground or background
 		if aux:
 			self.auxlayer = FCNHead(1024, nclass, norm_layer)
 
@@ -52,7 +53,7 @@ class DeepLabV3(BaseNet):
 		x = F.interpolate(concated, (h,w), **self._up_kwargs)
 		# labeled = F.softmax(x,dim=1)
 		labeled = x
-
+		objects = self.objectness(x)
 		# print (torch.sum(x,dim=1))
 		# labeled = torch.argmax(labeled,dim=1)
 		# outputs.append(x)
@@ -63,7 +64,7 @@ class DeepLabV3(BaseNet):
 
 		# return tuple(outputs)
 		# print (x)
-		return x,labeled
+		return objects,labeled
 
 	def val_forward(self,x):
 		_, _, h, w = x.size()

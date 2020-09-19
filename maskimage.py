@@ -37,7 +37,7 @@ def generate_dataset(classes,ratio):
 		ret,binary = cv2.threshold(gray,220,255,cv2.THRESH_BINARY)
 		mask = np.zeros((480,840,3)).astype(np.uint8)
 		label = np.zeros((480,840)).astype(np.uint8)
-		label slingshot first
+		# label slingshot first
 		for t in truth:
 			info = t.split('|')
 			X = int(info[0])
@@ -46,8 +46,6 @@ def generate_dataset(classes,ratio):
 			width = int(info[3])
 			vertices = info[4]
 			game_type = str(info[5]).strip().split('.')[1]
-			# if game_type == 'SLINGSHOT':
-			# 	print (gray[e])
 			if game_type not in classes:
 				continue
 				# game_type = 'UNKNOWN'
@@ -67,7 +65,6 @@ def generate_dataset(classes,ratio):
 				label[Y:Y+width,X:X+height] = temp
 				break
 
-
 		for t in truth:
 			info = t.split('|')
 			X = int(info[0])
@@ -76,9 +73,8 @@ def generate_dataset(classes,ratio):
 			width = int(info[3])
 			vertices = info[4]
 			game_type = str(info[5]).strip().split('.')[1]
-			# if game_type == 'SLINGSHOT':
-			# 	print (gray[e])
-				# game_type = 'UNKNOWN'
+			if game_type == 'SLINGSHOT' or game_type not in classes:
+				continue
 			startPoint = (X,Y)
 			endPoint = (X + height,Y+width)
 			to_ret = np.zeros((480,840)).astype(np.uint8)
@@ -116,11 +112,8 @@ def generate_dataset(classes,ratio):
 			width = int(info[3])
 			vertices = info[4]
 			game_type = str(info[5]).strip().split('.')[1]
-			# if game_type == 'SLINGSHOT':
-			# 	print (gray[e])
 			if game_type not in classes:
 				continue
-				# game_type = 'UNKNOWN'
 			if game_type == 'SLING':
 				startPoint = (X,Y)
 				endPoint = (X + height,Y+width)
@@ -143,13 +136,10 @@ def generate_dataset(classes,ratio):
 			width = int(info[3])
 			vertices = info[4]
 			game_type = str(info[5]).strip().split('.')[1]
-			# if game_type == 'SLINGSHOT':
-			# 	print (gray[e])
 			if game_type == 'SLING':
 				continue
 			if game_type not in classes:
 				game_type = 'UNKNOWN'
-				# game_type = 'UNKNOWN'
 			startPoint = (X,Y)
 			endPoint = (X + height,Y+width)
 			to_ret = np.zeros((480,840)).astype(np.uint8)

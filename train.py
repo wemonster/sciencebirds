@@ -124,17 +124,20 @@ class Trainer():
 		train_loss = 0.0
 		self.model.train()
 		tbar = tqdm(self.trainloader)
-		for i, (image,labels,foregrounds) in enumerate(tbar):
+		for i, (image,labels,objectness) in enumerate(tbar):
 			image = image.type(torch.cuda.FloatTensor)
 			self.scheduler(self.optimizer, i, epoch, self.best_pred)
 			self.optimizer.zero_grad()
-			outputs,labeled = self.model(image)
+			pixel_wise,labeled = self.model(image)
+			pixel_wise = pixel_wise.type(torch.cuda.FloatTensor)
 			labeled = labeled.type(torch.cuda.FloatTensor)
-			
+		
 			labels = torch.squeeze(labels)
 			labels = labels.to(dtype=torch.int64).cuda()
 
-			loss = self.criterion(labeled, labels)
+			class_loss = self.criterion(labeled, labels)
+			objectness_loss = self.criterion(pixel_wise,objectness)
+			loss = class_loss.mean() + objectness_loss.mean()
 			loss.backward()
 			self.optimizer.step()
 			train_loss += loss.item()
@@ -217,7 +220,7 @@ class Trainer():
 		self.model.eval()
 		total_inter, total_union, total_correct, total_label = 0, 0, 0, 0
 		tbar = tqdm(self.valloader, desc='\r')
-		for i, (image,labels,foregrounds) in enumerate(tbar):
+		for i, (image,labels,objectness) in enumerate(tbar):
 			image = image.type(torch.cuda.FloatTensor)
 			if torch_ver == "0.3":
 				image = Variable(image, volatile=True)
