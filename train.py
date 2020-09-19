@@ -48,7 +48,7 @@ class Trainer():
 						 'base_size': args.base_size,'crop_size': args.crop_size}
 		trainset = get_segmentation_dataset(args.dataset,self.ratio,args.size, split=args.train_split, mode='train',
 										   **data_kwargs)
-		print (trainset[0])
+
 		testset = get_segmentation_dataset(args.dataset,self.ratio,args.size, split='val', mode ='val',
 										   **data_kwargs)
 		print ("finish loading the dataset")
@@ -59,7 +59,7 @@ class Trainer():
 										   drop_last=True, shuffle=True, **kwargs)
 		self.valloader = data.DataLoader(testset, batch_size=args.batch_size,
 										 drop_last=False, shuffle=False, **kwargs)
-		self.nclass = math.floor((1-self.ratio) * 12) + 1
+		self.nclass = math.floor((1-self.ratio) * 12)
 		# model
 		model = get_segmentation_model(self.ratio,self.nclass,args.model, dataset = args.dataset,
 									   backbone = args.backbone, dilated = args.dilated,
@@ -134,14 +134,18 @@ class Trainer():
 		
 			labels = torch.squeeze(labels)
 			labels = labels.to(dtype=torch.int64).cuda()
-
+			#only takes account those foregrounds
+			foregrounds = torch.nonzero(labels > 0)
+			labeled = labeled[foregrounds]
+			labels = labels[foregrounds]
 			class_loss = self.criterion(labeled, labels)
 			objectness_loss = self.criterion(pixel_wise,objectness)
 			loss = class_loss.mean() + objectness_loss.mean()
 			loss.backward()
 			self.optimizer.step()
 			train_loss += loss.item()
-			tbar.set_description('Train loss: %.3f' % (train_loss / (i + 1)))
+			tbar.set_description('Train loss:{:.3f},objectness loss:{:.3f},class loss:{:.3f}'
+				.format(train_loss / (i + 1),objectness_loss.item(),clas_loss.item()))
 		log_file.write("Epoch:{}, Loss:{:.3f}\n".format(epoch,train_loss/(i+1)))
 		if self.args.no_val:
 			# save checkpoint every epoch
@@ -205,39 +209,47 @@ class Trainer():
 
 
 
-		def eval_batch(model, image, target):
-			labeled,features = model.val_forward(image)
-			pred = torch.argmax(labeled,dim=1)
+		def eval_batch(model, image, target,object_truth):
+			labeled,objectness,features = model.val_forward(image)
+			pred = torch.argmax(labeled,dim=1) + 1
 			target = target.squeeze().cuda()
+			objectness_pred = torch.argmax(objectness,dim=1)
+			object_truth = object_truth.squeeze().cuda()
+
 			correct, labeled,correct_classified = utils.batch_pix_accuracy(pred.data, target)
+
+			correct_object,labeled_object,correct_classified_object = utils.batch_pix_accuracy(objectness_pred.data,object_truth)
 			collect_features(features,correct_classified,pred)
 			inter, union = utils.batch_intersection_union(pred.data, target, self.nclass)
-			return correct, labeled, inter, union
+			return correct, labeled, inter, union, correct_object, labeled_object
 
 		
 
 		is_best = False
 		self.model.eval()
-		total_inter, total_union, total_correct, total_label = 0, 0, 0, 0
+		total_inter, total_union, total_correct, total_label, total_object,total_object_label = 0, 0, 0, 0, 0, 0
 		tbar = tqdm(self.valloader, desc='\r')
 		for i, (image,labels,objectness) in enumerate(tbar):
 			image = image.type(torch.cuda.FloatTensor)
 			if torch_ver == "0.3":
 				image = Variable(image, volatile=True)
-				correct, labeled, inter, union = eval_batch(self.model, image, labels)
+				correct, labeled, inter, union, correct_object,labeled_object = eval_batch(self.model, image, labels,objectness)
 			else:
 				with torch.no_grad():
-					correct, labeled, inter, union = eval_batch(self.model, image, labels)
+					correct, labeled, inter, union, correct_object,labeled_object = eval_batch(self.model, image, labels,objectness)
 
 			total_correct += correct
 			total_label += labeled
 			total_inter += inter
 			total_union += union
+			total_object += correct_object
+			total_object_label += labeled_object
 			pixAcc = 1.0 * total_correct / (np.spacing(1) + total_label)
+			objAcc = 1.0 * total_object / (np.spaceing(1) + total_object_label)
 			IoU = 1.0 * total_inter / (np.spacing(1) + total_union)
 			mIoU = IoU.mean()
 			tbar.set_description(
-				'pixAcc: %.3f, mIoU: %.3f' % (pixAcc, mIoU))
+				'pixAcc: %.3f, mIoU: %.3f, objAcc: %.3f' % (pixAcc, mIoU,objAcc))
 		new_pred = (pixAcc + mIoU)/2
 		log_file.write("Epoch:{}, pixAcc:{:.3f}, mIoU:{:.3f}, Overall:{:.3f}\n".format(epoch,pixAcc,mIoU,new_pred))
 		if new_pred >= self.best_pred:

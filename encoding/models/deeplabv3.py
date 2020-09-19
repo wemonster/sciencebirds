@@ -48,12 +48,12 @@ class DeepLabV3(BaseNet):
 		x = F.interpolate(x,(h//4,w//4),**self._up_kwargs)
 
 		concated = torch.cat((low_level_features,x),1)
+		objects = F.interpolate(concated,(h,w),**self._up_kwargs)
 		concated = self.concat_conv(concated)
-
 		x = F.interpolate(concated, (h,w), **self._up_kwargs)
 		# labeled = F.softmax(x,dim=1)
 		labeled = x
-		objects = self.objectness(x)
+		objectness_score = self.objectness(objects) #batch_size x 2 x H x W
 		# print (torch.sum(x,dim=1))
 		# labeled = torch.argmax(labeled,dim=1)
 		# outputs.append(x)
@@ -64,7 +64,7 @@ class DeepLabV3(BaseNet):
 
 		# return tuple(outputs)
 		# print (x)
-		return objects,labeled
+		return objectness_score,labeled
 
 	def val_forward(self,x):
 		_, _, h, w = x.size()
@@ -82,7 +82,8 @@ class DeepLabV3(BaseNet):
 		concated = self.concat_conv(concated)
 
 		x = F.interpolate(concated, (h,w), **self._up_kwargs)
-		return x,feature_vectors
+		objectness_score = self.objectness(feature_vectors)
+		return x,objectness_score,feature_vectors
 
 class DeepLabV3Head(nn.Module):
 	def __init__(self, in_channels, out_channels, norm_layer, up_kwargs, atrous_rates=(12, 24, 36)):

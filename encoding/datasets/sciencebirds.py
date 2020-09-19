@@ -66,7 +66,7 @@ class SciencebirdSeg(BaseDataset):
 		foregrounds = Image.open(os.path.join(self.foreground_files,str(img_id)+'.png')).convert('RGB')
 		if self.mode == 'test':
 			labels = Image.open(os.path.join(self.unknowns_files,str(img_id)+'.png'))
-		objectness = copy.deepcopy(labels)
+		objectness = np.array(labels)
 		objectness[objectness > 0] = 1
 		if self.transform is not None:
 			img = self.transform(img)
