@@ -138,18 +138,24 @@ class Trainer():
 			objectness = torch.squeeze(objectness)
 			objectness = objectness.to(dtype=torch.int64).cuda()
 			#only takes account those foregrounds
-			foregrounds = torch.nonzero(labels > 0)
+			foregrounds = (labels > 0).nonzero()
 			batch,x,y = foregrounds[:,0],foregrounds[:,1],foregrounds[:,2]
-			labeled = labeled[batch,x,y]
-			labels = labels[batch,x,y]
+#			print (labeled.size(),labels.size())
+			labeled = labeled[batch,:,x,y]
+			labels = labels[batch,x,y] - 1
+#			print (labeled.size(),pixel_wise.size())
+
+#			print (torch.unique(labels),torch.unique(objectness))
+
 			class_loss = self.criterion(labeled, labels)
 			objectness_loss = self.criterion(pixel_wise,objectness)
 			loss = class_loss.mean() + objectness_loss.mean()
+#			print (loss)
 			loss.backward()
 			self.optimizer.step()
 			train_loss += loss.item()
-			tbar.set_description('Train loss:{:.3f},objectness loss:{:.3f},class loss:{:.3f}'
-				.format(train_loss / (i + 1),objectness_loss.item(),clas_loss.item()))
+			tbar.set_description('Train loss:{:.3f}\n,objectness loss:{:.3f}\n,class loss:{:.3f}\n'
+				.format(train_loss / (i + 1),objectness_loss.item(),class_loss.item()))
 		log_file.write("Epoch:{}, Loss:{:.3f}\n".format(epoch,train_loss/(i+1)))
 		if self.args.no_val:
 			# save checkpoint every epoch
