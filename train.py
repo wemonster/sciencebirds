@@ -316,15 +316,15 @@ if __name__ == "__main__":
 	for i in range(1):
 		id_info = Category(class_info[i][1])
 		trainer = Trainer(class_info[i],id_info,args)
-		# ratio = class_info[i][0]
-		# train_log_file = open(os.path.join(root,"training_{}_log.txt".format(int(ratio*10))),'w')
-		# val_log_file = open(os.path.join(root,"val_{}_log.txt".format(int(ratio*10))),'w')
-		# print('Starting Epoch:', trainer.args.start_epoch)
-		# print('Total Epoches:', trainer.args.epochs)
-		# for epoch in range(trainer.args.start_epoch, trainer.args.epochs):
-		# 	trainer.training(epoch,train_log_file)
-		# 	if not trainer.args.no_val:
-		# 		trainer.validation(epoch,val_log_file)
-		# trainer.build_gaussian_model()
-		# train_log_file.close()
-		# val_log_file.close()
+		ratio = class_info[i][0]
+		train_log_file = open(os.path.join(root,"training_{}_log.txt".format(int(ratio*10))),'w')
+		val_log_file = open(os.path.join(root,"val_{}_log.txt".format(int(ratio*10))),'w')
+		print('Starting Epoch:', trainer.args.start_epoch)
+		print('Total Epoches:', trainer.args.epochs)
+		for epoch in range(trainer.args.start_epoch, trainer.args.epochs):
+			trainer.training(epoch,train_log_file)
+			if not trainer.args.no_val:
+				trainer.validation(epoch,val_log_file)
+		trainer.build_gaussian_model()
+		train_log_file.close()
+		val_log_file.close()
