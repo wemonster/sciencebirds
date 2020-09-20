@@ -165,12 +165,10 @@ def test(args,classes):
 				outputs,objectness,features = evaluator.val_forward(image)
 				predict = torch.argmax(outputs,1) #batch_size x 1 x H x W
 				objectness_pred = torch.argmax(objectness,dim=1) #batch_size x 1 x H x W
-				print (predict.size())
-				print (torch.unique(objectness_pred,return_counts=True))
 				predict = predict * objectness_pred
 				#thresholding here
 				toc = time.time()
-				mask = utils.get_mask_pallete(predict[0], args.dataset)
+				mask = utils.get_mask_pallete(predict, args.dataset)
 				labels = labels.squeeze().cuda()
 				pixAcc,mIoU,correct_classified = utils.batch_pix_accuracy(predict.data, labels)
 				#thresholding(gaussians,category,threshold,features,correct_classified,predict)
@@ -181,12 +179,12 @@ def test(args,classes):
 				pixAcc, mIoU = metric.get()
 				overallpix += pixAcc
 				overallmIoU += mIoU
-				
 				#write the output
-				outname = str(ids[i]) + '.png'
 				#print (image[0].data.cpu().numpy())
 				#cv2.imwrite(os.path.join("../experiments/results/truth0",outname),image[0].data.cpu().numpy().transpose(1,2,0))
-				cv2.imwrite(os.path.join(outdir, outname),mask)
+				for j in range(8):
+					outname = str(ids[i*8+j]) + '.png'
+					cv2.imwrite(os.path.join(outdir, outname),mask[j])
 		print ("Overall pixel accuracy:{:.4f},Overall mIoU:{:.4f}".format(pixAcc,mIoU))
 	test_log.close()
 

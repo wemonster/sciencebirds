@@ -80,12 +80,13 @@ def usepalette(img):
 		'TNT':[64,128,128]
 	}
 
-	row,col = img.shape
-	output = np.zeros((480,840,3)).astype(np.uint8)
+	batch,row,col = img.shape
+	output = np.zeros((batch,480,840,3)).astype(np.uint8)
 	img = img.data.cpu().numpy()
-	for i in range(row):
-		for j in range(col):
-			output[i,j,:] = colormap[id_to_cat[img[i,j]]]
+	for b in range(batch):
+		for i in range(row):
+			for j in range(col):
+				output[b,i,j,:] = colormap[id_to_cat[img[b,i,j]]]
 	return output
 
 vocpallete = _get_voc_pallete(256)
