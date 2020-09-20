@@ -168,7 +168,7 @@ def test(args,classes):
 				predict = predict * objectness_pred
 				#thresholding here
 				toc = time.time()
-				mask = utils.get_mask_pallete(predict, args.dataset)
+				#mask = utils.get_mask_pallete(predict, args.dataset)
 				labels = labels.squeeze().cuda()
 				pixAcc,mIoU,correct_classified = utils.batch_pix_accuracy(predict.data, labels)
 				#thresholding(gaussians,category,threshold,features,correct_classified,predict)
@@ -184,7 +184,8 @@ def test(args,classes):
 				#cv2.imwrite(os.path.join("../experiments/results/truth0",outname),image[0].data.cpu().numpy().transpose(1,2,0))
 				for j in range(8):
 					outname = str(ids[i*8+j]) + '.png'
-					cv2.imwrite(os.path.join(outdir, outname),mask[j])
+					mask = objectness_pred[j].squeeze().cpu().numpy()* 255
+					cv2.imwrite(os.path.join(outdir, outname),mask)
 		print ("Overall pixel accuracy:{:.4f},Overall mIoU:{:.4f}".format(pixAcc,mIoU))
 	test_log.close()
 
