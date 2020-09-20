@@ -107,7 +107,7 @@ def test(args,classes):
 		if args.cuda else {}
 	test_data = data.DataLoader(testset, batch_size=8,shuffle=False, **loader_kwargs)
 	# model
-	nclass = len(classes) + 1
+	nclass = len(classes)
 	if args.model_zoo is not None:
 		model = get_model(args.model_zoo, pretrained=True)
 	else:
@@ -146,6 +146,7 @@ def test(args,classes):
 	category = Category(classes,True)
 	threshold = 0.5
 	for i, (image,labels,objectness) in enumerate(tbar):
+		print (i,image.size())
 		image = image.type(torch.cuda.FloatTensor)
 		# pass
 		if 'val' in args.mode:
@@ -164,6 +165,8 @@ def test(args,classes):
 				outputs,objectness,features = evaluator.val_forward(image)
 				predict = torch.argmax(outputs,1) #batch_size x 1 x H x W
 				objectness_pred = torch.argmax(objectness,dim=1) #batch_size x 1 x H x W
+				print (predict.size())
+				print (torch.unique(objectness_pred,return_counts=True))
 				predict = predict * objectness_pred
 				#thresholding here
 				toc = time.time()
@@ -181,6 +184,8 @@ def test(args,classes):
 				
 				#write the output
 				outname = str(ids[i]) + '.png'
+				#print (image[0].data.cpu().numpy())
+				#cv2.imwrite(os.path.join("../experiments/results/truth0",outname),image[0].data.cpu().numpy().transpose(1,2,0))
 				cv2.imwrite(os.path.join(outdir, outname),mask)
 		print ("Overall pixel accuracy:{:.4f},Overall mIoU:{:.4f}".format(pixAcc,mIoU))
 	test_log.close()
