@@ -51,20 +51,9 @@ class DeepLabV3(BaseNet):
 		objects = F.interpolate(concated,(h,w),**self._up_kwargs)
 		concated = self.concat_conv(concated)
 		x = F.interpolate(concated, (h,w), **self._up_kwargs)
-		# labeled = F.softmax(x,dim=1)
-		labeled = x
-		objectness_score = self.objectness(objects) #batch_size x 2 x H x W
-		# print (torch.sum(x,dim=1))
-		# labeled = torch.argmax(labeled,dim=1)
-		# outputs.append(x)
-		# if self.aux:
-		#     auxout = self.auxlayer(c3)
-		#     auxout = F.interpolate(auxout, (h,w), **self._up_kwargs)
-		#     outputs.append(auxout)
 
-		# return tuple(outputs)
-		# print (x)
-		return objectness_score,labeled
+		objectness_score = self.objectness(objects) #batch_size x 2 x H x W
+		return objectness_score,x
 
 	def val_forward(self,x):
 		_, _, h, w = x.size()
@@ -82,7 +71,7 @@ class DeepLabV3(BaseNet):
 		concated = self.concat_conv(concated)
 
 		x = F.interpolate(concated, (h,w), **self._up_kwargs)
-		objectness_score = self.objectness(feature_vectors)
+		objectness_score = self.objectness(feature_vectors) #whether the pixel is fg/bg, batch_size x 2 x H x W
 		return x,objectness_score,feature_vectors
 
 class DeepLabV3Head(nn.Module):

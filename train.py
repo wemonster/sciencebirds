@@ -150,12 +150,12 @@ class Trainer():
 
 			class_loss = self.criterion(labeled, labels)
 			objectness_loss = self.criterion(pixel_wise,objectness)
-			loss = class_loss.mean() + objectness_loss.mean()
+			loss = class_loss.item() + objectness_loss.item()
 #			print (loss)
 			loss.backward()
 			self.optimizer.step()
 			train_loss += loss.item()
-			tbar.set_description('Train loss:{:.3f}\n'
+			tbar.set_description('Train loss:{:.3f}'
 				.format(train_loss / (i + 1)))
 		log_file.write("Epoch:{}, Loss:{:.3f}\n".format(epoch,train_loss/(i+1)))
 		if self.args.no_val:
@@ -222,11 +222,12 @@ class Trainer():
 
 		def eval_batch(model, image, target,object_truth):
 			labeled,objectness,features = model.val_forward(image)
-			pred = torch.argmax(labeled,dim=1) + 1
-			target = target.squeeze().cuda()
-			objectness_pred = torch.argmax(objectness,dim=1)
+			objectness_pred = torch.argmax(objectness,dim=1) #batch_size x 1 x H x W
 			object_truth = object_truth.squeeze().cuda()
-
+			pred = torch.argmax(labeled,dim=1) #batch_size x 1 x H x W
+			pred = objectness_pred * pred
+			target = target.squeeze().cuda()
+		
 			correct, labeled,correct_classified = utils.batch_pix_accuracy(pred.data, target)
 
 			correct_object,labeled_object,correct_classified_object = utils.batch_pix_accuracy(objectness_pred.data,object_truth)
@@ -261,7 +262,7 @@ class Trainer():
 			mIoU = IoU.mean()
 			tbar.set_description(
 				'pixAcc: %.3f, mIoU: %.3f, objAcc: %.3f' % (pixAcc, mIoU,objAcc))
-		new_pred = (pixAcc + mIoU)/2
+		new_pred = (pixAcc + mIoU + objAcc)/3
 		log_file.write("Epoch:{}, pixAcc:{:.3f}, mIoU:{:.3f}, Overall:{:.3f}\n".format(epoch,pixAcc,mIoU,new_pred))
 		if new_pred >= self.best_pred:
 			is_best = True

@@ -145,8 +145,7 @@ def test(args,classes):
 	gaussians = build_gaussian(mean_weights,var_weights)
 	category = Category(classes,True)
 	threshold = 0.5
-	for i, (image,labels,foregrounds) in enumerate(tbar):
-		image = foregrounds
+	for i, (image,labels,objectness) in enumerate(tbar):
 		image = image.type(torch.cuda.FloatTensor)
 		# pass
 		if 'val' in args.mode:
@@ -162,8 +161,10 @@ def test(args,classes):
 		else:
 			with torch.no_grad():
 				tic = time.time()
-				outputs,features = evaluator.val_forward(image)
-				predict = torch.argmax(outputs,1)
+				outputs,objectness,features = evaluator.val_forward(image)
+				predict = torch.argmax(outputs,1) #batch_size x 1 x H x W
+				objectness_pred = torch.argmax(objectness,dim=1) #batch_size x 1 x H x W
+				predict = predict * objectness_pred
 				#thresholding here
 				toc = time.time()
 				mask = utils.get_mask_pallete(predict[0], args.dataset)

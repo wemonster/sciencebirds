@@ -78,7 +78,7 @@ class SciencebirdSeg(BaseDataset):
 			objectness = self.label_transform(objectness) * 255
 			objectness = objectness.type(torch.LongTensor)
 		if self.mode == 'test':
-			return img,labels,foregrounds
+			return foregrounds,labels,objectness
 		return img,labels,objectness
 
 	def __len__(self):
