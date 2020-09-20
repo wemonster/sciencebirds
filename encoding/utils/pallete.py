@@ -60,7 +60,8 @@ def usepalette(img):
 		9:'WOOD',
 		10:'YELLOWBIRD',
 		11:'SLING',
-		12:'TNT'
+		12:'TNT',
+		13:'UNKNOWN'
 	}
 
 
@@ -77,12 +78,14 @@ def usepalette(img):
 		'WOOD':[192,0,0],
 		'YELLOWBIRD':[64,128,128],
 		'SLING':[192,128,128],
-		'TNT':[64,128,128]
+		'TNT':[64,128,128],
+		'UNKNOWN':[255,255,255]
 	}
 
 	batch,row,col = img.shape
 	output = np.zeros((batch,480,840,3)).astype(np.uint8)
 	img = img.data.cpu().numpy()
+	# for ids in id_to_cat.keys():
 	for b in range(batch):
 		for i in range(row):
 			for j in range(col):
