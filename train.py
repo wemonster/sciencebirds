@@ -151,6 +151,7 @@ class Trainer():
 			objectness_loss = self.criterion(pixel_wise,objectness)
 			loss = class_loss.item() + objectness_loss.item()
 #			print (loss)
+			print (type(loss))
 			loss.backward()
 			self.optimizer.step()
 			train_loss += loss.item()
