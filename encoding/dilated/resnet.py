@@ -3,7 +3,7 @@ import math
 import torch
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
-
+import torchvision.models as models
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
 		   'resnet152', 'BasicBlock', 'Bottleneck']
 
@@ -349,19 +349,12 @@ def resnet50(pretrained_model="pretrained.pkl",num_classes=13,pretrained=False,*
 	# model = myNet(13,[3,4,6,3])
 	model = ResNet(num_classes,Bottleneck,[3,4,6,3],**kwargs)
 	if pretrained:
-		state_dict = torch.load(pretrained_model)
-		# model.load_state_dict(state_dict)
-		for name,param in model.named_parameters():
-			if name.startswith('avgpool') or name.startswith('fc'):
-				continue
-			param.requires_grad = False
-			param = state_dict[name]
-		# for (name,param) in model.named_parameters():
-		# 	param.requires_grad = False
-	# 	model.load_state_dict(state_dict)
-	#     from ..models.model_store import get_model_file
-		# model.load_state_dict(torch.load(
-		#     get_model_file('resnet50', root=root)), strict=False)
+		model_ft = models.resnet50(pretrained=True)
+		model_dict = model.state_dict()
+		wts = model.state_dict()
+		pretrained_dict = {k:v for k,v in wts.items() if k in model_dict and not k.startswith('fc')}
+		model_dict.update(pretrained_dict)
+		model.load_state_dict(model_dict)
 	return model
 
 
