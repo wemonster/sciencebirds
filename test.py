@@ -165,20 +165,20 @@ def test(args,classes):
 				outputs,objectness,features = evaluator.val_forward(image)
 				predict = torch.argmax(outputs,1) #batch_size x 1 x H x W
 				objectness_pred = torch.argmax(objectness,dim=1) #batch_size x 1 x H x W
-				# predict = predict * objectness_pred
+				predict = predict * objectness_pred
 				#thresholding here
 				toc = time.time()
 				#mask = utils.get_mask_pallete(predict, args.dataset)
-				# labels = labels.squeeze().cuda()
-				# pixAcc,mIoU,correct_classified = utils.batch_pix_accuracy(predict.data, labels)
-				# #thresholding(gaussians,category,threshold,features,correct_classified,predict)
-				# test_log.write('pixAcc:{:.4f},mIoU:{:.4f},cost:{:.3f}s\n'.format(pixAcc, mIoU,toc-tic))
+				labels = labels.squeeze().cuda()
+				pixAcc,mIoU,correct_classified = utils.batch_pix_accuracy(predict.data, labels)
+				#thresholding(gaussians,category,threshold,features,correct_classified,predict)
+				test_log.write('pixAcc:{:.4f},mIoU:{:.4f},cost:{:.3f}s\n'.format(pixAcc, mIoU,toc-tic))
 				
 				#record the accuracy
-				# metric.update(labels, predict.data)
-				# pixAcc, mIoU = metric.get()
-				# overallpix += pixAcc
-				# overallmIoU += mIoU
+				metric.update(labels, predict.data)
+				pixAcc, mIoU = metric.get()
+				overallpix += pixAcc
+				overallmIoU += mIoU
 				#write the output
 				#print (image[0].data.cpu().numpy())
 				#cv2.imwrite(os.path.join("../experiments/results/truth0",outname),image[0].data.cpu().numpy().transpose(1,2,0))
