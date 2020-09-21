@@ -49,8 +49,8 @@ class DeepLabV3(BaseNet):
 
 		concated = torch.cat((low_level_features,x),1)
 		objects = F.interpolate(concated,(h,w),**self._up_kwargs)
-		concated = self.concat_conv(concated)
-		x = F.interpolate(concated, (h,w), **self._up_kwargs)
+		# concated = self.concat_conv(concated)
+		# x = F.interpolate(concated, (h,w), **self._up_kwargs)
 
 		objectness_score = self.objectness(objects) #batch_size x 2 x H x W
 		return objectness_score,x
@@ -68,9 +68,9 @@ class DeepLabV3(BaseNet):
 
 		concated = torch.cat((low_level_features,x),1)
 		feature_vectors = F.interpolate(concated,(h,w),**self._up_kwargs)
-		concated = self.concat_conv(concated)
+		# concated = self.concat_conv(concated)
 
-		x = F.interpolate(concated, (h,w), **self._up_kwargs)
+		# x = F.interpolate(concated, (h,w), **self._up_kwargs)
 		objectness_score = self.objectness(feature_vectors) #whether the pixel is fg/bg, batch_size x 2 x H x W
 		return x,objectness_score,feature_vectors
 

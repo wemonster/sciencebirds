@@ -73,7 +73,7 @@ class Trainer():
 		# optimizer using different LR
 		params_list = [{'params': model.pretrained.parameters(), 'lr': args.lr}]
 		params_list.append({'params':model.low_level.parameters(),'lr':args.lr})
-		params_list.append({'params':model.concat_conv.parameters(),'lr':args.lr})
+		# params_list.append({'params':model.concat_conv.parameters(),'lr':args.lr})
 		params_list.append({'params':model.objectness.parameters(),'lr':args.lr})
 		# if hasattr(model, 'jpu'):
 		# 	params_list.append({'params': model.jpu.parameters(), 'lr': args.lr*10})
@@ -139,18 +139,18 @@ class Trainer():
 			objectness = torch.squeeze(objectness)
 			objectness = objectness.to(dtype=torch.int64).cuda()
 			#only takes account those foregrounds
-			foregrounds = (labels > 0).nonzero()
-			batch,x,y = foregrounds[:,0],foregrounds[:,1],foregrounds[:,2]
+			# foregrounds = (labels > 0).nonzero()
+			# batch,x,y = foregrounds[:,0],foregrounds[:,1],foregrounds[:,2]
 #			print (labeled.size(),labels.size())
-			labeled = labeled[batch,:,x,y]
-			labels = labels[batch,x,y] - 1
+			# labeled = labeled[batch,:,x,y]
+			# labels = labels[batch,x,y] - 1
 #			print (labeled.size(),pixel_wise.size())
-
 #			print (torch.unique(labels),torch.unique(objectness))
 
-			class_loss = self.criterion(labeled, labels)
+			# class_loss = self.criterion(labeled, labels)
 			objectness_loss = self.criterion(pixel_wise,objectness)
 			loss = class_loss.item() + objectness_loss.item()
+			loss = objectness_loss
 #			print (loss)
 			loss.backward()
 			self.optimizer.step()
@@ -224,15 +224,18 @@ class Trainer():
 			labeled,objectness,features = model.val_forward(image)
 			objectness_pred = torch.argmax(objectness,dim=1) #batch_size x 1 x H x W
 			object_truth = object_truth.squeeze().cuda()
-			pred = torch.argmax(labeled,dim=1) #batch_size x 1 x H x W
-			pred = objectness_pred * pred
+			# pred = torch.argmax(labeled,dim=1) #batch_size x 1 x H x W
+			# pred = objectness_pred * pred
 			target = target.squeeze().cuda()
 		
-			correct, labeled,correct_classified = utils.batch_pix_accuracy(pred.data, target)
-
+			# correct, labeled,correct_classified = utils.batch_pix_accuracy(pred.data, target)
+			correct = 0
+			labeled = 0
 			correct_object,labeled_object,correct_classified_object = utils.batch_pix_accuracy(objectness_pred.data,object_truth)
-			collect_features(features,correct_classified,pred)
-			inter, union = utils.batch_intersection_union(pred.data, target, self.nclass)
+			# collect_features(features,correct_classified,pred)
+			# inter, union = utils.batch_intersection_union(pred.data, target, self.nclass)
+			inter = 0
+			union = 0
 			return correct, labeled, inter, union, correct_object, labeled_object
 
 		
