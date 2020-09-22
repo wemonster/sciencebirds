@@ -181,11 +181,17 @@ def generate_imagesets(ratio):
 	val_file.close()
 	test_file.close()
 
-data = open("logs/resnet.txt",'r').readlines()
-# class_info = []
-for i in data[:1]:
-	ratio,classes = i.split('|')
-	ratio = float(ratio.split(':')[1])
-	classes = classes.strip().split(':')[1].split(',')
-	generate_dataset(classes,ratio)
+# data = open("logs/resnet.txt",'r').readlines()
+# # class_info = []
+# for i in data[:1]:
+# 	ratio,classes = i.split('|')
+# 	ratio = float(ratio.split(':')[1])
+# 	classes = classes.strip().split(':')[1].split(',')
+# 	generate_dataset(classes,ratio)
 # generate_imagesets(0.8)
+
+a = cv2.imread("dataset/rawdata/foregrounds/0.png")
+
+cv2.ellipse(a,(256,256),(100,50),0,0,255,(255,255,255),-1)
+cv2.rectangle(a,(30,30),(100,100),(255,255,255),40)
+cv2.imwrite("dataset/rawdata/foregrounds/4400.png",a)
