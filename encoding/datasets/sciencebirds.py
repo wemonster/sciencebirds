@@ -62,6 +62,8 @@ class SciencebirdSeg(BaseDataset):
 	def __getitem__(self, index):
 		img_id = self.ids[index]
 		img = Image.open(os.path.join(self.image_files, str(img_id)+'.png')).convert('RGB') #foregrounds only
+		img = np.array(img)
+		img = img[img!=[0,0,0]].astype(np.uint8)*255
 		labels = Image.open(os.path.join(self.label_files,str(img_id)+'.png'))
 		foregrounds = Image.open(os.path.join(self.foreground_files,str(img_id)+'.png')).convert('RGB')
 		if self.mode == 'test':
@@ -78,6 +80,7 @@ class SciencebirdSeg(BaseDataset):
 			objectness = self.label_transform(objectness) * 255
 			objectness = objectness.type(torch.LongTensor)
 		if self.mode == 'test':
+			foregrounds = foregrounds[foregrounds!=[0,0,0]].astype(np.uint8)*255
 			return foregrounds,labels,objectness
 		return img,labels,objectness
 
