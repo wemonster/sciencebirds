@@ -351,13 +351,12 @@ def resnet50(pretrained_model="../models/resnet/pretrained_geometric.pkl",num_cl
 
 	if pretrained:
 		wts = torch.load(pretrained_model)
-		model.load_state_dict(wts)
 		# model_ft = models.resnet50(pretrained=True)
-		# model_dict = model.state_dict()
+		model_dict = model.state_dict()
 		# wts = model.state_dict()
-		# pretrained_dict = {k:v for k,v in wts.items() if k in model_dict and not k.startswith('fc')}
-		# model_dict.update(pretrained_dict)
-		# model.load_state_dict(model_dict)
+		pretrained_dict = {k:v for k,v in wts.items() if k in model_dict and not k.startswith('fc')}
+		model_dict.update(pretrained_dict)
+		model.load_state_dict(model_dict)
 	return model
 
 
