@@ -103,7 +103,7 @@ model=ft_net().cuda()
 # model_dict.update(pretrained_dict)
 # net.load_state_dict(model_dict)
 model.eval()
-img=cv2.imread('dataset/rawdata/shapes/circ0.png')
+img=cv2.imread('dataset/characters/train/BLACKBIRD/BLACKBIRD1.png')
 img=cv2.resize(img,(224,224));
 img=cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
 transform = transforms.Compose(
