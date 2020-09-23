@@ -206,7 +206,7 @@ class ResNet(nn.Module):
 										   norm_layer=norm_layer)
 
 		self.avgpool = nn.AdaptiveAvgPool2d(output_size=(1,1))
-		self.fc = nn.Linear(512 * block.expansion, num_classes)
+		self.fc = nn.Linear(512 * block.expansion, 2)
 
 		for m in self.modules():
 			if isinstance(m, nn.Conv2d):

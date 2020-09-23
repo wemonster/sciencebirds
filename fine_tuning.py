@@ -175,6 +175,11 @@ def load_data(folder,batch_size,ratio):
 		transforms.Resize((input_size,input_size)),
 		transforms.ToTensor(),
 		transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225])
+		]),
+	'test':transforms.Compose([
+		transforms.Resize((input_size,input_size)),
+		transforms.ToTensor(),
+		transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225])
 		])
 	}
 	files = os.listdir(folder)
@@ -183,8 +188,8 @@ def load_data(folder,batch_size,ratio):
 	files = random.sample(classes,number_knowns)
 	# imgs = [cv2.imread(os.path.join(folder,i)) for i in files]
 	imgs = {x:datasets.ImageFolder(os.path.join(folder,x),transform=data_transforms[x]) 
-	for x in ['train','val']}
-	dataloaders_dict = {x:torch.utils.data.DataLoader(imgs[x],batch_size=batch_size,shuffle=True) for x in ['train','val']}
+	for x in ['train','val','test']}
+	dataloaders_dict = {x:torch.utils.data.DataLoader(imgs[x],batch_size=batch_size,shuffle=True) for x in ['train','val','test']}
 	# imgs = [data_transforms['train'](Image.open(os.path.join(folder,i))) for i in files]
 	# image_datasets = {'train':data_transforms['train']}
 	# for inputs,label in dataloaders_dict:
@@ -258,7 +263,7 @@ def test_model(model,weights):
 	model.load_state_dict(wts)
 	model.eval()
 	test_cases = 20
-	classes = ['BLACKBIRD','BLUEBIRD','HILL','ICE','PIG','REDBIRD','ROUNDWOOD','SLING','STONE','TERRAIN','TNT','WHITEBIRD','WOOD','YELLOWBIRD']
+	# classes = ['BLACKBIRD','BLUEBIRD','HILL','ICE','PIG','REDBIRD','ROUNDWOOD','SLING','STONE','TERRAIN','TNT','WHITEBIRD','WOOD','YELLOWBIRD']
 	corrects = 0
 	for i in range(test_cases):
 		random_class = random.choice(classes)
@@ -279,6 +284,15 @@ def test_model(model,weights):
 		print (random_class,classes[res])
 	print ("{}/{}".format(corrects,test_cases))
 
+def tune_geometry():
+	classes = ['circle','square','ellipse','right_trig','left_trig']
+	model = initialise_model(num_classes,feature_extract)
+	dataloaders_dict,data_transforms,classes = load_data('dataset/geometric',32,0.0)
+	print (classes)
+	criterion = nn.CrossEntropyLoss()
+	optimizer_model = optimizer(model)
+	train_model(model,dataloaders_dict,criterion,optimizer_model,"geometric",num_epochs)
+	
 
 if __name__ == "__main__":
 
@@ -286,16 +300,17 @@ if __name__ == "__main__":
 	close_ratios = [0,0.1,0.2,0.3,0.4,0.5]
 	if not os.path.exists("../models/resnet"):
 		os.mkdir("../models/resnet")
-	resnet_log = open("logs/resnet.txt",'w')
-	for i in range(len(close_ratios)):
-		model = initialise_model(num_classes,feature_extract)
-		dataloaders_dict,data_transforms,classes = load_data('dataset/characters',8,close_ratios[i])
-		resnet_log.write("ratio:{}|known:{}\n".format(close_ratios[i],','.join(classes)))
-		criterion = nn.CrossEntropyLoss()
-		optimizer_model = optimizer(model)
-		output_model = str(int(close_ratios[i] * 10))
-		train_model(model,dataloaders_dict,criterion,optimizer_model,output_model,num_epochs)
-	resnet_log.close()
+	tune_geometry()
+	# resnet_log = open("logs/resnet.txt",'w')
+	# for i in range(len(close_ratios)):
+	# 	model = initialise_model(num_classes,feature_extract)
+	# 	dataloaders_dict,data_transforms,classes = load_data('dataset/characters',8,close_ratios[i])
+	# 	resnet_log.write("ratio:{}|known:{}\n".format(close_ratios[i],','.join(classes)))
+	# 	criterion = nn.CrossEntropyLoss()
+	# 	optimizer_model = optimizer(model)
+	# 	output_model = str(int(close_ratios[i] * 10))
+	# 	train_model(model,dataloaders_dict,criterion,optimizer_model,output_model,num_epochs)
+	# resnet_log.close()
 	# test_model(model,"mynet.pkl")
 	# plot_info("batchnorm",'logs/log.txt')
 	# plot_info('instance norm','logs/instance_norm_log.txt')
