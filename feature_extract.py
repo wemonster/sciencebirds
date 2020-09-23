@@ -44,7 +44,7 @@ class ft_net(nn.Module):
     def forward(self, x):
         if True: # draw features or not
             x = self.model.conv1(x)
-            # draw_features(8,8,x.cpu().numpy(),"{}/f1_conv1.png".format(savepath))
+            draw_features(8,8,x.cpu().numpy(),"{}/f1_conv1.png".format(savepath))
  
             x = self.model.bn1(x)
             # draw_features(8, 8, x.cpu().numpy(),"{}/f2_bn1.png".format(savepath))
