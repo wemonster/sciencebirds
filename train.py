@@ -149,7 +149,7 @@ class Trainer():
 
 			class_loss = self.criterion(labeled, labels)
 			objectness_loss = self.criterion(pixel_wise,objectness)
-			# loss = class_loss.item() + objectness_loss.item()
+			loss = class_loss.item() + objectness_loss.item()
 			loss = objectness_loss
 #			print (loss)
 			loss.backward()

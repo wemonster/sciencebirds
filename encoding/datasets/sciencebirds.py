@@ -62,13 +62,14 @@ class SciencebirdSeg(BaseDataset):
 	def __getitem__(self, index):
 		img_id = self.ids[index]
 		img = Image.open(os.path.join(self.image_files, str(img_id)+'.png')).convert('RGB') #foregrounds only
-		img = np.array(img)
-		img[np.where((img!=[0,0,0]).all(axis=2))] = [255,255,255]
+		#img = np.array(img)
+		#img[np.where((img!=[0,0,0]).all(axis=2))] = [255,255,255]
 		labels = Image.open(os.path.join(self.label_files,str(img_id)+'.png'))
 		foregrounds = Image.open(os.path.join(self.foreground_files,str(img_id)+'.png')).convert('RGB')
 		if self.mode == 'test':
-			foregrounds = np.array(foregrounds)
-			foregrounds[np.where((foregrounds!=[0,0,0]).all(axis=2))] = [255,255,255]
+			#foregrounds = np.array(foregrounds)
+
+			#foregrounds[np.where((foregrounds!=[0,0,0]).all(axis=2))] = [255,255,255]
 			labels = Image.open(os.path.join(self.unknowns_files,str(img_id)+'.png'))
 		objectness = np.array(labels)
 		objectness[objectness > 0] = 1

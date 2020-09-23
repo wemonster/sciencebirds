@@ -47,39 +47,39 @@ class ft_net(nn.Module):
             draw_features(8,8,x.cpu().numpy(),"{}/f1_conv1.png".format(savepath))
  
             x = self.model.bn1(x)
-            # draw_features(8, 8, x.cpu().numpy(),"{}/f2_bn1.png".format(savepath))
+            draw_features(8, 8, x.cpu().numpy(),"{}/f2_bn1.png".format(savepath))
  
             x = self.model.relu(x)
-            # draw_features(8, 8, x.cpu().numpy(), "{}/f3_relu.png".format(savepath))
+            draw_features(8, 8, x.cpu().numpy(), "{}/f3_relu.png".format(savepath))
  
             x = self.model.maxpool(x)
-            # draw_features(8, 8, x.cpu().numpy(), "{}/f4_maxpool.png".format(savepath))
+            draw_features(8, 8, x.cpu().numpy(), "{}/f4_maxpool.png".format(savepath))
  
             x = self.model.layer1(x)
-            # draw_features(16, 16, x.cpu().numpy(), "{}/f5_layer1.png".format(savepath))
+            draw_features(16, 16, x.cpu().numpy(), "{}/f5_layer1.png".format(savepath))
  
             x = self.model.layer2(x)
-            # draw_features(16, 32, x.cpu().numpy(), "{}/f6_layer2.png".format(savepath))
+            draw_features(16, 32, x.cpu().numpy(), "{}/f6_layer2.png".format(savepath))
  
             x = self.model.layer3(x)
-            # draw_features(32, 32, x.cpu().numpy(), "{}/f7_layer3.png".format(savepath))
+            draw_features(32, 32, x.cpu().numpy(), "{}/f7_layer3.png".format(savepath))
  
             x = self.model.layer4(x)
-            # draw_features(32, 32, x.cpu().numpy()[:, 0:1024, :, :], "{}/f8_layer4_1.png".format(savepath))
-            # draw_features(32, 32, x.cpu().numpy()[:, 1024:2048, :, :], "{}/f8_layer4_2.png".format(savepath))
+            draw_features(32, 32, x.cpu().numpy()[:, 0:1024, :, :], "{}/f8_layer4_1.png".format(savepath))
+            draw_features(32, 32, x.cpu().numpy()[:, 1024:2048, :, :], "{}/f8_layer4_2.png".format(savepath))
  
             x = self.model.avgpool(x)
-            # plt.plot(np.linspace(1, 2048, 2048), x.cpu().numpy()[0, :, 0, 0])
-            # plt.savefig("{}/f9_avgpool.png".format(savepath))
-            # plt.clf()
-            # plt.close()
+            plt.plot(np.linspace(1, 2048, 2048), x.cpu().numpy()[0, :, 0, 0])
+            plt.savefig("{}/f9_avgpool.png".format(savepath))
+            plt.clf()
+            plt.close()
  
-            # x = x.view(x.size(0), -1)
-            # x = self.model.fc(x)
-            # plt.plot(np.linspace(1, 1000, 1000), x.cpu().numpy()[0, :])
-            # plt.savefig("{}/f10_fc.png".format(savepath))
-            # plt.clf()
-            # plt.close()
+            x = x.view(x.size(0), -1)
+            x = self.model.fc(x)
+            plt.plot(np.linspace(1, 1000, 1000), x.cpu().numpy()[0, :])
+            plt.savefig("{}/f10_fc.png".format(savepath))
+            plt.clf()
+            plt.close()
         else :
             x = self.model.conv1(x)
             x = self.model.bn1(x)

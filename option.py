@@ -113,7 +113,7 @@ class Options():
 			}
 			args.epochs = epoches[args.dataset.lower()]
 		if args.batch_size is None:
-			args.batch_size = 2
+			args.batch_size = 4
 		if args.test_batch_size is None:
 			args.test_batch_size = 8
 		if args.lr is None:
