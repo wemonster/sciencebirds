@@ -340,7 +340,7 @@ def resnet34(pretrained=False, **kwargs):
 	return model
 
 
-def resnet50(pretrained_model="pretrained.pkl",num_classes=13,pretrained=False,**kwargs):
+def resnet50(pretrained_model="../models/resnet/pretrained_geometric.pkl",num_classes=13,pretrained=False,**kwargs):
 	"""Constructs a ResNet-50 model.
 
 	Args:
@@ -348,13 +348,16 @@ def resnet50(pretrained_model="pretrained.pkl",num_classes=13,pretrained=False,*
 	"""
 	# model = myNet(13,[3,4,6,3])
 	model = ResNet(num_classes,Bottleneck,[3,4,6,3],**kwargs)
+
 	if pretrained:
-		model_ft = models.resnet50(pretrained=True)
-		model_dict = model.state_dict()
-		wts = model.state_dict()
-		pretrained_dict = {k:v for k,v in wts.items() if k in model_dict and not k.startswith('fc')}
-		model_dict.update(pretrained_dict)
-		model.load_state_dict(model_dict)
+		wts = torch.load(pretrained_model)
+		model.load_state_dict(wts)
+		# model_ft = models.resnet50(pretrained=True)
+		# model_dict = model.state_dict()
+		# wts = model.state_dict()
+		# pretrained_dict = {k:v for k,v in wts.items() if k in model_dict and not k.startswith('fc')}
+		# model_dict.update(pretrained_dict)
+		# model.load_state_dict(model_dict)
 	return model
 
 
