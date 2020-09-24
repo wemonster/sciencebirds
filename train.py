@@ -150,7 +150,7 @@ class Trainer():
 			class_loss = self.criterion(labeled, labels)
 			objectness_loss = self.criterion(pixel_wise,objectness)
 			loss = class_loss.item() + objectness_loss.item()
-			loss = objectness_loss
+			loss = class_loss + objectness_loss
 #			print (loss)
 			loss.backward()
 			self.optimizer.step()
@@ -224,7 +224,7 @@ class Trainer():
 			labeled,objectness,features = model.val_forward(image)
 			objectness_pred = torch.argmax(objectness,dim=1) #batch_size x 1 x H x W
 			object_truth = object_truth.squeeze().cuda()
-			pred = torch.argmax(labeled,dim=1) #batch_size x 1 x H x W
+			pred = torch.argmax(labeled,dim=1)+1 #batch_size x 1 x H x W
 			pred = objectness_pred * pred
 			target = target.squeeze().cuda()
 		
@@ -325,7 +325,7 @@ if __name__ == "__main__":
 	root = "logs/{}".format(args.size)
 	if not os.path.exists(root):
 		os.mkdir(root)
-	for i in range(1):
+	for i in range(5):
 		id_info = Category(class_info[i][1])
 		trainer = Trainer(class_info[i],id_info,args)
 		ratio = class_info[i][0]

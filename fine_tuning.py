@@ -37,7 +37,7 @@ num_classes = 14
 input_size = 224
 batch_size = 4
 
-num_epochs = 50
+num_epochs = 20
 
 feature_extract = True
 
@@ -134,7 +134,7 @@ def load_weights(pklfile):
 def initialise_model(num_classes,feature_extract,use_pretrained=True):
 	# model_ft = models.resnet50(pretrained=use_pretrained)
 	# set_parameter_requires_grad(model_ft,feature_extract)
-	model = resnet.resnet50(nclass=num_classes)
+	model = resnet.resnet50(num_classes=num_classes)
 
 	# wts = model_ft.state_dict()
 	# model_dict = model.state_dict()

@@ -140,9 +140,9 @@ def test(args,classes):
 	overallpix = 0.0
 	overallmIoU = 0.0
 	#load gaussian model
-	mean_weights = torch.load("../models/gaussian/mean_{}.pt".format(int(args.ratio*10)))
-	var_weights = torch.load("../models/gaussian/var_{}.pt".format(int(args.ratio*10)))
-	gaussians = build_gaussian(mean_weights,var_weights)
+	#mean_weights = torch.load("../models/gaussian/mean_{}.pt".format(int(args.ratio*10)))
+	#var_weights = torch.load("../models/gaussian/var_{}.pt".format(int(args.ratio*10)))
+	#gaussians = build_gaussian(mean_weights,var_weights)
 	category = Category(classes,True)
 	threshold = 0.5
 	for i, (image,labels,objectness) in enumerate(tbar):
@@ -163,12 +163,12 @@ def test(args,classes):
 			with torch.no_grad():
 				tic = time.time()
 				outputs,objectness,features = evaluator.val_forward(image)
-				predict = torch.argmax(outputs,1) #batch_size x 1 x H x W
+				predict = torch.argmax(outputs,1)+1 #batch_size x 1 x H x W
 				objectness_pred = torch.argmax(objectness,dim=1) #batch_size x 1 x H x W
 				predict = predict * objectness_pred
 				#thresholding here
 				toc = time.time()
-				#mask = utils.get_mask_pallete(predict, args.dataset)
+				mask = utils.get_mask_pallete(predict, args.dataset)
 				labels = labels.squeeze().cuda()
 				pixAcc,mIoU,correct_classified = utils.batch_pix_accuracy(predict.data, labels)
 				#thresholding(gaussians,category,threshold,features,correct_classified,predict)
@@ -184,8 +184,8 @@ def test(args,classes):
 				#cv2.imwrite(os.path.join("../experiments/results/truth0",outname),image[0].data.cpu().numpy().transpose(1,2,0))
 				for j in range(8):
 					outname = str(ids[i*8+j]) + '.png'
-					mask = objectness_pred[j].squeeze().cpu().numpy()* 255
-					cv2.imwrite(os.path.join(outdir, outname),mask)
+					#mask = predict[j].squeeze().cpu().numpy()* 255
+					cv2.imwrite(os.path.join(outdir, outname),mask[j])
 		print ("Overall pixel accuracy:{:.4f},Overall mIoU:{:.4f}".format(pixAcc,mIoU))
 	test_log.close()
 
@@ -196,4 +196,4 @@ if __name__ == "__main__":
 	args.test_batch_size = torch.cuda.device_count()
 	class_info = get_class_lists()
 
-	test(args,class_info[0][1])
+	test(args,class_info[3][1])
