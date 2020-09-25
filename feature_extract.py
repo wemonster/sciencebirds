@@ -9,7 +9,7 @@ import torchvision.models as models
 import torchvision.transforms as transforms
 import numpy as np
  
-savepath='vis_resnet50/'
+savepath='vis_raw_resnet50/'
 if not os.path.exists(savepath):
     os.mkdir(savepath)
  
@@ -38,7 +38,7 @@ class ft_net(nn.Module):
 
     def __init__(self):
         super(ft_net, self).__init__()
-        model_ft = resnet.resnet50(pretrained=True)
+        model_ft = resnet.resnet50(pretrained=False)
         self.model = model_ft
  
     def forward(self, x):
