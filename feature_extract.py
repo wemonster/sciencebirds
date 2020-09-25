@@ -9,7 +9,7 @@ import torchvision.models as models
 import torchvision.transforms as transforms
 import numpy as np
  
-savepath='vis_raw_resnet50/'
+savepath='vis_ImageNet_resnet50/'
 if not os.path.exists(savepath):
     os.mkdir(savepath)
  
