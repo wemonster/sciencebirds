@@ -1,11 +1,11 @@
 class Category:
 	def __init__(self,classes,unknown=False):
 		self.gameObjectType = {
-			'BACKGROUND':0
+			# 'BACKGROUND':0
 		}
 
 		self.id_to_cat = {
-			0:'BACKGROUND'
+			# 0:'BACKGROUND'
 		}
 		self.colormap = {
 			'BACKGROUND':[0,0,0],
@@ -24,8 +24,8 @@ class Category:
 			'UNKNOWN':[255,255,255]
 		}
 		for i in range(len(classes)):
-			self.gameObjectType[classes[i]] = i+1
-			self.id_to_cat[i+1] = classes[i]
+			self.gameObjectType[classes[i]] = i
+			self.id_to_cat[i] = classes[i]
 		if unknown:
 			self.gameObjectType['UNKNOWN'] = len(classes)+1
 			self.id_to_cat[len(classes)+1] = 'UNKNOWN'

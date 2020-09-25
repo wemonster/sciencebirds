@@ -10,7 +10,7 @@ import random
 import numpy as np
 from enum import Enum
 import copy
-
+import xml.etree.ElementTree as ET
 from classlabel import Category
 
 
@@ -190,8 +190,65 @@ def generate_imagesets(ratio):
 # 	generate_dataset(classes,ratio)
 # generate_imagesets(0.8)
 
-a = cv2.imread("dataset/rawdata/foregrounds/0.png")
+# a = cv2.imread("dataset/rawdata/foregrounds/0.png")
 
-cv2.ellipse(a,(256,256),(100,50),0,0,255,(255,255,255),-1)
-cv2.rectangle(a,(30,30),(100,100),(255,255,255),40)
-cv2.imwrite("dataset/rawdata/foregrounds/4400.png",a)
+# cv2.ellipse(a,(256,256),(100,50),0,0,255,(255,255,255),-1)
+# cv2.rectangle(a,(30,30),(100,100),(255,255,255),40)
+# cv2.imwrite("dataset/rawdata/foregrounds/4400.png",a)
+
+def write_truth(truth,filename):
+	with open(filename,'w') as xml:
+		xml.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+		xml.write('<annotation>\n')
+		xml.write('\t<filename>'+filename+'</filename>\n')
+		xml.write('\t<objects>'+str(len(truth))+'</objects>\n')
+		for t in truth:
+			info = t.split('|')
+			X = int(info[0])
+			Y = int(info[1])
+			height = int(info[2])
+			width = int(info[3])
+			vertices = info[4]
+			game_type = str(info[5]).strip()
+			startPoint = (X,Y)
+			endPoint = (X + height, Y+width)
+			xml.write('\t<object>\n')
+			xml.write('\t\t<name>' + game_type.split('.')[1] + '</name>\n')
+			xml.write('\t\t<box>\n')
+			xml.write('\t\t\t<xmin>' + str(X) + '</xmin>\n')
+			xml.write('\t\t\t<ymin>' + str(Y) + '</ymin>\n')
+			xml.write('\t\t\t<xmax>' + str(endPoint[0]) + '</xmax>\n')
+			xml.write('\t\t\t<ymax>' + str(endPoint[1]) + '</ymax>\n')
+			xml.write('\t\t</box>\n')
+			xml.write('\t</object>\n')
+		xml.write('</annotation>\n')
+
+# truth_folder = "dataset/rawdata/groundtruth"
+# truth_files = sorted(os.listdir(truth_folder),key=lambda x:int(x.split('.')[0][11:]))
+# print (truth_files)
+# for i in range(len(truth_files)):
+# 	truth = open(os.path.join(truth_folder,truth_files[i]),'r').readlines()
+# 	written_name = truth_files[i].split('.')[0][11:] + '.xml'
+# 	write_truth(truth,os.path.join("dataset/annotations",written_name))
+
+image_folder = "dataset/rawdata/foregrounds"
+annotations_folder = "dataset/annotations"
+
+images = sorted(os.listdir(image_folder),key=lambda x:int(x.split('.')[0]))
+annotations = sorted(os.listdir(annotations_folder),key=lambda x:int(x.split('.')[0]))
+for i in [random.randint(0,2000) for _ in range(10)]:
+	img = cv2.imread(os.path.join(image_folder,images[i]))
+	print (os.path.join(annotations_folder,annotations[i]))
+	annotation = ET.parse(os.path.join(annotations_folder,annotations[i]))
+	output = np.zeros(img.shape)
+	objs = annotation.findall('object')
+	num_objs = len(objs)
+	print (num_objs)
+	for ix, obj in enumerate(objs):
+		bbox = obj.find('box')
+		x1 = int(bbox.find('xmin').text)
+		y1 = int(bbox.find('ymin').text)
+		x2 = int(bbox.find('xmax').text)
+		y2 = int(bbox.find('ymax').text)
+		cv2.rectangle(img,(x1,y1),(x2,y2),(255,0,0))
+	cv2.imwrite(images[i],img)

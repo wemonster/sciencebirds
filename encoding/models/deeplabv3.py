@@ -38,9 +38,13 @@ class DeepLabV3(BaseNet):
 	def forward(self, x):
 		#Space for decoder
 		_, _, h, w = x.size()
-		c1, c2, c3, c4 = self.base_forward(x)
+		c0,c1, c2, c3, c4 = self.base_forward(x)
+
+		#detection head
+		feature_maps = [c1,c2,c3,c4]
 
 
+		#decoder
 		low_level_features = self.low_level(c1)
 
 		x = self.head(c4)
@@ -57,7 +61,7 @@ class DeepLabV3(BaseNet):
 
 	def val_forward(self,x):
 		_, _, h, w = x.size()
-		c1, c2, c3, c4 = self.base_forward(x)
+		c0,c1, c2, c3, c4 = self.base_forward(x)
 
 
 		low_level_features = self.low_level(c1)

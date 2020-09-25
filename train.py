@@ -23,13 +23,15 @@ from encoding.nn import SegmentationLosses, SyncBatchNorm
 from encoding.parallel import DataParallelModel, DataParallelCriterion
 from encoding.datasets import get_segmentation_dataset
 from encoding.models import get_segmentation_model
+from encoding.roi_data_layer.roibatchLoader import roibatchLoader
+from encoding.roi_data_layer.roidb import combined_roidb
 
 from option import Options
 # from maskimage import generate_dataset
 from classlabel import Category
 torch_ver = torch.__version__[:3]
-if torch_ver == '0.3':
-	from torch.autograd import Variable
+
+from torch.autograd import Variable
 
 class Trainer():
 	def __init__(self,info,id_info,args):
@@ -42,25 +44,50 @@ class Trainer():
 			transform.Normalize([.485, .456, .406], [.229, .224, .225])
 			])
 		label_transform = transform.ToTensor()
+		self.nclass = math.floor((1-self.ratio) * 12)
+		#initialise the tensor holder here
+		im_info = torch.FloatTensor(1)
+		num_boxes = torch.LongTensor(1)
+		gt_boxes = torch.FloatTensor(1)
+
+		use_cuda = False
+		if use_cuda:
+			im_info = im_info.cuda()
+			num_boxes = num_boxes.cuda()
+			gt_boxes = gt_boxes.cuda()
+		im_info = Variable(im_info)
+		num_boxes = Variable(num_boxes)
+		gt_boxes = Variable(gt_boxes)
 		# dataset
 		data_kwargs = {'transform': input_transform, 'target_transform':input_transform,
-						'label_transform':label_transform,
-						 'base_size': args.base_size,'crop_size': args.crop_size}
+						'label_transform':label_transform}
+		#get roidb info
+		train_imdb,train_roidb = combined_roidb('train',self.categories)
+		val_imdb,val_roidb = combined_roidb('val',self.categories)
+
+		#get image info
 		trainset = get_segmentation_dataset(args.dataset,self.ratio,args.size, split=args.train_split, mode='train',
 										   **data_kwargs)
 
-		testset = get_segmentation_dataset(args.dataset,self.ratio,args.size, split='val', mode ='val',
+		trainLoader = roibatchLoader(train_roidb,trainset,self.nclass,mode='train')
+
+		valset = get_segmentation_dataset(args.dataset,self.ratio,args.size, split='val', mode ='val',
 										   **data_kwargs)
-		print ("finish loading the dataset")
+		valLoader = roibatchLoader(val_roidb,valset,self.nclass,mode='val')
+		
+		
 		# dataloader
 		kwargs = {'num_workers': args.workers, 'pin_memory': True} \
 			if args.cuda else {}
-		self.trainloader = data.DataLoader(trainset, batch_size=args.batch_size,
+		self.trainloader = data.DataLoader(trainLoader, batch_size=args.batch_size,
 										   drop_last=True, shuffle=True, **kwargs)
-		self.valloader = data.DataLoader(testset, batch_size=args.batch_size,
+		self.valloader = data.DataLoader(valLoader, batch_size=args.batch_size,
 										 drop_last=False, shuffle=False, **kwargs)
-		self.nclass = math.floor((1-self.ratio) * 12)
-		# model
+
+		dataloader = {'train':self.trainloader,'val':self.valloader}
+		print ("finish loading the dataset")
+
+		# # model
 		model = get_segmentation_model(self.ratio,self.nclass,args.model, dataset = args.dataset,
 									   backbone = args.backbone, dilated = args.dilated,
 									   lateral = args.lateral, jpu = args.jpu, aux = args.aux,
@@ -125,7 +152,15 @@ class Trainer():
 		train_loss = 0.0
 		self.model.train()
 		tbar = tqdm(self.trainloader)
+		data_iter = iter(dataloader['train'])
+				
 		for i, (image,labels,objectness) in enumerate(tbar):
+			img_data = data_iter.next()
+			im_info.resize_(img_data[0].size()).copy_(img_data[0])
+			gt_boxes.resize_(img_data[1].size()).copy_(img_data[1])
+			num_boxes.resize_(img_data[2].size()).copy_(img_data[2])
+
+
 			image = image.type(torch.cuda.FloatTensor)
 			self.scheduler(self.optimizer, i, epoch, self.best_pred)
 			self.optimizer.zero_grad()
@@ -325,18 +360,18 @@ if __name__ == "__main__":
 	root = "logs/{}".format(args.size)
 	if not os.path.exists(root):
 		os.mkdir(root)
-	for i in range(5):
+	for i in range(1):
 		id_info = Category(class_info[i][1])
 		trainer = Trainer(class_info[i],id_info,args)
-		ratio = class_info[i][0]
-		train_log_file = open(os.path.join(root,"training_{}_log.txt".format(int(ratio*10))),'w')
-		val_log_file = open(os.path.join(root,"val_{}_log.txt".format(int(ratio*10))),'w')
-		print('Starting Epoch:', trainer.args.start_epoch)
-		print('Total Epoches:', trainer.args.epochs)
-		for epoch in range(trainer.args.start_epoch, trainer.args.epochs):
-			trainer.training(epoch,train_log_file)
-			if not trainer.args.no_val:
-				trainer.validation(epoch,val_log_file)
-		trainer.build_gaussian_model()
-		train_log_file.close()
-		val_log_file.close()
+		# ratio = class_info[i][0]
+		# train_log_file = open(os.path.join(root,"training_{}_log.txt".format(int(ratio*10))),'w')
+		# val_log_file = open(os.path.join(root,"val_{}_log.txt".format(int(ratio*10))),'w')
+		# print('Starting Epoch:', trainer.args.start_epoch)
+		# print('Total Epoches:', trainer.args.epochs)
+		# for epoch in range(trainer.args.start_epoch, trainer.args.epochs):
+		# 	trainer.training(epoch,train_log_file)
+		# 	if not trainer.args.no_val:
+		# 		trainer.validation(epoch,val_log_file)
+		# trainer.build_gaussian_model()
+		# train_log_file.close()
+		# val_log_file.close()
