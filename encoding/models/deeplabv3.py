@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from .fcn import FCNHead
 from .base import BaseNet
 
-from ssd.SSD import SSD
+#from ssd.SSD import SSD
 __all__ = ['DeepLabV3', 'get_deeplab']
 
 class DeepLabV3(BaseNet):
