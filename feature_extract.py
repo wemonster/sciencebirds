@@ -13,7 +13,7 @@ from option import Options
 
 
 
-savepath='vis_ImageNet_resnet50/'
+savepath='vis_openset_resnet50/'
 if not os.path.exists(savepath):
 	os.mkdir(savepath)
  
@@ -99,8 +99,8 @@ class ft_net(nn.Module):
  
 		return x
  
- class OpenSegNet(nn.Module):
-	def __init__(self,info,id_info,args):
+class OpenSegNet(nn.Module):
+ 	def __init__(self,info,id_info,args):
 		super(OpenSegNet, self).__init__()
 		self.ratio,self.classes = info[0],info[1]
 		self.categories = id_info
@@ -147,18 +147,17 @@ class ft_net(nn.Module):
 			draw_features(16, 16, low_level_features.cpu().numpy(), "{}/low_level_1.png".format(savepath))
 			
 			x = self.model.head(c4) #8x
-			draw_features(32, 32, x.cpu().numpy()[:, 0:1024, :, :], "{}/aspp_1.png".format(savepath))
-			draw_features(32, 32, x.cpu().numpy()[:, 1024:2048, :, :], "{}/aspp_2.png".format(savepath))
+			draw_features(16, 16, x.cpu().numpy(), "{}/aspp_1.png".format(savepath))
 			x = F.interpolate(x,(h//4,w//4),**self._up_kwargs) #4x
 			draw_features(16, 16, low_level_features.cpu().numpy(), "{}/interpolate4x.png".format(savepath))
 
 			concated = torch.cat((low_level_features,x),1)
-
+			draw_features(16,19,concated.cpu().numpy(),"{}/concat1.png".format(savepath))
 			objects = F.interpolate(concated,(h,w),**self._up_kwargs)
 			concated = self.model.concat_conv(concated) #4x
-			draw_features(16, 16, low_level_features.cpu().numpy(), "{}/interpolate4x.png".format(savepath))
+			draw_features(3,4, concated.cpu().numpy(), "{}/result4x".format(savepath))
 			x = F.interpolate(concated, (h,w), **self._up_kwargs)
-			draw_features(1, 14, low_level_features.cpu().numpy(), "{}/interpolate4x.png".format(savepath))
+			draw_features(3,4, x.cpu().numpy(), "{}/result.png".format(savepath))
 
 		else :
 			x = self.model.conv1(x)

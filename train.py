@@ -46,18 +46,18 @@ class Trainer():
 		label_transform = transform.ToTensor()
 		self.nclass = math.floor((1-self.ratio) * 12)
 		#initialise the tensor holder here
-		im_info = torch.FloatTensor(1)
-		num_boxes = torch.LongTensor(1)
-		gt_boxes = torch.FloatTensor(1)
+		self.im_info = torch.FloatTensor(1)
+		self.num_boxes = torch.LongTensor(1)
+		self.gt_boxes = torch.FloatTensor(1)
 
 		use_cuda = True
 		if use_cuda:
-			im_info = im_info.cuda()
-			num_boxes = num_boxes.cuda()
-			gt_boxes = gt_boxes.cuda()
-		im_info = Variable(im_info)
-		num_boxes = Variable(num_boxes)
-		gt_boxes = Variable(gt_boxes)
+			self.im_info = self.im_info.cuda()
+			self.num_boxes =self.num_boxes.cuda()
+			self.gt_boxes = self.gt_boxes.cuda()
+		self.im_info = Variable(self.im_info)
+		self.num_boxes = Variable(self.num_boxes)
+		self.gt_boxes = Variable(self.gt_boxes)
 		# dataset
 		data_kwargs = {'transform': input_transform, 'target_transform':input_transform,
 						'label_transform':label_transform}
@@ -81,7 +81,7 @@ class Trainer():
 			if args.cuda else {}
 		self.trainloader = data.DataLoader(trainset,batch_size=args.batch_size,
 										   drop_last=True, shuffle=True, **kwargs)
-		self.valloader = data.DataLoader(valloader,batch_size=args.batch_size,
+		self.valloader = data.DataLoader(valset,batch_size=args.batch_size,
 										   drop_last=False, shuffle=False, **kwargs)
 
 		
@@ -162,15 +162,15 @@ class Trainer():
 				
 		for i, (image,labels,objectness) in enumerate(tbar):
 			img_data = data_iter.next()
-			im_info.resize_(img_data[0].size()).copy_(img_data[0])
-			gt_boxes.resize_(img_data[1].size()).copy_(img_data[1])
-			num_boxes.resize_(img_data[2].size()).copy_(img_data[2])
+			self.im_info.resize_(img_data[0].size()).copy_(img_data[0])
+			self.gt_boxes.resize_(img_data[1].size()).copy_(img_data[1])
+			self.num_boxes.resize_(img_data[2].size()).copy_(img_data[2])
 
 
 			image = image.type(torch.cuda.FloatTensor)
 			self.scheduler(self.optimizer, i, epoch, self.best_pred)
 			self.optimizer.zero_grad()
-			pixel_wise,labeled = self.model(image)
+			pixel_wise,labeled = self.model(image,self.im_info,self.gt_boxes,self.num_boxes)
 			pixel_wise = pixel_wise.type(torch.cuda.FloatTensor)
 			labeled = labeled.type(torch.cuda.FloatTensor)
 		
