@@ -50,7 +50,7 @@ class Trainer():
 		num_boxes = torch.LongTensor(1)
 		gt_boxes = torch.FloatTensor(1)
 
-		use_cuda = False
+		use_cuda = True
 		if use_cuda:
 			im_info = im_info.cuda()
 			num_boxes = num_boxes.cuda()

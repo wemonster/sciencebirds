@@ -16,7 +16,6 @@ __all__ = ['FCN', 'get_fcn', 'get_fcn_resnet50_pcontext', 'get_fcn_resnet50_ade'
 
 class FCN(BaseNet):
     r"""Fully Convolutional Networks for Semantic Segmentation
-
     Parameters
     ----------
     nclass : int
@@ -26,13 +25,9 @@ class FCN(BaseNet):
         'resnet101' or 'resnet152').
     norm_layer : object
         Normalization layer used in backbone network (default: :class:`mxnet.gluon.nn.BatchNorm`;
-
-
     Reference:
-
         Long, Jonathan, Evan Shelhamer, and Trevor Darrell. "Fully convolutional networks
         for semantic segmentation." *CVPR*, 2015
-
     Examples
     --------
     >>> model = FCN(nclass=21, backbone='resnet50')
@@ -107,15 +102,12 @@ def get_fcn(dataset='pascal_voc', backbone='resnet50', pretrained=False,
 def get_fcn_resnet50_pcontext(pretrained=False, root='~/.encoding/models', **kwargs):
     r"""EncNet-PSP model from the paper `"Context Encoding for Semantic Segmentation"
     <https://arxiv.org/pdf/1803.08904.pdf>`_
-
     Parameters
     ----------
     pretrained : bool, default False
         Whether to load the pretrained weights for model.
     root : str, default '~/.encoding/models'
         Location for keeping the model parameters.
-
-
     Examples
     --------
     >>> model = get_fcn_resnet50_pcontext(pretrained=True)
@@ -126,15 +118,12 @@ def get_fcn_resnet50_pcontext(pretrained=False, root='~/.encoding/models', **kwa
 def get_fcn_resnet50_ade(pretrained=False, root='~/.encoding/models', **kwargs):
     r"""EncNet-PSP model from the paper `"Context Encoding for Semantic Segmentation"
     <https://arxiv.org/pdf/1803.08904.pdf>`_
-
     Parameters
     ----------
     pretrained : bool, default False
         Whether to load the pretrained weights for model.
     root : str, default '~/.encoding/models'
         Location for keeping the model parameters.
-
-
     Examples
     --------
     >>> model = get_fcn_resnet50_ade(pretrained=True)

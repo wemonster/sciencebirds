@@ -7,6 +7,7 @@ import torch.nn.functional as F
 from .fcn import FCNHead
 from .base import BaseNet
 
+from ssd.SSD import SSD
 __all__ = ['DeepLabV3', 'get_deeplab']
 
 class DeepLabV3(BaseNet):
@@ -31,32 +32,38 @@ class DeepLabV3(BaseNet):
 			nn.Conv2d(256,nclass,kernel_size=1,stride=1)
 			)
 		
+		self.dout_base_model = 256
+		# self._SSD = SSD(self.dout_base_model)
 		self.objectness = nn.Conv2d(304,2,kernel_size=1,stride=1,bias=False) #foreground or background
 		if aux:
 			self.auxlayer = FCNHead(1024, nclass, norm_layer)
 
-	def forward(self, x):
+	def forward(self, x,im_info,gt_boxes,num_boxes):
 		#Space for decoder
 		_, _, h, w = x.size()
 		c0,c1, c2, c3, c4 = self.base_forward(x)
 
 		#detection head
-		feature_maps = [c1,c2,c3,c4]
+		feature_maps = [c0,c1,c4]
 
 
 		#decoder
 		low_level_features = self.low_level(c1)
 
 		x = self.head(c4)
-
+		print (x.size())
 		x = F.interpolate(x,(h//4,w//4),**self._up_kwargs)
-
+		print (x.size())
 		concated = torch.cat((low_level_features,x),1)
+		print (concated.size())
 		objects = F.interpolate(concated,(h,w),**self._up_kwargs)
 		concated = self.concat_conv(concated)
+		print (concated.size())
 		x = F.interpolate(concated, (h,w), **self._up_kwargs)
-
+		print (x.size())
 		objectness_score = self.objectness(objects) #batch_size x 2 x H x W
+
+		# rois,rpn_loss_cls,rpn_loss_box = self._SSD(feature_maps,im_info,gt_boxes,num_boxes)
 		return objectness_score,x
 
 	def val_forward(self,x):
@@ -65,16 +72,19 @@ class DeepLabV3(BaseNet):
 
 
 		low_level_features = self.low_level(c1)
-
+		print (low_level_features.size())
 		x = self.head(c4)
-
+		print (x.size())
 		x = F.interpolate(x,(h//4,w//4),**self._up_kwargs)
-
+		print (s.size())
 		concated = torch.cat((low_level_features,x),1)
+		print (concated.size())
 		feature_vectors = F.interpolate(concated,(h,w),**self._up_kwargs)
 		concated = self.concat_conv(concated)
+		print (concated.size())
 
 		x = F.interpolate(concated, (h,w), **self._up_kwargs)
+		print (x.size())
 		objectness_score = self.objectness(feature_vectors) #whether the pixel is fg/bg, batch_size x 2 x H x W
 		return x,objectness_score,feature_vectors
 
