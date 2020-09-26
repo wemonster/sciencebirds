@@ -8,6 +8,7 @@ from torch import nn
 import encoding.dilated as resnet
 import torchvision.models as models
 import torchvision.transforms as transforms
+import torch.nn.functional as F
 import numpy as np
 from encoding.models import get_segmentation_model
 from option import Options
@@ -145,19 +146,19 @@ class OpenSegNet(nn.Module):
 
 			#decoder
 			low_level_features = self.model.low_level(c1) #4x
-			draw_features(16, 16, low_level_features.cpu().numpy(), "{}/low_level_1.png".format(savepath))
+			draw_features(6, 8, low_level_features.cpu().numpy(), "{}/low_level_1.png".format(savepath))
 			
 			x = self.model.head(c4) #8x
 			draw_features(16, 16, x.cpu().numpy(), "{}/aspp_1.png".format(savepath))
-			x = F.interpolate(x,(h//4,w//4),**self._up_kwargs) #4x
-			draw_features(16, 16, low_level_features.cpu().numpy(), "{}/interpolate4x.png".format(savepath))
+			x = F.interpolate(x,(h//4,w//4)) #4x
+			draw_features(16, 16, x.cpu().numpy(), "{}/interpolate4x.png".format(savepath))
 
 			concated = torch.cat((low_level_features,x),1)
 			draw_features(16,19,concated.cpu().numpy(),"{}/concat1.png".format(savepath))
-			objects = F.interpolate(concated,(h,w),**self._up_kwargs)
+			objects = F.interpolate(concated,(h,w))
 			concated = self.model.concat_conv(concated) #4x
 			draw_features(3,4, concated.cpu().numpy(), "{}/result4x".format(savepath))
-			x = F.interpolate(concated, (h,w), **self._up_kwargs)
+			x = F.interpolate(concated, (h,w))
 			draw_features(3,4, x.cpu().numpy(), "{}/result.png".format(savepath))
 
 		else :
