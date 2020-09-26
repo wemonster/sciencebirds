@@ -79,12 +79,18 @@ class Trainer():
 		# dataloader
 		kwargs = {'num_workers': args.workers, 'pin_memory': True} \
 			if args.cuda else {}
-		self.trainloader = data.DataLoader(trainLoader, batch_size=args.batch_size,
+		self.trainloader = data.DataLoader(trainset,batch_size=args.batch_size,
 										   drop_last=True, shuffle=True, **kwargs)
-		self.valloader = data.DataLoader(valLoader, batch_size=args.batch_size,
+		self.valloader = data.DataLoader(valloader,batch_size=args.batch_size,
+										   drop_last=False, shuffle=False, **kwargs)
+
+		
+		trainloader = data.DataLoader(trainLoader, batch_size=args.batch_size,
+										   drop_last=True, shuffle=True, **kwargs)
+		valloader = data.DataLoader(valLoader, batch_size=args.batch_size,
 										 drop_last=False, shuffle=False, **kwargs)
 
-		self.dataloader = {'train':self.trainloader,'val':self.valloader}
+		self.dataloader = {'train':trainloader,'val':valloader}
 		print ("finish loading the dataset")
 
 		# # model
