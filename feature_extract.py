@@ -1,5 +1,6 @@
 import cv2
 import time
+import math
 import os
 import matplotlib.pyplot as plt
 import torch
@@ -10,7 +11,7 @@ import torchvision.transforms as transforms
 import numpy as np
 from encoding.models import get_segmentation_model
 from option import Options
-
+from classlabel import Category
 
 
 savepath='vis_openset_resnet50/'
@@ -100,7 +101,7 @@ class ft_net(nn.Module):
 		return x
  
 class OpenSegNet(nn.Module):
- 	def __init__(self,info,id_info,args):
+	def __init__(self,info,id_info,args):
 		super(OpenSegNet, self).__init__()
 		self.ratio,self.classes = info[0],info[1]
 		self.categories = id_info
@@ -171,7 +172,6 @@ class OpenSegNet(nn.Module):
 			x = self.model.avgpool(x)
 			x = x.view(x.size(0), -1)
 			x = self.model.fc(x)
- 
 		return x
 def get_class_lists():
 	data = open("logs/resnet.txt",'r').readlines()
