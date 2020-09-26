@@ -15,7 +15,7 @@ from option import Options
 from classlabel import Category
 
 
-savepath='vis_openset_resnet50/'
+savepath='vis_trained_openset_resnet50/'
 if not os.path.exists(savepath):
 	os.mkdir(savepath)
  
@@ -115,6 +115,8 @@ class OpenSegNet(nn.Module):
 									   se_loss = args.se_loss, #norm_layer = SyncBatchNorm,
 									   base_size = args.base_size, crop_size = args.crop_size)
  
+		checkpoint = torch.load('../experiments/runs/model_best_0.pth.tar')
+		self.model.load_state_dict(checkpoint['state_dict'])
 	def forward(self, x):
 		if True: # draw features or not
 			_, _, h, w = x.size()
@@ -194,7 +196,6 @@ if not os.path.exists(root):
 for i in range(1):
 	id_info = Category(class_info[i][1])
 	model = OpenSegNet(class_info[i],id_info,args).cuda()
-
 # model=ft_net().cuda()
  
 # pretrained_dict = resnet50.state_dict()
