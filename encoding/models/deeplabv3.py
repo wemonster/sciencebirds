@@ -16,24 +16,37 @@ class DeepLabV3(BaseNet):
 
 		self.head = DeepLabV3Head(2048, nclass, norm_layer, self._up_kwargs)
 
-		self.low_level = nn.Sequential(
+		self.low_level_1 = nn.Sequential( #2x
+			nn.Conv2d(64,32,1,bias=False),
+			norm_layer(32),
+			nn.ReLU(True)
+			)
+
+		self.low_level_2 = nn.Sequential( #4x
 			nn.Conv2d(256,48,1,bias=False),
 			norm_layer(48),
 			nn.ReLU(True)
 			)
 		
-		self.concat_conv = nn.Sequential(
-			nn.Conv2d(304,256,kernel_size=3,stride=1,padding=1,bias=False),
-			norm_layer(256),
+		self.concat_conv_1 = nn.Sequential(
+			nn.Conv2d(304,128,kernel_size=3,stride=1,padding=1,bias=False),
+			norm_layer(128),
 			nn.ReLU(True),
-			nn.Conv2d(256,256,kernel_size=3,stride=1,padding=1,bias=False),
-			norm_layer(256),
+			nn.Conv2d(128,128,kernel_size=3,stride=1,padding=1,bias=False),
+			norm_layer(128),
 			nn.ReLU(True),
-			nn.Conv2d(256,nclass,kernel_size=1,stride=1)
+			
+			)
+
+		self.concat_conv_2 = nn.Sequential(
+			nn.Conv2d(160,64,kernel_size=3,stride=1,padding=1,bias=False),
+			norm_layer(64),
+			nn.ReLU(True),
+			nn.Conv2d(64,64,kernel_size=3,stride=1,padding=1,bias=False),
+			norm_layer(64),
+			nn.Conv2d(64,nclass,kernel_size=1,stride=1)
 			)
 		
-		self.dout_base_model = 256
-		self._SSD = SSD(self.dout_base_model)
 		self.objectness = nn.Conv2d(304,2,kernel_size=1,stride=1,bias=False) #foreground or background
 		if aux:
 			self.auxlayer = FCNHead(1024, nclass, norm_layer)
@@ -48,14 +61,26 @@ class DeepLabV3(BaseNet):
 
 
 		#decoder
-		low_level_features = self.low_level(c1)
+		low_level_features1 = self.low_level_1(c0) #2x
+		low_level_features2 = self.low_level_2(c1) #4x
 
 		x = self.head(c4)
+
 		x = F.interpolate(x,(h//4,w//4),**self._up_kwargs)
-		concated = torch.cat((low_level_features,x),1)
+
+		concated = torch.cat((low_level_features2,x),1)
+
 		objects = F.interpolate(concated,(h,w),**self._up_kwargs)
-		concated = self.concat_conv(concated)
-		x = F.interpolate(concated, (h,w), **self._up_kwargs)
+
+		concated = self.concat_conv_1(concated)
+
+		x = F.interpolate(concated, (h//2,w//2), **self._up_kwargs)
+
+		concated = torch.cat((low_level_features1,x),1)
+
+		concated = self.concat_conv_2(concated)
+
+		x = F.interpolate(concated,(h,w), **self._up_kwargs)
 		objectness_score = self.objectness(objects) #batch_size x 2 x H x W
 
 		# rois,rpn_loss_cls,rpn_loss_box = self._SSD(feature_maps,im_info,gt_boxes,num_boxes)
