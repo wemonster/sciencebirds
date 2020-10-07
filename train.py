@@ -161,7 +161,7 @@ class Trainer():
 		train_loss = 0.0
 		self.model.train()
 		tbar = tqdm(self.trainloader)
-		data_iter = iter(self.dataloader['train'])
+		#data_iter = iter(self.dataloader['train'])
 				
 		for i, (image,labels,objectness,edge) in enumerate(tbar):
 			#img_data = data_iter.next()
@@ -289,8 +289,7 @@ class Trainer():
 
 		is_best = False
 		self.model.eval()
-		total_inter, total_union, total_correct, total_label, total_object,total_object_label,total_edge,total_edge_label
-		 = 0, 0, 0, 0, 0, 0, 0, 0
+		total_inter, total_union, total_correct, total_label, total_object,total_object_label,total_edge,total_edge_label = 0, 0, 0, 0, 0, 0, 0, 0
 		tbar = tqdm(self.valloader, desc='\r')
 		for i, (image,labels,objectness,edge) in enumerate(tbar):
 			image = image.type(torch.cuda.FloatTensor)

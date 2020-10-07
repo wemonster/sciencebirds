@@ -66,6 +66,7 @@ class SciencebirdSeg(BaseDataset):
 		#img = np.array(img)
 		#img[np.where((img!=[0,0,0]).all(axis=2))] = [255,255,255]
 		labels = Image.open(os.path.join(self.label_files,str(img_id)+'.png'))
+		edge = Image.open(os.path.join(self.edge_files,str(img_id) + '.png'))
 		foregrounds = Image.open(os.path.join(self.foreground_files,str(img_id)+'.png')).convert('RGB')
 		if self.mode == 'test':
 			#foregrounds = np.array(foregrounds)
@@ -73,7 +74,7 @@ class SciencebirdSeg(BaseDataset):
 			labels = Image.open(os.path.join(self.unknowns_files,str(img_id)+'.png'))
 		objectness = np.array(labels)
 		objectness[objectness > 0] = 1
-
+		print (objectness.shape,labels.size,edge.size)
 
 		if self.transform is not None:
 			img = self.transform(img)
