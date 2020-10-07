@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from .fcn import FCNHead
 from .base import BaseNet
 
-from ssd.SSD import _SSD
+#from ssd.SSD import _SSD
 __all__ = ['DeepLabV3', 'get_deeplab']
 
 class DeepLabV3(BaseNet):
@@ -17,7 +17,7 @@ class DeepLabV3(BaseNet):
 		self.head = DeepLabV3Head(2048, nclass, norm_layer, self._up_kwargs)
 
 		self.low_level_1 = nn.Sequential( #2x
-			nn.Conv2d(64,32,1,bias=False),
+			nn.Conv2d(128,32,1,bias=False),
 			norm_layer(32),
 			nn.ReLU(True)
 			)
@@ -55,7 +55,7 @@ class DeepLabV3(BaseNet):
 		#Space for decoder
 		_, _, h, w = x.size()
 		c0,c1, c2, c3, c4 = self.base_forward(x)
-
+#		print (c0.size())
 		#detection head
 		feature_maps = [c0,c1,c4]
 
@@ -91,19 +91,26 @@ class DeepLabV3(BaseNet):
 		c0,c1, c2, c3, c4 = self.base_forward(x)
 
 
-		low_level_features = self.low_level(c1)
+		low_level_features1 = self.low_level_1(c0)
+		low_level_features2 = self.low_level_2(c1)
 
 		x = self.head(c4)
 
 		x = F.interpolate(x,(h//4,w//4),**self._up_kwargs)
 
-		concated = torch.cat((low_level_features,x),1)
+		concated = torch.cat((low_level_features2,x),1)
 
 		feature_vectors = F.interpolate(concated,(h,w),**self._up_kwargs)
-		concated = self.concat_conv(concated)
+		concated = self.concat_conv_1(concated)
 
+		x = F.interpolate(concated, (h//2,w//2), **self._up_kwargs)
 
-		x = F.interpolate(concated, (h,w), **self._up_kwargs)
+		concated = torch.cat((low_level_features1,x),1)
+
+		concated = self.concat_conv_2(concated)
+
+		x = F.interpolate(concated,(h,w),**self._up_kwargs)
+
 		objectness_score = self.objectness(feature_vectors) #whether the pixel is fg/bg, batch_size x 2 x H x W
 		return x,objectness_score,feature_vectors
 

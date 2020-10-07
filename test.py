@@ -21,7 +21,7 @@ from torch.distributions import MultivariateNormal
 
 from encoding.nn import BatchNorm
 from encoding.datasets import get_segmentation_dataset, test_batchify_fn
-from encoding.models import get_model, get_segmentation_model, MultiEvalModule
+from encoding.models import get_segmentation_model, MultiEvalModule
 
 
 from option import Options
@@ -196,4 +196,4 @@ if __name__ == "__main__":
 	args.test_batch_size = torch.cuda.device_count()
 	class_info = get_class_lists()
 
-	test(args,class_info[3][1])
+	test(args,class_info[0][1])

@@ -163,10 +163,10 @@ class Trainer():
 		data_iter = iter(self.dataloader['train'])
 				
 		for i, (image,labels,objectness) in enumerate(tbar):
-			img_data = data_iter.next()
-			self.im_info.resize_(img_data[0].size()).copy_(img_data[0])
-			self.gt_boxes.resize_(img_data[1].size()).copy_(img_data[1])
-			self.num_boxes.resize_(img_data[2].size()).copy_(img_data[2])
+			#img_data = data_iter.next()
+			#self.im_info.resize_(img_data[0].size()).copy_(img_data[0])
+			#self.gt_boxes.resize_(img_data[1].size()).copy_(img_data[1])
+			#self.num_boxes.resize_(img_data[2].size()).copy_(img_data[2])
 
 
 			image = image.type(torch.cuda.FloatTensor)
