@@ -47,20 +47,20 @@ class DeepLabV3(BaseNet):
 			nn.Conv2d(64,nclass,kernel_size=1,stride=1)
 			)
 		self.edge_conv = nn.Sequential(
-			nn.Conv2d(304,128,kernel_size=3,stride=1,padding=1,bias=False),
-			norm_layer(128),
-			nn.ReLU(True),
-			nn.Conv2d(128,64,kernel_size=3,stride=1,padding=1,bias=False),
+			nn.Conv2d(160,64,kernel_size=3,stride=1,padding=1,bias=False),
 			norm_layer(64),
+			nn.ReLU(True),
+			#nn.Conv2d(128,64,kernel_size=3,stride=1,padding=1,bias=False),
+			#norm_layer(64),
 			nn.Conv2d(64,2,kernel_size=3,stride=1,padding=1)
 			)
 
 		self.objectness = nn.Sequential(
-			nn.Conv2d(304,128,kernel_size=3,stride=1,padding=1,bias=False),
-			norm_layer(128),
-			nn.ReLU(True),
-			nn.Conv2d(128,64,kernel_size=3,stride=1,padding=1,bias=False),
+			nn.Conv2d(160,64,kernel_size=3,stride=1,padding=1,bias=False),
 			norm_layer(64),
+			nn.ReLU(True),
+			#nn.Conv2d(128,64,kernel_size=3,stride=1,padding=1,bias=False),
+			#norm_layer(64),
 			nn.Conv2d(64,2,kernel_size=3,stride=1,padding=1,bias=False)
 			) #foreground or background
 		if aux:
@@ -78,23 +78,25 @@ class DeepLabV3(BaseNet):
 		#decoder
 		low_level_features1 = self.low_level_1(c0) #2x
 		low_level_features2 = self.low_level_2(c1) #4x
-
+		#print (low_level_features1.shape,low_level_features2.shape)
 		x = self.head(c4)
-
+		#print (x.shape)
 		x = F.interpolate(x,(h//4,w//4),**self._up_kwargs)
-
+		
 		concated = torch.cat((low_level_features2,x),1)
-
+		#print (concated.shape)
 		# objects = F.interpolate(concated,(h,w),**self._up_kwargs)
 
 		concated = self.concat_conv_1(concated)
-
+		#print (concated.shape)
 		x = F.interpolate(concated, (h//2,w//2), **self._up_kwargs)
 
 		concated = torch.cat((low_level_features1,x),1)
 
+		#print (concated.shape)
 		object_edge = F.interpolate(concated,(h,w),**self._up_kwargs)
 
+		#print (object_edge.shape)
 		concated = self.concat_conv_2(concated)
 
 
@@ -121,7 +123,7 @@ class DeepLabV3(BaseNet):
 
 		concated = torch.cat((low_level_features2,x),1)
 
-		# feature_vectors = F.interpolate(concated,(h,w),**self._up_kwargs)
+		feature_vectors = F.interpolate(concated,(h,w),**self._up_kwargs)
 		concated = self.concat_conv_1(concated)
 
 		x = F.interpolate(concated, (h//2,w//2), **self._up_kwargs)

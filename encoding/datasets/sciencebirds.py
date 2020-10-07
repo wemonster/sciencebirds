@@ -75,7 +75,8 @@ class SciencebirdSeg(BaseDataset):
 		objectness = np.array(labels)
 		objectness[objectness > 0] = 1
 		# print (objectness.shape,labels.size,edge.size)
-
+		edge = np.array(edge)
+		edge[edge > 0] = 1
 		if self.transform is not None:
 			img = self.transform(img)
 		if self.target_transform is not None:

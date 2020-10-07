@@ -171,6 +171,7 @@ class Trainer():
 
 
 			image = image.type(torch.cuda.FloatTensor)
+			
 			self.scheduler(self.optimizer, i, epoch, self.best_pred)
 			self.optimizer.zero_grad()
 			pixel_wise,cat_label,edge_label = self.model(image,self.im_info,self.gt_boxes,self.num_boxes)
@@ -180,6 +181,9 @@ class Trainer():
 
 			labels = torch.squeeze(labels)
 			labels = labels.to(dtype=torch.int64).cuda()
+			
+			edge = torch.squeeze(edge)
+			edge = edge.to(dtype=torch.int64).cuda()
 
 			objectness = torch.squeeze(objectness)
 			objectness = objectness.to(dtype=torch.int64).cuda()

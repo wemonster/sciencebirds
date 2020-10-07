@@ -92,6 +92,10 @@ def test(args,classes):
 	# outdir = "../results"
 	if not os.path.exists(outdir):
 		os.makedirs(outdir)
+	
+	outdir = os.path.join(args.save_folder,'edge')
+	if not os.path.exists(outdir):
+		os.makedirs(outdir)
 	# data transforms
 	input_transform = transform.Compose([
 		transform.ToTensor(),
@@ -170,7 +174,7 @@ def test(args,classes):
 				edge_pred = torch.argmax(edge_label,dim=1)
 				#thresholding here
 				toc = time.time()
-				mask = utils.get_mask_pallete(predict, args.dataset)
+				#mask = utils.get_mask_pallete(predict, args.dataset)
 				labels = labels.squeeze().cuda()
 				pixAcc,mIoU,correct_classified = utils.batch_pix_accuracy(predict.data, labels)
 				#thresholding(gaussians,category,threshold,features,correct_classified,predict)
@@ -184,10 +188,11 @@ def test(args,classes):
 				#write the output
 				#print (image[0].data.cpu().numpy())
 				#cv2.imwrite(os.path.join("../experiments/results/truth0",outname),image[0].data.cpu().numpy().transpose(1,2,0))
-				for j in range(8):
-					outname = str(ids[i*8+j]) + '.png'
+				for j in range(args.test_batch_size):
+					outname = str(ids[i*args.test_batch_size+j]) + '.png'
 					#mask = predict[j].squeeze().cpu().numpy()* 255
-					cv2.imwrite(os.path.join(outdir, outname),mask[j])
+					mask = edge[j].squeeze().cpu().numpy()*255
+					cv2.imwrite(os.path.join(outdir, outname),mask)
 		print ("Overall pixel accuracy:{:.4f},Overall mIoU:{:.4f}".format(pixAcc,mIoU))
 	test_log.close()
 

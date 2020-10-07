@@ -115,7 +115,7 @@ class Options():
 		if args.batch_size is None:
 			args.batch_size = 4
 		if args.test_batch_size is None:
-			args.test_batch_size = 8
+			args.test_batch_size = 1
 		if args.lr is None:
 			lrs = {
 				'coco': 0.01,
