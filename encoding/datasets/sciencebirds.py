@@ -31,6 +31,7 @@ class SciencebirdSeg(BaseDataset):
 		self.image_files = os.path.join(folder,"foregrounds")
 		self.label_files = os.path.join(folder,'masks')
 		self.foreground_files = "dataset/rawdata/foregrounds"
+		self.edge_files = os.path.join(folder,"edge")
 		# if split == 'train':
 		# 	print('train set')
 		# 	ann_file = os.path.join(root, 'annotations/instances_train2017.json')
@@ -68,11 +69,12 @@ class SciencebirdSeg(BaseDataset):
 		foregrounds = Image.open(os.path.join(self.foreground_files,str(img_id)+'.png')).convert('RGB')
 		if self.mode == 'test':
 			#foregrounds = np.array(foregrounds)
-
 			#foregrounds[np.where((foregrounds!=[0,0,0]).all(axis=2))] = [255,255,255]
 			labels = Image.open(os.path.join(self.unknowns_files,str(img_id)+'.png'))
 		objectness = np.array(labels)
 		objectness[objectness > 0] = 1
+
+
 		if self.transform is not None:
 			img = self.transform(img)
 		if self.target_transform is not None:
@@ -82,9 +84,12 @@ class SciencebirdSeg(BaseDataset):
 			labels = labels.type(torch.LongTensor)
 			objectness = self.label_transform(objectness) * 255
 			objectness = objectness.type(torch.LongTensor)
+
+			edge = self.label_transform(edge) * 255
+			edge = edge.type(torch.LongTensor)
 		if self.mode == 'test':
-			return foregrounds,labels,objectness
-		return img,labels,objectness
+			return foregrounds,labels,objectness,edge
+		return img,labels,objectness,edge
 
 	def __len__(self):
 		return len(self.ids)

@@ -46,8 +46,23 @@ class DeepLabV3(BaseNet):
 			norm_layer(64),
 			nn.Conv2d(64,nclass,kernel_size=1,stride=1)
 			)
-		
-		self.objectness = nn.Conv2d(304,2,kernel_size=1,stride=1,bias=False) #foreground or background
+		self.edge_conv = nn.Sequential(
+			nn.Conv2d(304,128,kernel_size=3,stride=1,padding=1,bias=False),
+			norm_layer(128),
+			nn.ReLU(True),
+			nn.Conv2d(128,64,kernel_size=3,stride=1,padding=1,bias=False),
+			norm_layer(64),
+			nn.Conv2d(64,2,kernel_size=3,stride=1,padding=1)
+			)
+
+		self.objectness = nn.Sequential(
+			nn.Conv2d(304,128,kernel_size=3,stride=1,padding=1,bias=False),
+			norm_layer(128),
+			nn.ReLU(True),
+			nn.Conv2d(128,64,kernel_size=3,stride=1,padding=1,bias=False),
+			norm_layer(64),
+			nn.Conv2d(64,2,kernel_size=3,stride=1,padding=1,bias=False)
+			) #foreground or background
 		if aux:
 			self.auxlayer = FCNHead(1024, nclass, norm_layer)
 
@@ -70,7 +85,7 @@ class DeepLabV3(BaseNet):
 
 		concated = torch.cat((low_level_features2,x),1)
 
-		objects = F.interpolate(concated,(h,w),**self._up_kwargs)
+		# objects = F.interpolate(concated,(h,w),**self._up_kwargs)
 
 		concated = self.concat_conv_1(concated)
 
@@ -81,10 +96,11 @@ class DeepLabV3(BaseNet):
 		concated = self.concat_conv_2(concated)
 
 		x = F.interpolate(concated,(h,w), **self._up_kwargs)
-		objectness_score = self.objectness(objects) #batch_size x 2 x H x W
+		edge = self.edge_conv(x)
+		objectness_score = self.objectness(x) #batch_size x 2 x H x W
 
 		# rois,rpn_loss_cls,rpn_loss_box = self._SSD(feature_maps,im_info,gt_boxes,num_boxes)
-		return objectness_score,x
+		return objectness_score,x,edge
 
 	def val_forward(self,x):
 		_, _, h, w = x.size()
@@ -100,7 +116,7 @@ class DeepLabV3(BaseNet):
 
 		concated = torch.cat((low_level_features2,x),1)
 
-		feature_vectors = F.interpolate(concated,(h,w),**self._up_kwargs)
+		# feature_vectors = F.interpolate(concated,(h,w),**self._up_kwargs)
 		concated = self.concat_conv_1(concated)
 
 		x = F.interpolate(concated, (h//2,w//2), **self._up_kwargs)
@@ -110,9 +126,9 @@ class DeepLabV3(BaseNet):
 		concated = self.concat_conv_2(concated)
 
 		x = F.interpolate(concated,(h,w),**self._up_kwargs)
-
-		objectness_score = self.objectness(feature_vectors) #whether the pixel is fg/bg, batch_size x 2 x H x W
-		return x,objectness_score,feature_vectors
+		edge = self.edge_conv(x)
+		objectness_score = self.objectness(x) #whether the pixel is fg/bg, batch_size x 2 x H x W
+		return x,objectness_score,feature_vectors,edge
 
 class DeepLabV3Head(nn.Module):
 	def __init__(self, in_channels, out_channels, norm_layer, up_kwargs, atrous_rates=(12, 24, 36)):

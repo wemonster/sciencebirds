@@ -69,11 +69,11 @@ class Trainer():
 		trainset = get_segmentation_dataset(args.dataset,self.ratio,args.size, split=args.train_split, mode='train',
 										   **data_kwargs)
 
-		trainLoader = roibatchLoader(train_roidb,trainset,self.nclass,mode='train')
+		# trainLoader = roibatchLoader(train_roidb,trainset,self.nclass,mode='train')
 
 		valset = get_segmentation_dataset(args.dataset,self.ratio,args.size, split='val', mode ='val',
 										   **data_kwargs)
-		valLoader = roibatchLoader(val_roidb,valset,self.nclass,mode='val')
+		# valLoader = roibatchLoader(val_roidb,valset,self.nclass,mode='val')
 		
 		
 		# dataloader
@@ -85,12 +85,12 @@ class Trainer():
 										   drop_last=False, shuffle=False, **kwargs)
 
 		
-		trainloader = data.DataLoader(trainLoader, batch_size=args.batch_size,
-										   drop_last=True, shuffle=True, **kwargs)
-		valloader = data.DataLoader(valLoader, batch_size=args.batch_size,
-										 drop_last=False, shuffle=False, **kwargs)
+		# trainloader = data.DataLoader(trainLoader, batch_size=args.batch_size,
+		# 								   drop_last=True, shuffle=True, **kwargs)
+		# valloader = data.DataLoader(valLoader, batch_size=args.batch_size,
+		# 								 drop_last=False, shuffle=False, **kwargs)
 
-		self.dataloader = {'train':trainloader,'val':valloader}
+		# self.dataloader = {'train':trainloader,'val':valloader}
 		print ("finish loading the dataset")
 
 		# # model
@@ -110,6 +110,7 @@ class Trainer():
 		params_list.append({'params':model.concat_conv_1.parameters(),'lr':args.lr})
 		params_list.append({'params':model.concat_conv_2.parameters(),'lr':args.lr})
 		params_list.append({'params':model.objectness.parameters(),'lr':args.lr})
+		params_list.append({'params':model.edge_conv.parameters(),'lr':args.lr})
 		# if hasattr(model, 'jpu'):
 		# 	params_list.append({'params': model.jpu.parameters(), 'lr': args.lr*10})
 		if hasattr(model, 'head'): 
@@ -162,7 +163,7 @@ class Trainer():
 		tbar = tqdm(self.trainloader)
 		data_iter = iter(self.dataloader['train'])
 				
-		for i, (image,labels,objectness) in enumerate(tbar):
+		for i, (image,labels,objectness,edge) in enumerate(tbar):
 			#img_data = data_iter.next()
 			#self.im_info.resize_(img_data[0].size()).copy_(img_data[0])
 			#self.gt_boxes.resize_(img_data[1].size()).copy_(img_data[1])
@@ -172,10 +173,11 @@ class Trainer():
 			image = image.type(torch.cuda.FloatTensor)
 			self.scheduler(self.optimizer, i, epoch, self.best_pred)
 			self.optimizer.zero_grad()
-			pixel_wise,labeled = self.model(image,self.im_info,self.gt_boxes,self.num_boxes)
+			pixel_wise,cat_label,edge_label = self.model(image,self.im_info,self.gt_boxes,self.num_boxes)
 			pixel_wise = pixel_wise.type(torch.cuda.FloatTensor)
-			labeled = labeled.type(torch.cuda.FloatTensor)
-		
+			cat_label = cat_label.type(torch.cuda.FloatTensor)
+			edge_label = edge_label.type(torch.cuda.FloatTensor)
+
 			labels = torch.squeeze(labels)
 			labels = labels.to(dtype=torch.int64).cuda()
 
@@ -185,15 +187,16 @@ class Trainer():
 			foregrounds = (labels > 0).nonzero()
 			batch,x,y = foregrounds[:,0],foregrounds[:,1],foregrounds[:,2]
 #			print (labeled.size(),labels.size())
-			labeled = labeled[batch,:,x,y]
+			cat_label = cat_label[batch,:,x,y]
 			labels = labels[batch,x,y] - 1
 #			print (labeled.size(),pixel_wise.size())
 #			print (torch.unique(labels),torch.unique(objectness))
 
-			class_loss = self.criterion(labeled, labels)
+			class_loss = self.criterion(cat_label, labels)
 			objectness_loss = self.criterion(pixel_wise,objectness)
+			edge_loss = self.criterion(edge_label,edge)
 			loss = class_loss.item() + objectness_loss.item()
-			loss = class_loss + objectness_loss
+			loss = class_loss + objectness_loss + edge_loss
 #			print (loss)
 			loss.backward()
 			self.optimizer.step()
@@ -263,35 +266,40 @@ class Trainer():
 
 
 
-		def eval_batch(model, image, target,object_truth):
-			labeled,objectness,features = model.val_forward(image)
+		def eval_batch(model, image, target,object_truth,edge):
+			labeled,objectness,features,edge_label = model.val_forward(image)
 			objectness_pred = torch.argmax(objectness,dim=1) #batch_size x 1 x H x W
 			object_truth = object_truth.squeeze().cuda()
 			pred = torch.argmax(labeled,dim=1)+1 #batch_size x 1 x H x W
 			pred = objectness_pred * pred
 			target = target.squeeze().cuda()
 		
+			edge_pred = torch.argmax(edge_label,dim=1)
+			edge = edge.squeeze().cuda()
+
+			edge_correct,edge_labeled,edge_correct_classified = utils.batch_pix_accuracy(edge_pred.data,edge)
 			correct, labeled,correct_classified = utils.batch_pix_accuracy(pred.data, target)
 
 			correct_object,labeled_object,correct_classified_object = utils.batch_pix_accuracy(objectness_pred.data,object_truth)
 			collect_features(features,correct_classified,pred)
 			inter, union = utils.batch_intersection_union(pred.data, target, self.nclass)
-			return correct, labeled, inter, union, correct_object, labeled_object
+			return correct, labeled, inter, union, correct_object, labeled_object,edge_correct,edge_labeled
 
 		
 
 		is_best = False
 		self.model.eval()
-		total_inter, total_union, total_correct, total_label, total_object,total_object_label = 0, 0, 0, 0, 0, 0
+		total_inter, total_union, total_correct, total_label, total_object,total_object_label,total_edge,total_edge_label
+		 = 0, 0, 0, 0, 0, 0, 0, 0
 		tbar = tqdm(self.valloader, desc='\r')
-		for i, (image,labels,objectness) in enumerate(tbar):
+		for i, (image,labels,objectness,edge) in enumerate(tbar):
 			image = image.type(torch.cuda.FloatTensor)
 			if torch_ver == "0.3":
 				image = Variable(image, volatile=True)
-				correct, labeled, inter, union, correct_object,labeled_object = eval_batch(self.model, image, labels,objectness)
+				correct, labeled, inter, union, correct_object,labeled_object,edge_correct,edge_labeled = eval_batch(self.model, image, labels,objectness,edge)
 			else:
 				with torch.no_grad():
-					correct, labeled, inter, union, correct_object,labeled_object = eval_batch(self.model, image, labels,objectness)
+					correct, labeled, inter, union, correct_object,labeled_object,edge_correct,edge_labeled = eval_batch(self.model, image, labels,objectness,edge)
 
 			total_correct += correct
 			total_label += labeled
@@ -299,13 +307,16 @@ class Trainer():
 			total_union += union
 			total_object += correct_object
 			total_object_label += labeled_object
+			total_edge += edge_labeled
+			total_edge_label += edge_labeled
 			pixAcc = 1.0 * total_correct / (np.spacing(1) + total_label)
 			objAcc = 1.0 * total_object / (np.spacing(1) + total_object_label)
+			edgAcc = 1.0 * total_edge / (np.spacing(1) + total_edge_label)
 			IoU = 1.0 * total_inter / (np.spacing(1) + total_union)
 			mIoU = IoU.mean()
 			tbar.set_description(
-				'pixAcc: %.3f, mIoU: %.3f, objAcc: %.3f' % (pixAcc, mIoU,objAcc))
-		new_pred = (pixAcc + mIoU + objAcc)/3
+				'pixAcc: %.3f, mIoU: %.3f, objAcc: %.3f, edgAcc: %.3f' % (pixAcc, mIoU,objAcc,edgAcc))
+		new_pred = (pixAcc + mIoU + objAcc + edgAcc)/4
 		log_file.write("Epoch:{}, pixAcc:{:.3f}, mIoU:{:.3f}, Overall:{:.3f}\n".format(epoch,pixAcc,mIoU,new_pred))
 		if new_pred >= self.best_pred:
 			is_best = True
