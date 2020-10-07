@@ -93,7 +93,7 @@ def test(args,classes):
 	if not os.path.exists(outdir):
 		os.makedirs(outdir)
 	
-	outdir = os.path.join(args.save_folder,'edge')
+	outdir = os.path.join(outdir,'edge')
 	if not os.path.exists(outdir):
 		os.makedirs(outdir)
 	# data transforms

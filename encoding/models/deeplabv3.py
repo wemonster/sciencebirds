@@ -113,7 +113,6 @@ class DeepLabV3(BaseNet):
 		_, _, h, w = x.size()
 		c0,c1, c2, c3, c4 = self.base_forward(x)
 
-
 		low_level_features1 = self.low_level_1(c0)
 		low_level_features2 = self.low_level_2(c1)
 
@@ -123,7 +122,7 @@ class DeepLabV3(BaseNet):
 
 		concated = torch.cat((low_level_features2,x),1)
 
-		feature_vectors = F.interpolate(concated,(h,w),**self._up_kwargs)
+		# feature_vectors = F.interpolate(concated,(h,w),**self._up_kwargs)
 		concated = self.concat_conv_1(concated)
 
 		x = F.interpolate(concated, (h//2,w//2), **self._up_kwargs)
@@ -136,7 +135,7 @@ class DeepLabV3(BaseNet):
 		x = F.interpolate(concated,(h,w),**self._up_kwargs)
 		edge = self.edge_conv(object_edge)
 		objectness_score = self.objectness(object_edge) #whether the pixel is fg/bg, batch_size x 2 x H x W
-		return x,objectness_score,feature_vectors,edge
+		return x,objectness_score,object_edge,edge
 
 class DeepLabV3Head(nn.Module):
 	def __init__(self, in_channels, out_channels, norm_layer, up_kwargs, atrous_rates=(12, 24, 36)):
