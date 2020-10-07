@@ -93,11 +93,16 @@ class DeepLabV3(BaseNet):
 
 		concated = torch.cat((low_level_features1,x),1)
 
+		object_edge = F.interpolate(concated,(h,w),**self._up_kwargs)
+
 		concated = self.concat_conv_2(concated)
 
+
+
+
 		x = F.interpolate(concated,(h,w), **self._up_kwargs)
-		edge = self.edge_conv(x)
-		objectness_score = self.objectness(x) #batch_size x 2 x H x W
+		edge = self.edge_conv(object_edge)
+		objectness_score = self.objectness(object_edge) #batch_size x 2 x H x W
 
 		# rois,rpn_loss_cls,rpn_loss_box = self._SSD(feature_maps,im_info,gt_boxes,num_boxes)
 		return objectness_score,x,edge
@@ -123,11 +128,12 @@ class DeepLabV3(BaseNet):
 
 		concated = torch.cat((low_level_features1,x),1)
 
+		object_edge = F.interpolate(concated,(h,w),**self._up_kwargs)
 		concated = self.concat_conv_2(concated)
 
 		x = F.interpolate(concated,(h,w),**self._up_kwargs)
-		edge = self.edge_conv(x)
-		objectness_score = self.objectness(x) #whether the pixel is fg/bg, batch_size x 2 x H x W
+		edge = self.edge_conv(object_edge)
+		objectness_score = self.objectness(object_edge) #whether the pixel is fg/bg, batch_size x 2 x H x W
 		return x,objectness_score,feature_vectors,edge
 
 class DeepLabV3Head(nn.Module):

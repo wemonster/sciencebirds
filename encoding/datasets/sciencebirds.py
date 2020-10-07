@@ -74,7 +74,7 @@ class SciencebirdSeg(BaseDataset):
 			labels = Image.open(os.path.join(self.unknowns_files,str(img_id)+'.png'))
 		objectness = np.array(labels)
 		objectness[objectness > 0] = 1
-		print (objectness.shape,labels.size,edge.size)
+		# print (objectness.shape,labels.size,edge.size)
 
 		if self.transform is not None:
 			img = self.transform(img)
