@@ -128,7 +128,7 @@ class OpenSegNet(nn.Module):
  
 			x = self.model.pretrained.relu(x) #2x
 			draw_features(8, 8, x.cpu().numpy(), "{}/f3_relu.png".format(savepath))
- 			c0 = x
+			c0 = x
 			x = self.model.pretrained.maxpool(x) #4x
 			draw_features(8, 8, x.cpu().numpy(), "{}/f4_maxpool.png".format(savepath))
  
