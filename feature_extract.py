@@ -163,22 +163,22 @@ class OpenSegNet(nn.Module):
 			concated = self.model.concat_conv_1(concated) #4x (128,120,210)
 			draw_features(16,8, concated.cpu().numpy(), "{}/result4x".format(savepath))
 
-			x = F.interpolate(concated, (h//2,w//2), **self._up_kwargs) #2x (128,240,420)
-			draw_features(16,8, x.cpu().numpy(), "{}/result2x".format(savepath))
+			#x = F.interpolate(concated, (h//2,w//2)) #2x (128,240,420)
+			#draw_features(16,8, x.cpu().numpy(), "{}/result2x".format(savepath))
 
-			concated = torch.cat((low_level_features1,x),1) #(160,240,420)
-			draw_features(16,10,concated.cpu().numpy(), "{}/concat2x.png".format(savepath))
+			#concated = torch.cat((low_level_features1,x),1) #(160,240,420)
+			#draw_features(16,10,concated.cpu().numpy(), "{}/concat2x.png".format(savepath))
 
-			object_edge = F.interpolate(concated,(h,w),**self._up_kwargs) #(160,480,840)
-			draw_features(16,10,concated.cpu().numpy(), "{}/feature.png".format(savepath))
+			object_edge = F.interpolate(concated,(h,w)) #(160,480,840)
+			draw_features(16,8,concated.cpu().numpy(), "{}/feature.png".format(savepath))
 
-			x = self.concat_conv_2(object_edge) # (12,480,840)
+			x = self.model.concat_conv_2(object_edge) # (12,480,840)
 			draw_features(3,4, x.cpu().numpy(), "{}/categories.png".format(savepath))
 
-			edge = self.edge_conv(object_edge) #(2,480,840)
+			edge = self.model.edge_conv(object_edge) #(2,480,840)
 			draw_features(1,2, edge.cpu().numpy(), "{}/edge.png".format(savepath))
 
-			objectness_score = self.objectness(object_edge) #(2,480,840)
+			objectness_score = self.model.objectness(object_edge) #(2,480,840)
 			draw_features(1,2, objectness_score.cpu().numpy(), "{}/objectness.png".format(savepath))
 
 			
