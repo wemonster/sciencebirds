@@ -15,27 +15,30 @@ cv2.imwrite("edges.png",dilated_edge)
 masks = cv2.imread("../testresults/0/1.png",0)
 masks[dilated_edge==255] = 0
 cv2.imwrite("cutted.png",masks)
-# outdir = "../sciencebirdoutputs/0"
-# image_folder = "../testresults/0/masks"
-# img_files = os.listdir(image_folder)
-# for img in img_files:
-# 	masks = cv2.imread(os.path.join(image_folder,img),0)
-# 	categories = np.unique(masks)
-# 	colored = cv2.imread(os.path.join('dataset/rawdata/groundtruthimage',img))
-# 	edge = cv2.Canny(colored,0,255)
-# 	for cat in categories:
-# 		if cat == 0:
-# 			continue
-# 		to_ret = np.zeros((480,840)).astype(np.uint8)
-# 		to_ret[(masks==cat)] = 255
-# 		to_ret[(edge==255)] = 0
-# 		labels,num = skimage.measure.label(to_ret,connectivity=2,return_num=True)
-# 		props = regionprops(labels)
-# 		for prop in props:
-# 			xmin,ymin,xmax,ymax = prop['bbox']
-# 			cv2.rectangle(colored,(ymin,xmin),(ymax,xmax),(0,0,255),1)
+outdir = "../sciencebirdoutputs/0"
+image_folder = "../testresults/0"
+img_files = os.listdir(image_folder)
+for img in img_files:
+	if img.endswith('png'):
+		masks = cv2.imread(os.path.join(image_folder,img),0)
+		categories = np.unique(masks)
+		colored = cv2.imread(os.path.join('dataset/rawdata/groundtruthimage',img))
+		edge = cv2.Canny(colored,0,255)
+		for cat in categories:
+			if cat == 0:
+				continue
+			to_ret = np.zeros((480,840)).astype(np.uint8)
+			to_ret[(masks==cat)] = 255
+			to_ret[(edge==255)] = 0
+			labels,num = skimage.measure.label(to_ret,connectivity=2,return_num=True)
+			props = regionprops(labels)
+			for prop in props:
+				xmin,ymin,xmax,ymax = prop['bbox']
+				if (xmax-xmin) * (ymax-ymin) < 30:
+					continue
+				cv2.rectangle(colored,(ymin,xmin),(ymax,xmax),(0,0,255),1)
 
-# 	cv2.imwrite(os.path.join(outdir,img),colored)
+		cv2.imwrite(os.path.join(outdir,img),colored)
 # props = regionprops(labels)
 # print (type(props))
 # for prop in props:

@@ -128,7 +128,7 @@ class OpenSegNet(nn.Module):
  
 			x = self.model.pretrained.relu(x) #2x
 			draw_features(8, 8, x.cpu().numpy(), "{}/f3_relu.png".format(savepath))
- 
+ 			c0 = x
 			x = self.model.pretrained.maxpool(x) #4x
 			draw_features(8, 8, x.cpu().numpy(), "{}/f4_maxpool.png".format(savepath))
  
@@ -147,21 +147,41 @@ class OpenSegNet(nn.Module):
  
 
 			#decoder
-			low_level_features = self.model.low_level(c1) #4x
-			draw_features(6, 8, low_level_features.cpu().numpy(), "{}/low_level_1.png".format(savepath))
+			low_level_features1 = self.model.low_level_1(c0) #(32,240,420)
+			low_level_features2 = self.model.low_level_2(c1) #(48,120,210)
+			draw_features(6, 8, low_level_features2.cpu().numpy(), "{}/low_level_2.png".format(savepath))
 			
-			x = self.model.head(c4) #8x
+			x = self.model.head(c4) #8x (256,60,105)
 			draw_features(16, 16, x.cpu().numpy(), "{}/aspp_1.png".format(savepath))
-			x = F.interpolate(x,(h//4,w//4)) #4x
+
+			x = F.interpolate(x,(h//4,w//4)) #4x (256,120,210)
 			draw_features(16, 16, x.cpu().numpy(), "{}/interpolate4x.png".format(savepath))
 
-			concated = torch.cat((low_level_features,x),1)
-			draw_features(16,19,concated.cpu().numpy(),"{}/concat1.png".format(savepath))
-			objects = F.interpolate(concated,(h,w))
-			concated = self.model.concat_conv(concated) #4x
-			draw_features(3,4, concated.cpu().numpy(), "{}/result4x".format(savepath))
-			x = F.interpolate(concated, (h,w))
-			draw_features(3,4, x.cpu().numpy(), "{}/result.png".format(savepath))
+			concated = torch.cat((low_level_features2,x),1) #(304,120,210)
+			draw_features(16,19,concated.cpu().numpy(),"{}/concat4x.png".format(savepath))
+
+			concated = self.model.concat_conv_1(concated) #4x (128,120,210)
+			draw_features(16,8, concated.cpu().numpy(), "{}/result4x".format(savepath))
+
+			x = F.interpolate(concated, (h//2,w//2), **self._up_kwargs) #2x (128,240,420)
+			draw_features(16,8, x.cpu().numpy(), "{}/result2x".format(savepath))
+
+			concated = torch.cat((low_level_features1,x),1) #(160,240,420)
+			draw_features(16,10,concated.cpu().numpy(), "{}/concat2x.png".format(savepath))
+
+			object_edge = F.interpolate(concated,(h,w),**self._up_kwargs) #(160,480,840)
+			draw_features(16,10,concated.cpu().numpy(), "{}/feature.png".format(savepath))
+
+			x = self.concat_conv_2(object_edge) # (12,480,840)
+			draw_features(3,4, x.cpu().numpy(), "{}/categories.png".format(savepath))
+
+			edge = self.edge_conv(object_edge) #(2,480,840)
+			draw_features(1,2, edge.cpu().numpy(), "{}/edge.png".format(savepath))
+
+			objectness_score = self.objectness(object_edge) #(2,480,840)
+			draw_features(1,2, objectness_score.cpu().numpy(), "{}/objectness.png".format(savepath))
+
+			
 
 		else :
 			x = self.model.conv1(x)

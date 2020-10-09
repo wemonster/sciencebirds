@@ -42,17 +42,17 @@ class DeepLabV3(BaseNet):
 			nn.Conv2d(160,64,kernel_size=3,stride=1,padding=1,bias=False),
 			norm_layer(64),
 			nn.ReLU(True),
-			nn.Conv2d(64,64,kernel_size=3,stride=1,padding=1,bias=False),
-			norm_layer(64),
-			nn.Conv2d(64,nclass,kernel_size=1,stride=1)
+			nn.Conv2d(64,32,kernel_size=3,stride=1,padding=1,bias=False),
+			norm_layer(32),
+			nn.Conv2d(32,nclass,kernel_size=1,stride=1,padding=1,bias=False)
 			)
 		self.edge_conv = nn.Sequential(
 			nn.Conv2d(160,64,kernel_size=3,stride=1,padding=1,bias=False),
 			norm_layer(64),
 			nn.ReLU(True),
-			#nn.Conv2d(128,64,kernel_size=3,stride=1,padding=1,bias=False),
-			#norm_layer(64),
-			nn.Conv2d(64,2,kernel_size=3,stride=1,padding=1)
+			# nn.Conv2d(128,64,kernel_size=3,stride=1,padding=1,bias=False),
+			# norm_layer(64),
+			nn.Conv2d(64,2,kernel_size=3,stride=1,padding=1,bias=False)
 			)
 
 		self.objectness = nn.Sequential(
@@ -96,13 +96,13 @@ class DeepLabV3(BaseNet):
 		#print (concated.shape)
 		object_edge = F.interpolate(concated,(h,w),**self._up_kwargs)
 
-		#print (object_edge.shape)
-		concated = self.concat_conv_2(concated)
+		# #print (object_edge.shape)
+		# concated = self.concat_conv_2(concated)
 
 
+		# x = F.interpolate(concated,(h,w), **self._up_kwargs)
 
-
-		x = F.interpolate(concated,(h,w), **self._up_kwargs)
+		x = self.concat_conv_2(object_edge)
 		edge = self.edge_conv(object_edge)
 		objectness_score = self.objectness(object_edge) #batch_size x 2 x H x W
 
@@ -130,9 +130,10 @@ class DeepLabV3(BaseNet):
 		concated = torch.cat((low_level_features1,x),1)
 
 		object_edge = F.interpolate(concated,(h,w),**self._up_kwargs)
-		concated = self.concat_conv_2(concated)
+		# concated = self.concat_conv_2(concated)
 
-		x = F.interpolate(concated,(h,w),**self._up_kwargs)
+		# x = F.interpolate(concated,(h,w),**self._up_kwargs)
+		x = self.concat_conv_2(object_edge)
 		edge = self.edge_conv(object_edge)
 		objectness_score = self.objectness(object_edge) #whether the pixel is fg/bg, batch_size x 2 x H x W
 		return x,objectness_score,object_edge,edge
