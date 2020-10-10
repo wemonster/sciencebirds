@@ -39,7 +39,7 @@ class DeepLabV3(BaseNet):
 			)
 
 		self.concat_conv_2 = nn.Sequential(
-			nn.Conv2d(128,64,kernel_size=3,stride=1,padding=1,bias=False),
+			nn.Conv2d(160,64,kernel_size=3,stride=1,padding=1,bias=False),
 			norm_layer(64),
 			nn.ReLU(True),
 			nn.Conv2d(64,32,kernel_size=3,stride=1,padding=1,bias=False),
@@ -47,21 +47,23 @@ class DeepLabV3(BaseNet):
 			nn.Conv2d(32,nclass,kernel_size=1,stride=1)
 			)
 		self.edge_conv = nn.Sequential(
-			nn.Conv2d(128,64,kernel_size=3,stride=1,padding=1,bias=False),
+			nn.Conv2d(160,64,kernel_size=3,stride=1,padding=1,bias=False),
 			norm_layer(64),
 			nn.ReLU(True),
-			nn.Conv2d(64,64,kernel_size=3,stride=1,padding=1,bias=False),
-			norm_layer(64),
-			nn.Conv2d(64,2,kernel_size=3,stride=1,padding=1,bias=False)
+			# nn.Conv2d(64,64,kernel_size=3,stride=1,padding=1,bias=False),
+			# norm_layer(64),
+			# nn.Conv2d(64,2,kernel_size=3,stride=1,padding=1,bias=False)
+			nn.Conv2d(64,2,kernel_size=1,stride=1)
 			)
 
 		self.objectness = nn.Sequential(
-			nn.Conv2d(128,64,kernel_size=3,stride=1,padding=1,bias=False),
+			nn.Conv2d(160,64,kernel_size=3,stride=1,padding=1,bias=False),
 			norm_layer(64),
 			nn.ReLU(True),
-			nn.Conv2d(64,64,kernel_size=3,stride=1,padding=1,bias=False),
-			norm_layer(64),
-			nn.Conv2d(64,2,kernel_size=3,stride=1,padding=1,bias=False)
+			# nn.Conv2d(64,64,kernel_size=3,stride=1,padding=1,bias=False),
+			# norm_layer(64),
+			# nn.Conv2d(64,2,kernel_size=3,stride=1,padding=1,bias=False)
+			nn.Conv2d(64,2,kernel_size=1,stride=1)
 			) #foreground or background
 		if aux:
 			self.auxlayer = FCNHead(1024, nclass, norm_layer)
@@ -89,14 +91,14 @@ class DeepLabV3(BaseNet):
 
 		concated = self.concat_conv_1(concated)
 		#print (concated.shape)
-		# x = F.interpolate(concated, (h//2,w//2), **self._up_kwargs)
+		x = F.interpolate(concated, (h//2,w//2), **self._up_kwargs)
 
-		object_edge = F.interpolate(concated,(h,w),**self._up_kwargs)
-		# concated = torch.cat((low_level_features1,x),1)
+		
+		concated = torch.cat((low_level_features1,x),1)
 
 		#print (concated.shape)
 		
-
+		object_edge = F.interpolate(concated,(h,w),**self._up_kwargs)
 		# #print (object_edge.shape)
 		# concated = self.concat_conv_2(concated)
 
@@ -126,9 +128,9 @@ class DeepLabV3(BaseNet):
 		# feature_vectors = F.interpolate(concated,(h,w),**self._up_kwargs)
 		concated = self.concat_conv_1(concated)
 
-		# x = F.interpolate(concated, (h//2,w//2), **self._up_kwargs)
+		x = F.interpolate(concated, (h//2,w//2), **self._up_kwargs)
 
-		# concated = torch.cat((low_level_features1,x),1)
+		concated = torch.cat((low_level_features1,x),1)
 
 		object_edge = F.interpolate(concated,(h,w),**self._up_kwargs)
 		# concated = self.concat_conv_2(concated)
