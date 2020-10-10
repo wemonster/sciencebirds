@@ -93,9 +93,17 @@ def test(args,classes):
 	if not os.path.exists(outdir):
 		os.makedirs(outdir)
 	
-#	outdir = os.path.join(outdir,'edge')
-#	if not os.path.exists(outdir):
-#		os.makedirs(outdir)
+	edge_outdir = os.path.join(outdir,'edge')
+	if not os.path.exists(edge_outdir):
+		os.makedirs(edge_outdir)
+
+	objectness_outdir = os.path.join(outdir,'objectness')
+	if not os.path.exists(objectness_outdir):
+		os.makedirs(objectness_outdir)
+
+	mask_outdir = os.path.join(outdir,'mask')
+	if not os.path.exists(mask_outdir):
+		os.makedirs(mask_outdir)
 	# data transforms
 	input_transform = transform.Compose([
 		transform.ToTensor(),
@@ -175,7 +183,7 @@ def test(args,classes):
 				#thresholding here
 				predict = predict * (1-edge_pred)
 				toc = time.time()
-				#mask = utils.get_mask_pallete(predict, args.dataset)
+				mask = utils.get_mask_pallete(predict, args.dataset)
 				labels = labels.squeeze().cuda()
 				pixAcc,mIoU,correct_classified = utils.batch_pix_accuracy(predict.data, labels)
 				#thresholding(gaussians,category,threshold,features,correct_classified,predict)
@@ -191,9 +199,13 @@ def test(args,classes):
 				#cv2.imwrite(os.path.join("../experiments/results/truth0",outname),image[0].data.cpu().numpy().transpose(1,2,0))
 				for j in range(8):
 					outname = str(ids[i*8+j]) + '.png'
-					mask = predict[j].squeeze().cpu().numpy()
-					#mask = edge_pred[j].squeeze().cpu().numpy()*255
-					cv2.imwrite(os.path.join(outdir, outname),mask)
+					cv2.imwrite(os.path.join(mask_outdir,outname),mask[j])
+
+					objectness_output = objectness_pred[j].squeeze().cpu().numpy() * 255
+					cv2.imwrite(os.path.join(objectness_outdir,outname),objectness_output)
+
+					edge_output = edge_pred[j].squeeze().cpu().numpy()*255
+					cv2.imwrite(os.path.join(edge_outdir, outname),edge_output)
 		print ("Overall pixel accuracy:{:.4f},Overall mIoU:{:.4f}".format(pixAcc,mIoU))
 	test_log.close()
 
