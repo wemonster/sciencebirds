@@ -176,6 +176,7 @@ def test(args,classes):
 				tic = time.time()
 				outputs,objectness,features,edge_label = evaluator.val_forward(image)
 				predict = torch.argmax(outputs,1)+1 #batch_size x 1 x H x W
+				print (torch.unique(predict))
 				objectness_pred = torch.argmax(objectness,dim=1) #batch_size x 1 x H x W
 				predict = predict * objectness_pred
 				print (torch.unique(predict))

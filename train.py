@@ -100,17 +100,17 @@ class Trainer():
 									   se_loss = args.se_loss, #norm_layer = SyncBatchNorm,
 									   base_size = args.base_size, crop_size = args.crop_size)
 
-		# print(model)
+		print(model.parameters())
 		# for (name,w) in model.named_parameters():
 		# 	print (name,w.requires_grad)
 		# optimizer using different LR
-		params_list = [{'params': model.pretrained.parameters(), 'lr': args.lr}]
-		params_list.append({'params':model.low_level_1.parameters(),'lr':args.lr})
-		params_list.append({'params':model.low_level_2.parameters(),'lr':args.lr})
-		params_list.append({'params':model.concat_conv_1.parameters(),'lr':args.lr})
-		params_list.append({'params':model.concat_conv_2.parameters(),'lr':args.lr})
-		params_list.append({'params':model.objectness.parameters(),'lr':args.lr})
-		params_list.append({'params':model.edge_conv.parameters(),'lr':args.lr})
+		params_list = [{'params': model.parameters(), 'lr': args.lr}]
+		# params_list.append({'params':model.low_level_1.parameters(),'lr':args.lr})
+		# params_list.append({'params':model.low_level_2.parameters(),'lr':args.lr})
+		# params_list.append({'params':model.concat_conv_1.parameters(),'lr':args.lr})
+		# params_list.append({'params':model.concat_conv_2.parameters(),'lr':args.lr})
+		# params_list.append({'params':model.objectness.parameters(),'lr':args.lr})
+		# params_list.append({'params':model.edge_conv.parameters(),'lr':args.lr})
 		# if hasattr(model, 'jpu'):
 		# 	params_list.append({'params': model.jpu.parameters(), 'lr': args.lr*10})
 		if hasattr(model, 'head'): 
@@ -155,7 +155,6 @@ class Trainer():
 											args.epochs, len(self.trainloader))
 
 		self.correct_features = torch.tensor([])
-		self.corresponding_class = torch.tensor([])
 
 	def training(self, epoch,log_file):
 		train_loss = 0.0
@@ -223,7 +222,7 @@ class Trainer():
 		# Fast test during the training
 		def collect_features(features,position,pred):
 			'''
-			features: batch_size x 304 x H x W
+			features: batch_size x k x H x W (k is number of known class)
 			position: (tuple1,tuple2,tuple3); tuple1 = img_id, tuple2 = x, tuple3 = y
 			
 			return: 304 x (#correctly classified)
@@ -240,14 +239,11 @@ class Trainer():
 				img = img[random_samples]
 				x = x[random_samples]
 				y = y[random_samples]
-				if len(self.corresponding_class) == 0:
-					self.corresponding_class = pred[img,x,y]
-				else:
-					self.corresponding_class = torch.cat((self.corresponding_class,pred[img,x,y]))
+				target = features[img,:,x,y]
 				if len(self.correct_features) == 0:
-					self.correct_features = features[img,:,x,y]
+					self.correct_features = target
 				else:
-					self.correct_features = torch.cat((self.correct_features,features[img,:,x,y]))
+					self.correct_features = torch.cat((self.correct_features,target))
 
 			else:
 				#there is only 1 image in the batch
@@ -259,19 +255,16 @@ class Trainer():
 				random_samples = random.sample(list(range(number_matched)),min(number_matched,chosen))
 				x = x[random_samples]
 				y = y[random_samples]
-				if len(self.corresponding_class) == 0:
-					self.corresponding_class = pred[x,y]
-				else:
-					self.corresponding_class = torch.cat((self.corresponding_class,pred[x,y]))
+				target = features[:,x,y]
 				if len(self.correct_features) == 0:
-					self.correct_features = features[:,x,y]
+					self.correct_features = target
 				else:
-					self.correct_features = torch.cat((self.correct_features,features[:,x,y]))
+					self.correct_features = torch.cat((self.correct_features,target))
 
 
 
 		def eval_batch(model, image, target,object_truth,edge):
-			labeled,objectness,features,edge_label = model.val_forward(image)
+			labeled,objectness,edge_label = model.val_forward(image)
 			objectness_pred = torch.argmax(objectness,dim=1) #batch_size x 1 x H x W
 			object_truth = object_truth.squeeze().cuda()
 			pred = torch.argmax(labeled,dim=1)+1 #batch_size x 1 x H x W
@@ -282,12 +275,12 @@ class Trainer():
 			edge = edge.squeeze().cuda()
 
 			edge_correct,edge_labeled,edge_correct_classified = utils.batch_pix_accuracy(edge_pred.data,edge)
-			correct, labeled,correct_classified = utils.batch_pix_accuracy(pred.data, target)
+			correct, cat_labeled,correct_classified = utils.batch_pix_accuracy(pred.data, target)
 
 			correct_object,labeled_object,correct_classified_object = utils.batch_pix_accuracy(objectness_pred.data,object_truth)
-			collect_features(features,correct_classified,pred)
+			collect_features(labeled,correct_classified,pred)
 			inter, union = utils.batch_intersection_union(pred.data, target, self.nclass)
-			return correct, labeled, inter, union, correct_object, labeled_object,edge_correct,edge_labeled
+			return correct, cat_labeled, inter, union, correct_object, labeled_object,edge_correct,edge_labeled
 
 		
 
@@ -336,8 +329,8 @@ class Trainer():
 		(category,occurrance) = np.unique(occurrance,return_counts=True)
 		class_mean = {}
 		class_var = {}
-		if not os.path.exists("../models/gaussian"):
-			os.mkdir("../models/gaussian")
+		if not os.path.exists("../models/weibull"):
+			os.mkdir("../models/weibull")
 		for i in range(len(self.corresponding_class)):
 			target_category = self.corresponding_class[i]
 			if target_category not in class_mean:
@@ -357,9 +350,12 @@ class Trainer():
 				matched_features = self.correct_features[target_category,:].cpu().numpy().squeeze(axis=1)
 				class_var["cov_{}".format(target_id)] = 1/(len(target_category) - 1) * np.dot(matched_features.T,matched_features)
 
-		torch.save(class_mean,os.path.join("../models/gaussian","mean_{}.pt".format(int(self.ratio*10))))
-		torch.save(class_var,os.path.join("../models/gaussian","var_{}.pt".format(int(self.ratio*10))))
+		torch.save(class_mean,os.path.join("../models/weibull","{}.pt".format(int(self.ratio*10))))
 
+	def build_weibull_model(self):
+		if not os.path.exists("../models/weibull"):
+			os.mkdir("../models/weibull")
+		torch.save(self.correct_features,os.path.join("../models/weibull","{}.pt".format(int(self.ratio*10))))
 
 
 
@@ -391,9 +387,9 @@ if __name__ == "__main__":
 		print('Starting Epoch:', trainer.args.start_epoch)
 		print('Total Epoches:', trainer.args.epochs)
 		for epoch in range(trainer.args.start_epoch, trainer.args.epochs):
-		 	trainer.training(epoch,train_log_file)
+		 	# trainer.training(epoch,train_log_file)
 		 	if not trainer.args.no_val:
 		 		trainer.validation(epoch,val_log_file)
-		trainer.build_gaussian_model()
+		trainer.build_weibull_model()
 		train_log_file.close()
 		val_log_file.close()

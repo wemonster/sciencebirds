@@ -35,7 +35,6 @@ class DeepLabV3(BaseNet):
 			nn.Conv2d(128,128,kernel_size=3,stride=1,padding=1,bias=False),
 			norm_layer(128),
 			nn.ReLU(True),
-			
 			)
 
 		self.concat_conv_2 = nn.Sequential(
@@ -46,6 +45,14 @@ class DeepLabV3(BaseNet):
 			norm_layer(32),
 			nn.Conv2d(32,nclass,kernel_size=1,stride=1)
 			)
+
+		# self.feature_penultimate = nn.Sequential(
+		# 	nn.Conv2d(160,32,kernel_size=3,stride=1,padding=1,bias=False),
+		# 	norm_layer(32),
+		# 	nn.ReLU(True)
+		# 	)
+
+		# self.category = nn.Conv2d(32,nclass,kernel_size=1,stride=1)
 		self.edge_conv = nn.Sequential(
 			nn.Conv2d(160,64,kernel_size=3,stride=1,padding=1,bias=False),
 			norm_layer(64),
@@ -65,8 +72,6 @@ class DeepLabV3(BaseNet):
 			# nn.Conv2d(64,2,kernel_size=3,stride=1,padding=1,bias=False)
 			nn.Conv2d(64,2,kernel_size=1,stride=1)
 			) #foreground or background
-		if aux:
-			self.auxlayer = FCNHead(1024, nclass, norm_layer)
 
 	def forward(self, x,im_info,gt_boxes,num_boxes):
 		#Space for decoder
@@ -105,6 +110,8 @@ class DeepLabV3(BaseNet):
 
 		# x = F.interpolate(concated,(h,w), **self._up_kwargs)
 
+		# feature_map = self.feature_penultimate(object_edge)
+		# x = self.category(feature_map)
 		x = self.concat_conv_2(object_edge)
 		edge = self.edge_conv(object_edge)
 		objectness_score = self.objectness(object_edge) #batch_size x 2 x H x W
@@ -137,9 +144,11 @@ class DeepLabV3(BaseNet):
 
 		# x = F.interpolate(concated,(h,w),**self._up_kwargs)
 		x = self.concat_conv_2(object_edge)
+		# feature_map = self.feature_penultimate(object_edge)
+		# x = self.category(feature_map)
 		edge = self.edge_conv(object_edge)
 		objectness_score = self.objectness(object_edge) #whether the pixel is fg/bg, batch_size x 2 x H x W
-		return x,objectness_score,object_edge,edge
+		return x,objectness_score,edge
 
 class DeepLabV3Head(nn.Module):
 	def __init__(self, in_channels, out_channels, norm_layer, up_kwargs, atrous_rates=(12, 24, 36)):
