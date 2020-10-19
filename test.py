@@ -61,10 +61,11 @@ def build_weibull(features,ng=10):
 		weibulls[i+1] = weibull
 	return weibulls,feature_means
 
-def thresholding(weibulls,feature_means,test_data,eps):
+def thresholding(weibulls,feature_means,test_data,objectness,eps):
 	print (test_data.size())
+	objects = torch.nonzero(objectness,as_tuple=True)
+	test_data = test_data[objects]
 	dist = torch.abs(feature_means - test_data)
-
 	weibull_cdf = torch.Tensor([weibulls[i+1].cdf(dist[i]) for i in range(feature_means.size(1))])
 	return weibull_cdf
 
@@ -139,7 +140,7 @@ def test(args,classes):
 	#var_weights = torch.load("../models/gaussian/var_{}.pt".format(int(args.ratio*10)))
 	#gaussians = build_gaussian(mean_weights,var_weights)
 	feature_data = torch.load("../models/weibull/{}.pt".format(int(args.ratio*10)))
-	weibulls = build_weibull(feature_data)
+	weibulls,feature_means = build_weibull(feature_data)
 	category = Category(classes,True)
 	threshold = 0.5
 	for i, (image,labels,objectness,edge) in enumerate(tbar):
@@ -160,8 +161,7 @@ def test(args,classes):
 			with torch.no_grad():
 				tic = time.time()
 				outputs,objectness,edge_label = evaluator.val_forward(image)
-				weibull_cdfs = thresholding(weibulls,feature_data,outputs,threshold)
-				print (weibull_cdfs)
+				
 				predict = torch.argmax(outputs,1)+1 #batch_size x 1 x H x W
 				print (torch.unique(predict))
 				objectness_pred = torch.argmax(objectness,dim=1) #batch_size x 1 x H x W
@@ -169,6 +169,8 @@ def test(args,classes):
 				print (torch.unique(predict))
 				edge_pred = torch.argmax(edge_label,dim=1)
 				#thresholding here
+				weibull_cdfs = thresholding(weibulls,feature_means,outputs,objectness_pred,threshold)
+				print (weibull_cdfs)
 				predict = predict * (1-edge_pred)
 				toc = time.time()
 				mask = utils.get_mask_pallete(predict, args.dataset)
