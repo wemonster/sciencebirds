@@ -104,13 +104,13 @@ class Trainer():
 		# for (name,w) in model.named_parameters():
 		# 	print (name,w.requires_grad)
 		# optimizer using different LR
-		params_list = [{'params': model.parameters(), 'lr': args.lr}]
-		# params_list.append({'params':model.low_level_1.parameters(),'lr':args.lr})
-		# params_list.append({'params':model.low_level_2.parameters(),'lr':args.lr})
-		# params_list.append({'params':model.concat_conv_1.parameters(),'lr':args.lr})
-		# params_list.append({'params':model.concat_conv_2.parameters(),'lr':args.lr})
-		# params_list.append({'params':model.objectness.parameters(),'lr':args.lr})
-		# params_list.append({'params':model.edge_conv.parameters(),'lr':args.lr})
+		params_list = [{'params': model.pretrained.parameters(), 'lr': args.lr}]
+		params_list.append({'params':model.low_level_1.parameters(),'lr':args.lr})
+		params_list.append({'params':model.low_level_2.parameters(),'lr':args.lr})
+		params_list.append({'params':model.concat_conv_1.parameters(),'lr':args.lr})
+		params_list.append({'params':model.concat_conv_2.parameters(),'lr':args.lr})
+		params_list.append({'params':model.objectness.parameters(),'lr':args.lr})
+		params_list.append({'params':model.edge_conv.parameters(),'lr':args.lr})
 		# if hasattr(model, 'jpu'):
 		# 	params_list.append({'params': model.jpu.parameters(), 'lr': args.lr*10})
 		if hasattr(model, 'head'): 
@@ -279,6 +279,7 @@ class Trainer():
 
 			correct_object,labeled_object,correct_classified_object = utils.batch_pix_accuracy(objectness_pred.data,object_truth)
 			collect_features(labeled,correct_classified,pred)
+			self.build_weibull_model()
 			inter, union = utils.batch_intersection_union(pred.data, target, self.nclass)
 			return correct, cat_labeled, inter, union, correct_object, labeled_object,edge_correct,edge_labeled
 

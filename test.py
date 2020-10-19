@@ -174,7 +174,8 @@ def test(args,classes):
 		else:
 			with torch.no_grad():
 				tic = time.time()
-				outputs,objectness,features,edge_label = evaluator.val_forward(image)
+				outputs,objectness,edge_label = evaluator.val_forward(image)
+				features = outputs
 				predict = torch.argmax(outputs,1)+1 #batch_size x 1 x H x W
 				print (torch.unique(predict))
 				objectness_pred = torch.argmax(objectness,dim=1) #batch_size x 1 x H x W
@@ -200,13 +201,14 @@ def test(args,classes):
 				#cv2.imwrite(os.path.join("../experiments/results/truth0",outname),image[0].data.cpu().numpy().transpose(1,2,0))
 				for j in range(8):
 					outname = str(ids[i*8+j]) + '.png'
-					cv2.imwrite(os.path.join(mask_outdir,outname),mask[j])
+					#cv2.imwrite(os.path.join(mask_outdir,outname),mask[j])
+
 
 					objectness_output = objectness_pred[j].squeeze().cpu().numpy() * 255
-					cv2.imwrite(os.path.join(objectness_outdir,outname),objectness_output)
+					#cv2.imwrite(os.path.join(objectness_outdir,outname),objectness_output)
 
 					edge_output = edge_pred[j].squeeze().cpu().numpy()*255
-					cv2.imwrite(os.path.join(edge_outdir, outname),edge_output)
+					#cv2.imwrite(os.path.join(edge_outdir, outname),edge_output)
 		print ("Overall pixel accuracy:{:.4f},Overall mIoU:{:.4f}".format(pixAcc,mIoU))
 	test_log.close()
 
