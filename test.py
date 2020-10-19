@@ -53,15 +53,18 @@ def build_weibull(features,ng=10):
 	features: num_correct_samples x k
 	'''
 	weibulls = {}
-	feature_means = torch.sum(features,dim=1) / features.size(0)
+	feature_means = torch.sum(features,dim=0) / features.size(0)
+	print (features.size(),feature_means.size())
 	for i in range(features.size(1)):
 		weibull = libmr.MR()
-		weibull.fitHigh(torch.abs(features[:,i] - feature_means[:,i]),ng)
+		weibull.fit_high(torch.abs(features[:,i] - feature_means[i]),ng)
 		weibulls[i+1] = weibull
 	return weibulls,feature_means
 
 def thresholding(weibulls,feature_means,test_data,eps):
+	print (test_data.size())
 	dist = torch.abs(feature_means - test_data)
+
 	weibull_cdf = torch.Tensor([weibulls[i+1].cdf(dist[i]) for i in range(feature_means.size(1))])
 	return weibull_cdf
 
