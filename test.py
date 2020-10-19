@@ -18,6 +18,7 @@ from torch.utils import data
 # from scipy.stats import multivariate_normal
 from torch.distributions import MultivariateNormal
 
+import libmr
 
 from encoding.nn import BatchNorm
 from encoding.datasets import get_segmentation_dataset, test_batchify_fn
@@ -47,44 +48,23 @@ def build_gaussian(mean_weights,var_weights):
 		gaussians[category] = MultivariateNormal(val.cuda(),var)
 	return gaussians
 
-def thresholding(gaussians,category,threshold,features,position,pred):
+def build_weibull(features,ng=10):
 	'''
-	features: batch_size x 304 x H x W
-	position: (tuple1,tuple2,tuple3); tuple1 = img_id, tuple2 = x, tuple3 = y
-	pred: batch_size x H x W
-	return: 304 x (#correctly classified)
+	features: num_correct_samples x k
 	'''
-	if len(position) == 3:
+	weibulls = {}
+	feature_means = torch.sum(features,dim=1) / features.size(0)
+	for i in range(features.size(1)):
+		weibull = libmr.MR()
+		weibull.fitHigh(torch.abs(features[:,i] - feature_means[:,i]),ng)
+		weibulls[i+1] = weibull
+	return weibulls,feature_means
 
-		(category,occurrance) = np.unique(pred.cpu().numpy(),return_counts=True)
-		print (category)
-		for i in category[1:]:
-			matched = np.nonzero(pred==i) #matched x 3 (imgid,x,y)
-			img = matched[:,0]
-			x = matched[:,1]
-			y = matched[:,2]
-			matched_features = features[img,:,x,y] #matched x 304
-			print (matched_features.size())
-			prob = 1 - gaussians[i].cdf(matched_features[:2]) #matched x 1
-			print (prob)
-			# pred[prob<threshold] = category.gameObjectType['UNKNOWN']
+def thresholding(weibulls,feature_means,test_data,eps):
+	dist = torch.abs(feature_means - test_data)
+	weibull_cdf = torch.Tensor([weibulls[i+1].cdf(dist[i]) for i in range(feature_means.size(1))])
+	return weibull_cdf
 
-	# 	gaussian = gaussians[category]
-	# 	prob = 1 - gaussian.cdf(features[img,:,x,y])
-	# 	if len(self.corresponding_class) == 0:
-	# 		self.corresponding_class = pred[img,x,y]
-	# 	else:
-	# 		self.corresponding_class = torch.cat((self.corresponding_class,pred[img,x,y]))
-	# 	if len(self.correct_features) == 0:
-	# 		self.correct_features = features[img,:,x,y]
-	# 	else:
-	# 		self.correct_features = torch.cat((self.correct_features,features[img,:,x,y]))
-
-	# else:
-	# 	#there is only 1 image in the batch
-	# 	x = position[0]
-	# 	y = position[1]
-		# random sampling for 100 samples during each validation
 
 def test(args,classes):
 	# output folder
@@ -155,6 +135,8 @@ def test(args,classes):
 	#mean_weights = torch.load("../models/gaussian/mean_{}.pt".format(int(args.ratio*10)))
 	#var_weights = torch.load("../models/gaussian/var_{}.pt".format(int(args.ratio*10)))
 	#gaussians = build_gaussian(mean_weights,var_weights)
+	feature_data = torch.load("../models/weibull/{}.pt".format(int(args.ratio*10)))
+	weibulls = build_weibull(feature_data)
 	category = Category(classes,True)
 	threshold = 0.5
 	for i, (image,labels,objectness,edge) in enumerate(tbar):
@@ -175,7 +157,8 @@ def test(args,classes):
 			with torch.no_grad():
 				tic = time.time()
 				outputs,objectness,edge_label = evaluator.val_forward(image)
-				features = outputs
+				weibull_cdfs = thresholding(weibulls,feature_data,outputs,threshold)
+				print (weibull_cdfs)
 				predict = torch.argmax(outputs,1)+1 #batch_size x 1 x H x W
 				print (torch.unique(predict))
 				objectness_pred = torch.argmax(objectness,dim=1) #batch_size x 1 x H x W
@@ -201,14 +184,13 @@ def test(args,classes):
 				#cv2.imwrite(os.path.join("../experiments/results/truth0",outname),image[0].data.cpu().numpy().transpose(1,2,0))
 				for j in range(8):
 					outname = str(ids[i*8+j]) + '.png'
-					#cv2.imwrite(os.path.join(mask_outdir,outname),mask[j])
-
+					cv2.imwrite(os.path.join(mask_outdir,outname),mask[j])
 
 					objectness_output = objectness_pred[j].squeeze().cpu().numpy() * 255
-					#cv2.imwrite(os.path.join(objectness_outdir,outname),objectness_output)
+					cv2.imwrite(os.path.join(objectness_outdir,outname),objectness_output)
 
 					edge_output = edge_pred[j].squeeze().cpu().numpy()*255
-					#cv2.imwrite(os.path.join(edge_outdir, outname),edge_output)
+					cv2.imwrite(os.path.join(edge_outdir, outname),edge_output)
 		print ("Overall pixel accuracy:{:.4f},Overall mIoU:{:.4f}".format(pixAcc,mIoU))
 	test_log.close()
 
