@@ -62,8 +62,8 @@ class Trainer():
 		data_kwargs = {'transform': input_transform, 'target_transform':input_transform,
 						'label_transform':label_transform}
 		#get roidb info
-		train_imdb,train_roidb = combined_roidb('train',self.categories)
-		val_imdb,val_roidb = combined_roidb('val',self.categories)
+		#train_imdb,train_roidb = combined_roidb('train',self.categories)
+		#val_imdb,val_roidb = combined_roidb('val',self.categories)
 
 		#get image info
 		trainset = get_segmentation_dataset(args.dataset,self.ratio,args.size, split=args.train_split, mode='train',
@@ -379,7 +379,7 @@ if __name__ == "__main__":
 	root = "logs/{}".format(args.size)
 	if not os.path.exists(root):
 		os.mkdir(root)
-	for i in range(1):
+	for i in range(3,6):
 		id_info = Category(class_info[i][1])
 		trainer = Trainer(class_info[i],id_info,args)
 		ratio = class_info[i][0]
@@ -388,7 +388,7 @@ if __name__ == "__main__":
 		print('Starting Epoch:', trainer.args.start_epoch)
 		print('Total Epoches:', trainer.args.epochs)
 		for epoch in range(trainer.args.start_epoch, trainer.args.epochs):
-		 	# trainer.training(epoch,train_log_file)
+		 	trainer.training(epoch,train_log_file)
 		 	if not trainer.args.no_val:
 		 		trainer.validation(epoch,val_log_file)
 		trainer.build_weibull_model()
