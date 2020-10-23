@@ -64,26 +64,28 @@ def build_weibull(features,ng=10):
 def thresholding(weibulls,feature_means,test_data,objectness,eps):
 	
 	target_class = torch.argmax(test_data,dim=1)
-	print (target_class.size())
-	print (test_data.size())
+	#print (target_class.size())
+	#print (test_data.size())
 	objects = torch.nonzero(objectness,as_tuple=True)
-	print (objects)
+	#print (objects)
 	test_data = test_data[objects[0],:,objects[1],objects[2]]
-	print (test_data.size())
+	#print (test_data.size())
 	dist = torch.abs(feature_means - test_data)
 	#target_class = torch.argmax(test_data,dim=1)[objects[0],:,objects[1],objects[2]]
 	target_class = target_class[objects]
-	print (target_class.size())
-	print (dist.size())
-	print (weibulls.keys())
-	dist = dist[:100,target_class[:100]]
+	#print (target_class.size())
+	#print (dist.size())
+	#print (weibulls.keys())
+	#print (target_class[:100])
+	#print (dist[:100,:].size())
+	dist = dist[:100,:].gather(0,target_class[:100].unsqueeze(dim=1))
 	#weibull_cdf = torch.Tensor([weibulls[i+1].cdf(dist[i]) for i in range(feature_means.size(1))])
 	#print (weibulls[7],dist[6])
-	print (dist.size())
+	#print (dist.size())
 	#print ((target_class[0]+1).item())
 	#print (weibulls[(target_class[0]+1).item()])
 	#print (dist[0])
-	
+	print (dist)
 	weibull_cdf = torch.Tensor([weibulls[(target_class[k]+1).item()].cdf(dist[k]) for k in range(100)])
 	return weibull_cdf
 
