@@ -48,7 +48,7 @@ def build_gaussian(mean_weights,var_weights):
 		gaussians[category] = MultivariateNormal(val.cuda(),var)
 	return gaussians
 
-def build_weibull(features,ng=10):
+def build_weibull(features,ng=50):
 	'''
 	features: num_correct_samples x k
 	'''
@@ -92,8 +92,15 @@ def thresholding(weibulls,feature_means,test_data,objectness,eps):
 	#print (dist[0])
 	print (dist)
 	weibull_cdf = torch.Tensor([weibulls[(target_class[k]+1).item()].cdf(dist[k]) for k in range(dist.size(0))])
-	outliers = (weibull_cdf > eps).nonzero()	
-	return weibull_cdf,outliers
+	outliers = (weibull_cdf > eps).nonzero().squeeze()	
+	#print (outliers.size(),objects.size())
+	#outliers = objects[outliers]
+	#objects[0] = objects[0][outliers]
+	#objects[1] = objects[1][outliers]
+	#objects[2] = objects[2][outliers]
+	print (objects[0].size(),outliers.size())
+	print (objects[0][outliers].size(),objects[1][outliers].size(),objects[2][outliers].size())
+	return weibull_cdf,objects,outliers
 
 
 def test(args,classes):
@@ -189,16 +196,19 @@ def test(args,classes):
 				outputs,objectness,edge_label = evaluator.val_forward(image)
 				
 				predict = torch.argmax(outputs,1)+2 #batch_size x 1 x H x W
-				print (torch.unique(predict))
+				#print (torch.unique(predict))
 				objectness_pred = torch.argmax(objectness,dim=1) #batch_size x 1 x H x W
 				predict = predict * objectness_pred
-				print (torch.unique(predict))
+				#print (torch.unique(predict))
 				edge_pred = torch.argmax(edge_label,dim=1)
 				#thresholding here
-				weibull_cdfs,outliers = thresholding(weibulls,feature_means,outputs,objectness_pred,threshold)
-				print (weibull_cdfs)
-				print (outliers)
-				print (torch.unique(weibull_cdfs))
+				weibull_cdfs,objects,outliers = thresholding(weibulls,feature_means,outputs,objectness_pred,threshold)
+				#print (weibull_cdfs)
+				#print (outliers)
+				#print (outliers.size())
+				#print (torch.unique(weibull_cdfs))
+				predict[objects[0][outliers],objects[1][outliers],objects[2][outliers]] = 1
+				#predict[objects[0][outliers],:,objects[1][outliers],objects[2][outliers]] = 1
 				predict = predict * (1-edge_pred)
 				toc = time.time()
 				mask = utils.get_mask_pallete(predict, args.dataset)
