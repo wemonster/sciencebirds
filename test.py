@@ -211,7 +211,7 @@ def test(args,classes):
 				#predict[objects[0][outliers],:,objects[1][outliers],objects[2][outliers]] = 1
 				predict = predict * (1-edge_pred)
 				toc = time.time()
-				mask = utils.get_mask_pallete(predict, args.dataset)
+				mask = utils.get_mask_pallete(predict, category,args.dataset)
 				labels = labels.squeeze().cuda()
 				pixAcc,mIoU,correct_classified = utils.batch_pix_accuracy(predict.data, labels)
 				#thresholding(gaussians,category,threshold,features,correct_classified,predict)

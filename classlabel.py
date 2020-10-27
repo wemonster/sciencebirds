@@ -23,12 +23,12 @@ class Category:
 			'TNT':[64,128,128],
 			'UNKNOWN':[255,255,255]
 		}
-		for i in range(len(classes)):
+		for i in range(2,len(classes)):
 			self.gameObjectType[classes[i]] = i
 			self.id_to_cat[i] = classes[i]
 		if unknown:
-			self.gameObjectType['UNKNOWN'] = len(classes)+1
-			self.id_to_cat[len(classes)+1] = 'UNKNOWN'
+			self.gameObjectType['UNKNOWN'] = 1
+			self.id_to_cat[1] = 'UNKNOWN'
 
 	@property
 	def ids(self):
@@ -40,3 +40,6 @@ class Category:
 
 	def convert_category_to_class(self,category_id):
 		return self.id_to_cat[category_id]
+
+	# def adjust_label(self):
+		

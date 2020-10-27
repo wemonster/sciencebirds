@@ -11,7 +11,7 @@
 from PIL import Image
 import numpy as np
 
-def get_mask_pallete(npimg, dataset='detail'):
+def get_mask_pallete(npimg, category,dataset='detail'):
 	"""Get image color pallete for visualizing masks"""
 	# recovery boundary
 	# dataset = dataset.lower()
@@ -26,7 +26,7 @@ def get_mask_pallete(npimg, dataset='detail'):
 	# elif dataset in ('pcontext', 'pascal_voc', 'pascal_aug'):
 	# 	out_img.putpalette(vocpallete)
 	# elif dataset == 'sciencebirds':
-	out_img = usepalette(npimg)
+	out_img = usepalette(npimg,category)
 	return out_img
 
 def _get_voc_pallete(num_cls):
@@ -46,23 +46,8 @@ def _get_voc_pallete(num_cls):
 					lab >>= 3
 	return pallete
 
-def usepalette(img):
-	id_to_cat = {
-		0:'BACKGROUND',
-		1:'BLACKBIRD',
-		2:'BLUEBIRD',
-		3:'HILL',
-		4:'ICE',
-		5:'PIG',
-		6:'REDBIRD',
-		7:'STONE',
-		8:'WHITEBIRD',
-		9:'WOOD',
-		10:'YELLOWBIRD',
-		11:'SLING',
-		12:'TNT',
-		13:'UNKNOWN'
-	}
+def usepalette(img,category):
+	id_to_cat = category.id_to_cat
 
 
 	colormap = {
