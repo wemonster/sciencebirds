@@ -78,7 +78,7 @@ def thresholding(weibulls,feature_means,test_data,objectness,eps):
 	#print (weibulls.keys())
 	#print (target_class[:100])
 	#print (dist[:100,:].size())
-	dist = dist[:100,:].gather(0,target_class[:100].unsqueeze(dim=1))
+	dist = dist[:,:].gather(0,target_class[:].unsqueeze(dim=1))
 	#weibull_cdf = torch.Tensor([weibulls[i+1].cdf(dist[i]) for i in range(feature_means.size(1))])
 	#print (weibulls[7],dist[6])
 	#print (dist.size())
@@ -86,7 +86,7 @@ def thresholding(weibulls,feature_means,test_data,objectness,eps):
 	#print (weibulls[(target_class[0]+1).item()])
 	#print (dist[0])
 	print (dist)
-	weibull_cdf = torch.Tensor([weibulls[(target_class[k]+1).item()].cdf(dist[k]) for k in range(100)])
+	weibull_cdf = torch.Tensor([weibulls[(target_class[k]+1).item()].cdf(dist[k]) for k in range(dist.size(0))])
 	return weibull_cdf
 
 
@@ -191,6 +191,7 @@ def test(args,classes):
 				#thresholding here
 				weibull_cdfs = thresholding(weibulls,feature_means,outputs,objectness_pred,threshold)
 				print (weibull_cdfs)
+				print (torch.unique(weibull_cdfs))
 				predict = predict * (1-edge_pred)
 				toc = time.time()
 				mask = utils.get_mask_pallete(predict, args.dataset)
