@@ -75,7 +75,7 @@ def thresholding(weibulls,feature_means,test_data,objectness,eps):
 	#print (objects)
 	test_data = test_data[objects[0],:,objects[1],objects[2]]
 	#print (test_data.size())
-	dist = torch.abs(feature_means - test_data)
+	dist = torch.abs(feature_means.squeeze() - test_data)
 	#target_class = torch.argmax(test_data,dim=1)[objects[0],:,objects[1],objects[2]]
 	target_class = target_class[objects]
 	#print (target_class.size())
@@ -92,7 +92,8 @@ def thresholding(weibulls,feature_means,test_data,objectness,eps):
 	#print (dist[0])
 	print (dist)
 	weibull_cdf = torch.Tensor([weibulls[(target_class[k]+1).item()].cdf(dist[k]) for k in range(dist.size(0))])
-	return weibull_cdf
+	outliers = (weibull_cdf > eps).nonzero()	
+	return weibull_cdf,outliers
 
 
 def test(args,classes):
@@ -167,7 +168,7 @@ def test(args,classes):
 	feature_data = torch.load("../models/weibull/{}.pt".format(int(args.ratio*10)))
 	weibulls,feature_means = build_weibull(feature_data)
 	category = Category(classes,True)
-	threshold = 0.5
+	threshold = 0.1
 	for i, (image,labels,objectness,edge) in enumerate(tbar):
 		print (i,image.size())
 		image = image.type(torch.cuda.FloatTensor)
@@ -187,15 +188,16 @@ def test(args,classes):
 				tic = time.time()
 				outputs,objectness,edge_label = evaluator.val_forward(image)
 				
-				predict = torch.argmax(outputs,1)+1 #batch_size x 1 x H x W
+				predict = torch.argmax(outputs,1)+2 #batch_size x 1 x H x W
 				print (torch.unique(predict))
 				objectness_pred = torch.argmax(objectness,dim=1) #batch_size x 1 x H x W
 				predict = predict * objectness_pred
 				print (torch.unique(predict))
 				edge_pred = torch.argmax(edge_label,dim=1)
 				#thresholding here
-				weibull_cdfs = thresholding(weibulls,feature_means,outputs,objectness_pred,threshold)
+				weibull_cdfs,outliers = thresholding(weibulls,feature_means,outputs,objectness_pred,threshold)
 				print (weibull_cdfs)
+				print (outliers)
 				print (torch.unique(weibull_cdfs))
 				predict = predict * (1-edge_pred)
 				toc = time.time()

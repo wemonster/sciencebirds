@@ -28,7 +28,7 @@ xs = np.linspace(-5,5, 100)
 
 # 	print ("Scale shape sign translate score ", mr.get_params())
 # 	print ("Scale lb up shape lb up ", mr.get_confidence())
-def build_weibull(features,ng=10):
+def build_weibull(features,ng=60):
 	'''
 	features: num_correct_samples x k
 	'''
