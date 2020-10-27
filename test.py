@@ -53,11 +53,16 @@ def build_weibull(features,ng=10):
 	features: num_correct_samples x k
 	'''
 	weibulls = {}
-	feature_means = torch.sum(features,dim=0) / features.size(0)
-	print (features.size(),feature_means.size())
+
+	pred_class = torch.argmax(features,dim=1)
+	feature_means = torch.zeros((features.size(1),1)).cuda()
+	feature_sum = features.gather(1,pred_class.unsqueeze(dim=1))
+
 	for i in range(features.size(1)):
+		points = (pred_class == i).nonzero()
+		feature_means[i] = torch.sum(feature_sum[points]) / points.size(0)
 		weibull = libmr.MR()
-		weibull.fit_high(torch.abs(features[:,i] - feature_means[i]),ng)
+		weibull.fit_high(torch.abs(feature_sum[points][:,0,0] - feature_means[i]),ng)
 		weibulls[i+1] = weibull
 	return weibulls,feature_means
 

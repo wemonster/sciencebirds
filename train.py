@@ -155,7 +155,7 @@ class Trainer():
 											args.epochs, len(self.trainloader))
 
 		self.correct_features = torch.tensor([])
-
+		self.correct_class = torch.tensor([])
 	def training(self, epoch,log_file):
 		train_loss = 0.0
 		self.model.train()
@@ -240,8 +240,9 @@ class Trainer():
 				x = x[random_samples]
 				y = y[random_samples]
 				target = features[img,:,x,y]
+				target_class = torch.argmax(target)
 				if len(self.correct_features) == 0:
-					self.correct_features = target
+					self.correct_features = torch.tensor([target])
 				else:
 					self.correct_features = torch.cat((self.correct_features,target))
 
