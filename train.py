@@ -125,7 +125,8 @@ class Trainer():
 											#nclass=self.nclass, 
 											#se_weight=args.se_weight,
 											#aux_weight=args.aux_weight)
-		self.criterion = FocalLoss(num_class = self.nclass,alpha=torch.ones((self.nclass,1))*0.25)
+		# self.criterion = FocalLoss(num_class = self.nclass,alpha=torch.ones((self.nclass,1))*0.25)
+		self.criterion = FocalLoss()
 		self.model, self.optimizer = model, optimizer
 		# using cuda
 		if args.cuda:
