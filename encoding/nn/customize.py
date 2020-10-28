@@ -23,7 +23,7 @@ __all__ = ['SegmentationLosses', 'PyramidPooling', 'JPU', 'JPU_X', 'Mean']
 
 
 class FocalLoss(nn.Module):
-    def __init__(self,num_class,alpha=0.25,gamma=2,size_average=True):
+    def __init__(self,num_class,alpha=None,gamma=2,size_average=True):
         super(FocalLoss,self).__init__()
         if alpha is None:
             self.alpha = Variable(torch.ones(num_class,1))
@@ -39,20 +39,23 @@ class FocalLoss(nn.Module):
     def forward(self,preds,labels):
         N = preds.size(0)
         C = preds.size(1)
+		H = preds.size(2)
+		W = preds.size(3)
+
         P = F.softmax(preds,dim=1)
 
-        class_mask = preds.data.new(N,C).fill_(0)
+        class_mask = preds.data.new(N,C,).fill_(0)
         class_mask = Variable(class_mask)
-        ids = targets.view(-1,1)
+        ids = labels.view(-1,1)
         class_mask.scatter_(1,ids.data,1.)
-
+		
         if preds.is_cuda and not self.alpha.is_cuda:
             self.alpha = self.alpha.cuda()
 
         alpha = self.alpha[ids.data.view(-1)]
-
         probs = (P * class_mask).sum(1).view(-1,1)
-
+		#logpt = -F.cross_entropy(preds,labels)
+		#pt = torch.exp(logpt)
         log_p = probs.log()
 
         batch_loss = -alpha * (torch.pow((1-probs),self.gamma)) * log_p

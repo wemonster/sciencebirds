@@ -1,11 +1,11 @@
 class Category:
 	def __init__(self,classes,unknown=False):
 		self.gameObjectType = {
-			# 'BACKGROUND':0
+			'BACKGROUND':0
 		}
 
 		self.id_to_cat = {
-			# 0:'BACKGROUND'
+			0:'BACKGROUND'
 		}
 		self.colormap = {
 			'BACKGROUND':[0,0,0],

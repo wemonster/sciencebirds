@@ -20,6 +20,7 @@ from torch.nn.parallel.scatter_gather import gather
 
 import encoding.utils as utils
 from encoding.nn import SegmentationLosses, SyncBatchNorm
+from encoding.nn.customize import FocalLoss
 from encoding.parallel import DataParallelModel, DataParallelCriterion
 from encoding.datasets import get_segmentation_dataset
 from encoding.models import get_segmentation_model
@@ -120,11 +121,11 @@ class Trainer():
 		optimizer = torch.optim.SGD(params_list, lr=args.lr,
 			momentum=args.momentum, weight_decay=args.weight_decay)
 		# criterions
-		self.criterion = SegmentationLosses(se_loss=args.se_loss, aux=args.aux,
-											nclass=self.nclass, 
-											se_weight=args.se_weight,
-											aux_weight=args.aux_weight)
-		self.criterion = FocalLoss(num_class = self.nclass)
+		#self.criterion = SegmentationLosses(se_loss=args.se_loss, aux=args.aux,
+											#nclass=self.nclass, 
+											#se_weight=args.se_weight,
+											#aux_weight=args.aux_weight)
+		self.criterion = FocalLoss(num_class = self.nclass,alpha=torch.ones((self.nclass,1))*0.25)
 		self.model, self.optimizer = model, optimizer
 		# using cuda
 		if args.cuda:
@@ -381,7 +382,7 @@ if __name__ == "__main__":
 	root = "logs/{}".format(args.size)
 	if not os.path.exists(root):
 		os.mkdir(root)
-	for i in range(3,6):
+	for i in range(6):
 		id_info = Category(class_info[i][1])
 		trainer = Trainer(class_info[i],id_info,args)
 		ratio = class_info[i][0]
