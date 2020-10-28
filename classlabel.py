@@ -23,9 +23,9 @@ class Category:
 			'TNT':[64,128,128],
 			'UNKNOWN':[255,255,255]
 		}
-		for i in range(2,len(classes)):
-			self.gameObjectType[classes[i]] = i
-			self.id_to_cat[i] = classes[i]
+		for i in range(len(classes)):
+			self.gameObjectType[classes[i]] = i+2
+			self.id_to_cat[i+2] = classes[i]
 		if unknown:
 			self.gameObjectType['UNKNOWN'] = 1
 			self.id_to_cat[1] = 'UNKNOWN'
