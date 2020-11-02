@@ -115,8 +115,8 @@ class OpenSegNet(nn.Module):
 									   se_loss = args.se_loss, #norm_layer = SyncBatchNorm,
 									   base_size = args.base_size, crop_size = args.crop_size)
  
-		checkpoint = torch.load('../experiments/runs/model_best_0.pth.tar')
-		self.model.load_state_dict(checkpoint['state_dict'])
+		#checkpoint = torch.load('../experiments/runs/model_best_0.pth.tar')
+		#self.model.load_state_dict(checkpoint['state_dict'])
 	def forward(self, x):
 		if True: # draw features or not
 			_, _, h, w = x.size()

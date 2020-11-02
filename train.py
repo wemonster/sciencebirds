@@ -121,12 +121,12 @@ class Trainer():
 		optimizer = torch.optim.SGD(params_list, lr=args.lr,
 			momentum=args.momentum, weight_decay=args.weight_decay)
 		# criterions
-		#self.criterion = SegmentationLosses(se_loss=args.se_loss, aux=args.aux,
-											#nclass=self.nclass, 
-											#se_weight=args.se_weight,
-											#aux_weight=args.aux_weight)
+		self.criterion = SegmentationLosses(se_loss=args.se_loss, aux=args.aux,
+											nclass=self.nclass, 
+											se_weight=args.se_weight,
+											aux_weight=args.aux_weight)
 		# self.criterion = FocalLoss(num_class = self.nclass,alpha=torch.ones((self.nclass,1))*0.25)
-		self.criterion = FocalLoss()
+		#self.criterion = FocalLoss()
 		self.model, self.optimizer = model, optimizer
 		# using cuda
 		if args.cuda:
@@ -197,7 +197,8 @@ class Trainer():
 			labels = labels[batch,x,y] - 1
 #			print (labeled.size(),pixel_wise.size())
 #			print (torch.unique(labels),torch.unique(objectness))
-
+		#	print (cat_label.size(),labels.size())
+		#	print ("-"*20)
 			class_loss = self.criterion(cat_label, labels)
 			objectness_loss = self.criterion(pixel_wise,objectness)
 			edge_loss = self.criterion(edge_label,edge)

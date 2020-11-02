@@ -35,6 +35,8 @@ class FocalLoss(nn.Module):
 		logits: batch_size * labels_length * seq_length
 		labels: batch_size * seq_length
 		"""
+		print (logits.size(),labels.size())
+		print (labels.dim(),logits.dim())
 		if labels.dim() > 2:
 			labels = labels.contiguous().view(labels.size(0), labels.size(1), -1)
 			labels = labels.transpose(1, 2)
@@ -43,16 +45,17 @@ class FocalLoss(nn.Module):
 			logits = logits.contiguous().view(logits.size(0), logits.size(1), logits.size(2), -1)
 			logits = logits.transpose(2, 3)
 			logits = logits.contiguous().view(-1, logits.size(1), logits.size(3)).squeeze()
-		print (logits.size(),labels.size())
-		assert(logits.size(0) == labels.size(0))
-		assert(logits.size(2) == labels.size(1))
-		batch_size = logits.size(0)
+		#print (logits.size(),labels.size())
+		#assert(logits.size(0) == labels.size(0))
+		#assert(logits.size(2) == labels.size(1))
+		#batch_size = logits.size(0)
 		labels_length = logits.size(1)
-		seq_length = logits.size(2)
-
+		seq_length = logits.size(0)
+		#print (labels_length,seq_length)
 		# transpose labels into labels onehot
-		new_label = labels.unsqueeze(1)
-		label_onehot = torch.zeros([batch_size, labels_length, seq_length]).scatter_(1, new_label, 1)
+		new_label = labels.unsqueeze(1).transpose(1,0).cuda()		
+		#print (new_label.size())
+		label_onehot = torch.zeros([seq_length,labels_length]).cuda().scatter_(1, new_label, 1)
 
 		# calculate log
 		log_p = F.log_softmax(logits)

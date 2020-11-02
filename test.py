@@ -211,7 +211,7 @@ def test(args,classes):
 				#predict[objects[0][outliers],:,objects[1][outliers],objects[2][outliers]] = 1
 				predict = predict * (1-edge_pred)
 				toc = time.time()
-				mask = utils.get_mask_pallete(predict, category,args.dataset)
+				#mask = utils.get_mask_pallete(predict, category,args.dataset)
 				labels = labels.squeeze().cuda()
 				pixAcc,mIoU,correct_classified = utils.batch_pix_accuracy(predict.data, labels)
 				#thresholding(gaussians,category,threshold,features,correct_classified,predict)
@@ -227,7 +227,8 @@ def test(args,classes):
 				#cv2.imwrite(os.path.join("../experiments/results/truth0",outname),image[0].data.cpu().numpy().transpose(1,2,0))
 				for j in range(8):
 					outname = str(ids[i*8+j]) + '.png'
-					cv2.imwrite(os.path.join(mask_outdir,outname),mask[j])
+					print (torch.unique(predict[j]))
+					cv2.imwrite(os.path.join(mask_outdir,outname),predict[j].squeeze().cpu().numpy())
 
 					objectness_output = objectness_pred[j].squeeze().cpu().numpy() * 255
 					cv2.imwrite(os.path.join(objectness_outdir,outname),objectness_output)
@@ -244,4 +245,4 @@ if __name__ == "__main__":
 	args.test_batch_size = torch.cuda.device_count()
 	class_info = get_class_lists()
 
-	test(args,class_info[0][1])
+	test(args,class_info[int(args.ratio*10)][1])
