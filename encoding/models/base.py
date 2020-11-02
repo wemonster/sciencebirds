@@ -38,7 +38,7 @@ class BaseNet(nn.Module):
 		pretrained_model = "../models/resnet/pretrained_geometric.pkl"
 		nclass = math.floor(12 * (1-ratio))
 		if backbone == 'resnet50':
-			self.pretrained = resnet.resnet50(pretrained_model,nclass,pretrained=True)
+			self.pretrained = resnet.resnet50(pretrained_model,nclass,pretrained=False)
 		elif backbone == 'resnet101':
 			self.pretrained = resnet.resnet101(pretrained=True, dilated=dilated,
 											   norm_layer=norm_layer, root=root)

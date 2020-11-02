@@ -25,8 +25,10 @@ def get_class_lists():
 		classes = classes.strip().split(':')[1].split(',')
 		class_info.append((ratio,classes))
 	return class_info
-outdir = "../sciencebirdoutputs/0"
-image_folder = "../testresults/0/mask"
+outdir = "../sciencebirdoutputs/5"
+if not os.path.exists(outdir):
+	os.makedirs(outdir)
+image_folder = "../testresults/5/mask"
 img_files = os.listdir(image_folder)
 class_info = get_class_lists()
 
