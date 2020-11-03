@@ -202,12 +202,13 @@ def test(args,classes):
 				#print (torch.unique(predict))
 				edge_pred = torch.argmax(edge_label,dim=1)
 				#thresholding here
-				weibull_cdfs,objects,outliers = thresholding(weibulls,feature_means,outputs,objectness_pred,threshold)
+				#weibull_cdfs,objects,outliers = thresholding(weibulls,feature_means,outputs,objectness_pred,threshold)
+
 				#print (weibull_cdfs)
 				#print (outliers)
 				#print (outliers.size())
 				#print (torch.unique(weibull_cdfs))
-				predict[objects[0][outliers],objects[1][outliers],objects[2][outliers]] = 1
+				#predict[objects[0][outliers],objects[1][outliers],objects[2][outliers]] = 1
 				#predict[objects[0][outliers],:,objects[1][outliers],objects[2][outliers]] = 1
 				predict = predict * (1-edge_pred)
 				toc = time.time()

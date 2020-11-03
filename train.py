@@ -194,7 +194,7 @@ class Trainer():
 			batch,x,y = foregrounds[:,0],foregrounds[:,1],foregrounds[:,2]
 #			print (labeled.size(),labels.size())
 			cat_label = cat_label[batch,:,x,y]
-			labels = labels[batch,x,y] - 1
+			labels = labels[batch,x,y] - 2
 #			print (labeled.size(),pixel_wise.size())
 #			print (torch.unique(labels),torch.unique(objectness))
 		#	print (cat_label.size(),labels.size())
@@ -244,9 +244,10 @@ class Trainer():
 				x = x[random_samples]
 				y = y[random_samples]
 				target = features[img,:,x,y]
-				target_class = torch.argmax(target)
+				target_class = torch.argmax(target,dim=1)
+				#print (target.size(),target_class.size())
 				if len(self.correct_features) == 0:
-					self.correct_features = torch.tensor([target])
+					self.correct_features = target
 				else:
 					self.correct_features = torch.cat((self.correct_features,target))
 
@@ -272,7 +273,7 @@ class Trainer():
 			labeled,objectness,edge_label = model.val_forward(image)
 			objectness_pred = torch.argmax(objectness,dim=1) #batch_size x 1 x H x W
 			object_truth = object_truth.squeeze().cuda()
-			pred = torch.argmax(labeled,dim=1)+1 #batch_size x 1 x H x W
+			pred = torch.argmax(labeled,dim=1)+2 #batch_size x 1 x H x W
 			pred = objectness_pred * pred
 			target = target.squeeze().cuda()
 		
