@@ -3,7 +3,8 @@
 
 import os
 import cv2
-
+import numpy as np
+import time
 def batch_pix_accuracy(output, target):
 	"""Batch Pixel Accuracy
 	Args:
@@ -12,9 +13,10 @@ def batch_pix_accuracy(output, target):
 	"""
 	# _, predict = torch.max(output, 1)
 	predict = output
-	predict = predict.cpu().numpy().astype('int64')
-	target = target.cpu().numpy().astype('int64')
+	predict = predict.astype('int64')
+	target = target.astype('int64')
 	correct_classified = np.nonzero(predict==target)
+
 	pixel_labeled = np.sum(target > 0)
 	#print (pixel_labeled)
 	#print (np.unique(predict),np.unique(target))
@@ -24,6 +26,20 @@ def batch_pix_accuracy(output, target):
 		"Correct area should be smaller than Labeled"
 	return pixel_correct, pixel_labeled,correct_classified
 
+def object_intersection_union(output,target):
+	predict = output
+	predict = predict.astype('int64')
+	target = target.astype('int64')
+	predict[predict > 0] = 1
+	target[target > 0] = 1
+	predict = predict * (target > 0).astype(predict.dtype)
+	intersection = predict * (predict == target)
+	# areas of intersection and union
+	area_inter, _ = np.histogram(intersection, bins=2)
+	area_pred, _ = np.histogram(predict, bins=2)
+	area_lab, _ = np.histogram(target, bins=2)
+	area_union = area_pred + area_lab - area_inter
+	return area_inter, area_union
 
 def batch_intersection_union(output, target, nclass):
 	"""Batch Intersection of Union
@@ -37,9 +53,9 @@ def batch_intersection_union(output, target, nclass):
 	mini = 1
 	maxi = nclass
 	nbins = nclass
-	predict = predict.cpu().numpy().astype('int64') + 1
-	target = target.cpu().numpy().astype('int64') + 1
-	predict = predict * (target > 1).astype(predict.dtype)
+	predict = predict.astype('int64') + 1
+	target = target.astype('int64') + 1
+	predict = predict * (target > 0).astype(predict.dtype)
 	intersection = predict * (predict == target)
 	# areas of intersection and union
 	area_inter, _ = np.histogram(intersection, bins=nbins, range=(mini, maxi))
@@ -54,50 +70,55 @@ def batch_intersection_union(output, target, nclass):
 def edge_accuracy(truthroot,resultroot):
 	truth_folder = os.path.join(truthroot,'edge')
 	result_folder = os.path.join(resultroot,'edge')
-	imgs = os.listdir(truth_folder)
+	imgs = os.listdir(result_folder)
 	total_correct = 0
 	total_label = 0
 	for img in imgs:
 		truth_im = cv2.imread(os.path.join(truth_folder,img))
 		result_im = cv2.imread(os.path.join(result_folder,img))
+		# print (img,truth_im)
 		pixel_correct,pixel_labeled,_ = batch_pix_accuracy(result_im, truth_im)
+		
 		total_correct += pixel_correct
 		total_label += pixel_labeled
-	total_inter += inter
-	total_union += union
-	total_object += correct_object
-	total_object_label += labeled_object
-	total_edge += edge_labeled
-	total_edge_label += edge_labeled
+	# total_inter += inter
+	# total_union += union
 	pixAcc = 1.0 * total_correct / (np.spacing(1) + total_label)
-	objAcc = 1.0 * total_object / (np.spacing(1) + total_object_label)
-	edgAcc = 1.0 * total_edge / (np.spacing(1) + total_edge_label)
-	IoU = 1.0 * total_inter / (np.spacing(1) + total_union)
-	mIoU = IoU.mean()
+	# IoU = 1.0 * total_inter / (np.spacing(1) + total_union)
+	# mIoU = IoU.mean()
+	print (pixAcc)
 	return pixAcc
 
-def objectness_accuracy(truthroot,resultroot):
-	truth_folder = os.path.join(truthroot,'mask')
+def objectness_accuracy(truthroot,resultroot,ratio):
+	# truth_folder = os.path.join(truthroot,'masks')
 	result_folder = os.path.join(resultroot,'objectness')
-	imgs = os.listdir(truth_folder)
+	imgs = os.listdir(result_folder)
 	total_correct = 0
 	total_label = 0
+	total_inter = 0
+	total_union = 0
 	for img in imgs:
-		truth_im = cv2.imread(os.path.join(truth_folder,img))
+		truth_im = cv2.imread(os.path.join(truthroot,img),1)
 		objectness = np.array(truth_im)
-		objectness[objectness>0] = 1
+		objectness[objectness!=[0,0,0]] = 255
 		result_im = cv2.imread(os.path.join(result_folder,img))
 		pixel_correct,pixel_labeled,_ = batch_pix_accuracy(result_im, objectness)
+		area_inter,area_union = object_intersection_union(result_im,objectness)
 		total_correct += pixel_correct
 		total_label += pixel_labeled
+		total_inter += area_inter
+		total_union += area_union
 	pixAcc = 1.0 * total_correct / (np.spacing(1) + total_label)
-	return pixAcc	
+	IoU = 1.0 * total_inter / (np.spacing(1) + total_union)
+	mIoU = IoU.mean()
+	print (pixAcc,mIoU)
+	return pixAcc,mIoU	
 
 def object_box_accuracy(truthroot,resultroot):
 
 	truth_folder = os.path.join(truthroot,'mask')
 	result_folder = os.path.join(resultroot,'objectness')
-	imgs = os.listdir(truth_folder)
+	imgs = os.listdir(result_folder)
 	for img in img_files:
 		#boxes from groundtruth
 		box_truth = img.split('.')[0]
@@ -144,9 +165,9 @@ if __name__ == "__main__":
 		truthroot = os.path.join(ratio_truth_folder,str(int(ratio*10)))
 		resultroot = os.path.join(test_image_folder,str(int(ratio*10)))
 		#edge
-		edge_accuracy(truthroot,resultroot)
+		# edge_accuracy(truthroot,resultroot)
 		#objectness
-		objectness_accuracy(truthroot,resultroot)
-		#detection
-		object_box_accuracy(groundtruth_folder,resultroot)
+		objectness_accuracy("dataset/rawdata/foregrounds",resultroot,ratio)
+		# #detection
+		# object_box_accuracy(groundtruth_folder,resultroot)
 
