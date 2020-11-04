@@ -50,7 +50,6 @@ def generate_dataset(classes,ratio):
 				continue
 				# game_type = 'UNKNOWN'
 			if game_type == 'SLING':
-
 				startPoint = (X,Y)
 				endPoint = (X + height,Y+width)
 				to_ret = np.zeros((480,840)).astype(np.uint8)
