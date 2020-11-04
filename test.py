@@ -29,12 +29,11 @@ from option import Options
 from classlabel import Category
 def get_class_lists():
 	data = open("logs/resnet.txt",'r').readlines()
-	class_info = []
+	class_info = {}
 	for i in data:
-		ratio,classes = i.split('|')
-		ratio = float(ratio.split(':')[1])
-		classes = classes.strip().split(':')[1].split(',')
-		class_info.append((ratio,classes))
+		filename,classes = i.split('|')
+		classes = classes.strip().split(',')
+		class_info[filename] = classes
 	return class_info
 
 def build_gaussian(mean_weights,var_weights):
@@ -52,8 +51,8 @@ def build_weibull(features,ng=50):
 	'''
 	features: num_correct_samples x k
 	'''
-	weibulls = {}
-
+	weibulls_high = {}
+	weibulls_low = {}
 	pred_class = torch.argmax(features,dim=1)
 	feature_means = torch.zeros((features.size(1),1)).cuda()
 	feature_sum = features.gather(1,pred_class.unsqueeze(dim=1))
@@ -61,12 +60,16 @@ def build_weibull(features,ng=50):
 	for i in range(features.size(1)):
 		points = (pred_class == i).nonzero()
 		feature_means[i] = torch.sum(feature_sum[points]) / points.size(0)
-		weibull = libmr.MR()
-		weibull.fit_high(torch.abs(feature_sum[points][:,0,0] - feature_means[i]),ng)
-		weibulls[i+1] = weibull
-	return weibulls,feature_means
+		weibull_high = libmr.MR()
+		weibull_low = libmr.MR()
 
-def thresholding(weibulls,feature_means,test_data,objectness,eps):
+		weibull_high.fit_high(torch.sort(torch.abs(feature_sum[points][:,0,0] - feature_means[i])),ng)
+		weibull_low.fit_low(torch.sort(torch.abs(feature_sum[points][:,0,0] - feature_means[i]),descending=False),ng)
+		weibulls_high[i+1] = weibull_high
+		weibulls_low[i+1] = weibull_low
+	return weibulls_high,weibulls_low,feature_means
+
+def thresholding(weibulls_high,weibulls_low,feature_means,test_data,objectness,eps):
 	
 	target_class = torch.argmax(test_data,dim=1)
 	#print (target_class.size())
@@ -78,34 +81,22 @@ def thresholding(weibulls,feature_means,test_data,objectness,eps):
 	dist = torch.abs(feature_means.squeeze() - test_data)
 	#target_class = torch.argmax(test_data,dim=1)[objects[0],:,objects[1],objects[2]]
 	target_class = target_class[objects]
-	#print (target_class.size())
-	#print (dist.size())
-	#print (weibulls.keys())
-	#print (target_class[:100])
-	#print (dist[:100,:].size())
+
 	dist = dist[:,:].gather(0,target_class[:].unsqueeze(dim=1))
-	#weibull_cdf = torch.Tensor([weibulls[i+1].cdf(dist[i]) for i in range(feature_means.size(1))])
-	#print (weibulls[7],dist[6])
-	#print (dist.size())
-	#print ((target_class[0]+1).item())
-	#print (weibulls[(target_class[0]+1).item()])
-	#print (dist[0])
+
 	print (dist)
-	weibull_cdf = torch.Tensor([weibulls[(target_class[k]+1).item()].cdf(dist[k]) for k in range(dist.size(0))])
-	outliers = (weibull_cdf > eps).nonzero().squeeze()	
-	#print (outliers.size(),objects.size())
-	#outliers = objects[outliers]
-	#objects[0] = objects[0][outliers]
-	#objects[1] = objects[1][outliers]
-	#objects[2] = objects[2][outliers]
+	weibull_high_cdf = torch.Tensor([weibulls_high[(target_class[k]+1).item()].cdf(dist[k]) for k in range(dist.size(0))])
+	weibull_low_cdf = torch.Tensor([weibulls_low[(target_class[k]+1).item()].cdf(dist[k]) for k in range(dist.size(0))])
+	high_outliers = (weibull_high_cdf > eps).nonzero().squeeze()	
+	low_outliers = (weibull_low_cdf > eps).nonzero().squeeze()
 	print (objects[0].size(),outliers.size())
 	print (objects[0][outliers].size(),objects[1][outliers].size(),objects[2][outliers].size())
-	return weibull_cdf,objects,outliers
+	return objects,outliers
 
 
 def test(args,classes):
 	# output folder
-	outdir = os.path.join(args.save_folder,str(int(args.ratio*10)))
+	outdir = os.path.join(args.save_folder,args.model_name)
 	# outdir = "../results"
 	if not os.path.exists(outdir):
 		os.makedirs(outdir)
@@ -129,7 +120,7 @@ def test(args,classes):
 	# dataset
 	data_kwargs = {'transform': input_transform, 'target_transform':input_transform,
 						'label_transform':label_transform}
-	testset = get_segmentation_dataset(args.dataset,args.ratio,args.size, split=args.split, mode='test',
+	testset = get_segmentation_dataset(args.dataset,args.model_name,args.size, split=args.split, mode='test',
 										   **data_kwargs)
 	# dataloader
 	loader_kwargs = {'num_workers': args.workers, 'pin_memory': True} \
@@ -140,7 +131,7 @@ def test(args,classes):
 	if args.model_zoo is not None:
 		model = get_model(args.model_zoo, pretrained=True)
 	else:
-		model = get_segmentation_model(args.ratio,nclass,args.model, dataset = args.dataset,
+		model = get_segmentation_model(nclass,args.model_name, dataset = args.dataset,
 									   backbone = args.backbone, dilated = args.dilated,
 									   lateral = args.lateral, jpu = args.jpu, aux = args.aux,
 									   se_loss = args.se_loss, norm_layer = BatchNorm,
@@ -165,15 +156,15 @@ def test(args,classes):
 
 	tbar = tqdm(test_data)
 	ids = testset._load_image_set_index()
-	test_log = open("logs/{}.txt".format(int(args.ratio*10)),'w')
+	test_log = open("logs/{}.txt".format(args.model_name),'w')
 	overallpix = 0.0
 	overallmIoU = 0.0
 	#load gaussian model
 	#mean_weights = torch.load("../models/gaussian/mean_{}.pt".format(int(args.ratio*10)))
 	#var_weights = torch.load("../models/gaussian/var_{}.pt".format(int(args.ratio*10)))
 	#gaussians = build_gaussian(mean_weights,var_weights)
-	feature_data = torch.load("../models/weibull/{}.pt".format(int(args.ratio*10)))
-	weibulls,feature_means = build_weibull(feature_data)
+	feature_data = torch.load("../models/weibull/{}.pt".format(args.model_name))
+	weibulls_high,weibulls_low,feature_means = build_weibull(feature_data)
 	category = Category(classes,True)
 	threshold = 0.1
 	for i, (image,labels,objectness,edge) in enumerate(tbar):
@@ -202,7 +193,7 @@ def test(args,classes):
 				#print (torch.unique(predict))
 				edge_pred = torch.argmax(edge_label,dim=1)
 				#thresholding here
-				#weibull_cdfs,objects,outliers = thresholding(weibulls,feature_means,outputs,objectness_pred,threshold)
+				objects,outliers = thresholding(weibulls_high,weibulls_low,feature_means,outputs,objectness_pred,threshold)
 
 				#print (weibull_cdfs)
 				#print (outliers)
@@ -246,4 +237,4 @@ if __name__ == "__main__":
 	args.test_batch_size = torch.cuda.device_count()
 	class_info = get_class_lists()
 
-	test(args,class_info[int(args.ratio*10)][1])
+	test(args,class_info[args.model_name])

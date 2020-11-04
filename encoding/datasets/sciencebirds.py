@@ -10,27 +10,27 @@ import torchvision.transforms as transform
 from .base import BaseDataset
 
 class SciencebirdSeg(BaseDataset):
-	def __init__(self, ratio,size='small', root='dataset/images',split='train',
+	def __init__(self, filename,size='small', root='../dataset/images',split='train',
 				 mode=None, transform=None, target_transform=None,label_transform=None, **kwargs):
 		super(SciencebirdSeg, self).__init__(
 			root, split, mode, transform, target_transform, **kwargs)
 		
-		folder = os.path.join(root,"{}/{}".format(size,int(ratio*10)))
+		folder = os.path.join(root,"{}/{}".format(size,filename))
 		if self.mode == 'train':
 			print ('train set')
-			self.ids_file = os.path.join("dataset",'ImageSets/train.txt')
+			self.ids_file = os.path.join("../dataset",'ImageSets/train.txt')
 		elif self.mode == 'test':
 			print ("test set")
-			self.ids_file = os.path.join("dataset",'ImageSets/test.txt')
-			self.unknowns_files = "dataset/rawdata/foregroundmask"
+			self.ids_file = os.path.join("../dataset",'ImageSets/test.txt')
+			self.unknowns_files = os.path.join(folder,"unknowns")
 		else:
 			print ('val set')
-			self.ids_file = os.path.join("dataset",'ImageSets/val.txt')
+			self.ids_file = os.path.join("../dataset",'ImageSets/val.txt')
 		self.ids = self._load_image_set_index()
 		# self.image_files = "dataset/rawdata/groundtruthimage"
 		self.image_files = os.path.join(folder,"foregrounds")
 		self.label_files = os.path.join(folder,'masks')
-		self.foreground_files = "dataset/rawdata/foregrounds"
+		self.foreground_files = "../dataset/rawdata/foregrounds"
 		self.edge_files = os.path.join(folder,"edge")
 		# if split == 'train':
 		# 	print('train set')

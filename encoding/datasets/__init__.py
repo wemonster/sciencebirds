@@ -7,5 +7,5 @@ datasets = {
     'sciencebirds':SciencebirdSeg
 }
 
-def get_segmentation_dataset(name,ratio,size='small', **kwargs):
-    return datasets[name.lower()](ratio,size,**kwargs)
+def get_segmentation_dataset(name,filename,size='small', **kwargs):
+    return datasets[name.lower()](filename,size,**kwargs)

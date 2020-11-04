@@ -36,7 +36,7 @@ from torch.autograd import Variable
 
 class Trainer():
 	def __init__(self,info,id_info,args):
-		self.ratio,self.classes = info[0],info[1]
+		self.filename,self.classes = info[0],info[1]
 		self.categories = id_info
 		self.args = args
 		# data transforms
@@ -45,7 +45,7 @@ class Trainer():
 			transform.Normalize([.485, .456, .406], [.229, .224, .225])
 			])
 		label_transform = transform.ToTensor()
-		self.nclass = math.floor((1-self.ratio) * 12)
+		self.nclass = len(self.classes)
 		#initialise the tensor holder here
 		self.im_info = torch.FloatTensor(1)
 		self.num_boxes = torch.LongTensor(1)
@@ -67,12 +67,12 @@ class Trainer():
 		#val_imdb,val_roidb = combined_roidb('val',self.categories)
 
 		#get image info
-		trainset = get_segmentation_dataset(args.dataset,self.ratio,args.size, split=args.train_split, mode='train',
+		trainset = get_segmentation_dataset(args.dataset,self.filename,args.size, split=args.train_split, mode='train',
 										   **data_kwargs)
 
 		# trainLoader = roibatchLoader(train_roidb,trainset,self.nclass,mode='train')
 
-		valset = get_segmentation_dataset(args.dataset,self.ratio,args.size, split='val', mode ='val',
+		valset = get_segmentation_dataset(args.dataset,self.filename,args.size, split='val', mode ='val',
 										   **data_kwargs)
 		# valLoader = roibatchLoader(val_roidb,valset,self.nclass,mode='val')
 		
@@ -95,13 +95,13 @@ class Trainer():
 		print ("finish loading the dataset")
 
 		# # model
-		model = get_segmentation_model(self.ratio,self.nclass,args.model, dataset = args.dataset,
+		model = get_segmentation_model(self.nclass,args.model, dataset = args.dataset,
 									   backbone = args.backbone, dilated = args.dilated,
 									   lateral = args.lateral, jpu = args.jpu, aux = args.aux,
 									   se_loss = args.se_loss, #norm_layer = SyncBatchNorm,
 									   base_size = args.base_size, crop_size = args.crop_size)
 
-		print(model.parameters())
+
 		# for (name,w) in model.named_parameters():
 		# 	print (name,w.requires_grad)
 		# optimizer using different LR
@@ -219,7 +219,7 @@ class Trainer():
 				'state_dict': self.model.state_dict(),
 				'optimizer': self.optimizer.state_dict(),
 				'best_pred': self.best_pred,
-			}, self.args, is_best, filename='checkpoint_{}.pth.tar'.format(epoch))
+			}, self.args, is_best, self.filename,filename='checkpoint_{}.pth.tar'.format(epoch))
 
 
 	def validation(self, epoch,log_file):
@@ -329,7 +329,7 @@ class Trainer():
 				'state_dict': self.model.state_dict(),
 				'optimizer': self.optimizer.state_dict(),
 				'best_pred': new_pred,
-			}, self.args, is_best,self.ratio,"checkpoint_{}.pth.tar".format(epoch+1))
+			}, self.args, is_best,self.filename,"checkpoint_{}.pth.tar".format(epoch+1))
 
 	def build_gaussian_model(self):
 		occurrance = self.corresponding_class.cpu().numpy()
@@ -357,12 +357,12 @@ class Trainer():
 				matched_features = self.correct_features[target_category,:].cpu().numpy().squeeze(axis=1)
 				class_var["cov_{}".format(target_id)] = 1/(len(target_category) - 1) * np.dot(matched_features.T,matched_features)
 
-		torch.save(class_mean,os.path.join("../models/weibull","{}.pt".format(int(self.ratio*10))))
+		torch.save(class_mean,os.path.join("../models/weibull","{}.pt".format(self.filename)))
 
 	def build_weibull_model(self):
 		if not os.path.exists("../models/weibull"):
 			os.mkdir("../models/weibull")
-		torch.save(self.correct_features,os.path.join("../models/weibull","{}.pt".format(int(self.ratio*10))))
+		torch.save(self.correct_features,os.path.join("../models/weibull","{}.pt".format(self.filename)))
 
 
 
@@ -370,10 +370,9 @@ def get_class_lists():
 	data = open("logs/resnet.txt",'r').readlines()
 	class_info = []
 	for i in data:
-		ratio,classes = i.split('|')
-		ratio = float(ratio.split(':')[1])
-		classes = classes.strip().split(':')[1].split(',')
-		class_info.append((ratio,classes))
+		filename,classes = i.split('|')
+		classes = classes.strip().split(',')
+		class_info.append((filename,classes))
 	return class_info
 
 
@@ -381,16 +380,15 @@ if __name__ == "__main__":
 	args = Options().parse()
 	torch.manual_seed(args.seed)
 	class_info = get_class_lists()
-	print (class_info)
 	root = "logs/{}".format(args.size)
 	if not os.path.exists(root):
 		os.mkdir(root)
 	for i in range(6):
 		id_info = Category(class_info[i][1])
 		trainer = Trainer(class_info[i],id_info,args)
-		ratio = class_info[i][0]
-		train_log_file = open(os.path.join(root,"training_{}_log.txt".format(int(ratio*10))),'w')
-		val_log_file = open(os.path.join(root,"val_{}_log.txt".format(int(ratio*10))),'w')
+		filename = class_info[i][0]
+		train_log_file = open(os.path.join(root,"training_{}_log.txt".format(filename)),'w')
+		val_log_file = open(os.path.join(root,"val_{}_log.txt".format(filename)),'w')
 		print('Starting Epoch:', trainer.args.start_epoch)
 		print('Total Epoches:', trainer.args.epochs)
 		for epoch in range(trainer.args.start_epoch, trainer.args.epochs):

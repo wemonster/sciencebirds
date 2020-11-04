@@ -98,7 +98,7 @@ def objectness_accuracy(truthroot,resultroot,ratio):
 	total_inter = 0
 	total_union = 0
 	for img in imgs:
-		truth_im = cv2.imread(os.path.join(truthroot,img),1)
+		truth_im = cv2.imread(os.path.join(truthroot,img))
 		objectness = np.array(truth_im)
 		objectness[objectness!=[0,0,0]] = 255
 		result_im = cv2.imread(os.path.join(result_folder,img))
@@ -165,7 +165,7 @@ if __name__ == "__main__":
 		truthroot = os.path.join(ratio_truth_folder,str(int(ratio*10)))
 		resultroot = os.path.join(test_image_folder,str(int(ratio*10)))
 		#edge
-		# edge_accuracy(truthroot,resultroot)
+		edge_accuracy(truthroot,resultroot)
 		#objectness
 		objectness_accuracy("dataset/rawdata/foregrounds",resultroot,ratio)
 		# #detection

@@ -20,14 +20,25 @@ all_categories = ['BLACKBIRD','BLUEBIRD','HILL','ICE','PIG','REDBIRD','STONE','W
 
 # for i in range(len(all_categories)):
 	# colormap[cat] = [i,i,i]
-def generate_dataset(classes,ratio):
+def generate_dataset(classes,filename):
 	classids = Category(classes,True)
-	gts_root = "dataset/rawdata/groundtruth"
+
+	gts_root = "../dataset/rawdata/groundtruth"
 	gts = sorted(os.listdir(gts_root),key=lambda x:int(x.split('.')[0][11:]))
-	gtimage_root = "dataset/rawdata/groundtruthimage"
+	gtimage_root = "../dataset/rawdata/groundtruthimage"
 	gtimages = sorted(os.listdir(gtimage_root),key=lambda x:int(x.split('.')[0]))
 	print (len(gts),len(gtimages))
-	save_folder = "dataset/images/small/{}".format(int(ratio*10))
+	save_folder = "../dataset/images/small/{}".format(filename)
+	if not os.path.exists(save_folder):
+		os.makedirs(save_folder)
+	if not os.path.exists(os.path.join(save_folder,'edge')):
+		os.makedirs(os.path.join(save_folder,'edge'))
+	if not os.path.exists(os.path.join(save_folder,'masks')):
+		os.makedirs(os.path.join(save_folder,'masks'))
+	if not os.path.exists(os.path.join(save_folder,'foregrounds')):
+		os.makedirs(os.path.join(save_folder,'foregrounds'))
+	if not os.path.exists(os.path.join(save_folder,'unknowns')):
+		os.makedirs(os.path.join(save_folder,'unknowns'))
 	for j in range(len(gts)):
 		truth = open(os.path.join(gts_root,gts[j]),'r').readlines()
 		im = cv2.imread(os.path.join(gtimage_root,gtimages[j]))
@@ -46,9 +57,9 @@ def generate_dataset(classes,ratio):
 			width = int(info[3])
 			vertices = info[4]
 			game_type = str(info[5]).strip().split('.')[1]
+				# game_type = 'UNKNOWN'
 			if game_type not in classes:
 				continue
-				# game_type = 'UNKNOWN'
 			if game_type == 'SLING':
 				startPoint = (X,Y)
 				endPoint = (X + height,Y+width)
@@ -98,63 +109,63 @@ def generate_dataset(classes,ratio):
 		cv2.imwrite(os.path.join(save_folder,"masks/{}".format(gtimages[j])),label)
 		label[label>0] = 1
 		foreground = np.multiply(im,label[:,:,np.newaxis])
+		edge = cv2.Canny(foreground,0,255)
+		cv2.imwrite(os.path.join(save_folder,'edge/{}'.format(gtimages[j])),edge)
 		# cv2.imwrite(os.path.join("dataset/rawdata/foregrounds","{}".format(gtimages[j])),foreground)
 		cv2.imwrite(os.path.join(save_folder,'foregrounds/{}'.format(gtimages[j])),foreground)
-		# #label for unknowns
-		# classids = Category(classes,True)
-		# label = np.zeros((480,840)).astype(np.uint8)
-		# for t in truth:
-		# 	info = t.split('|')
-		# 	X = int(info[0])
-		# 	Y = int(info[1])
-		# 	height = int(info[2])
-		# 	width = int(info[3])
-		# 	vertices = info[4]
-		# 	game_type = str(info[5]).strip().split('.')[1]
-		# 	if game_type not in classes:
-		# 		continue
-		# 	if game_type == 'SLING':
-		# 		startPoint = (X,Y)
-		# 		endPoint = (X + height,Y+width)
-		# 		to_ret = np.zeros((480,840)).astype(np.uint8)
-		# 		# cv2.rectangle(im,startPoint,endPoint,(255,0,0),1)
-		# 		to_ret[Y:Y+width,X:X+height] = binary[Y:Y+width,X:X+height]
-		# 		contours,hierarchy = cv2.findContours(to_ret,cv2.RETR_TREE,cv2.CHAIN_APPROX_NONE)
-		# 		cv2.fillPoly(to_ret[Y:Y+width,X:X+height],contours,classids.gameObjectType[game_type],1)
-		# 		temp = to_ret[Y:Y+width,X:X+height]
-		# 		temp[temp>0] = classids.gameObjectType[game_type]
-		# 		temp = classids.gameObjectType[game_type] - temp
-		# 		#label
-		# 		label[Y:Y+width,X:X+height] = temp
-		# 		break
-		# for t in truth:
-		# 	info = t.split('|')
-		# 	X = int(info[0])
-		# 	Y = int(info[1])
-		# 	height = int(info[2])
-		# 	width = int(info[3])
-		# 	vertices = info[4]
-		# 	game_type = str(info[5]).strip().split('.')[1]
-		# 	if game_type == 'SLING':
-		# 		continue
-		# 	if game_type not in classes:
-		# 		game_type = 'UNKNOWN'
-		# 	startPoint = (X,Y)
-		# 	endPoint = (X + height,Y+width)
-		# 	to_ret = np.zeros((480,840)).astype(np.uint8)
-		# 	# cv2.rectangle(im,startPoint,endPoint,(255,0,0),1)
-		# 	to_ret[Y:Y+width,X:X+height] = binary[Y:Y+width,X:X+height]
-		# 	contours,hierarchy = cv2.findContours(to_ret,cv2.RETR_TREE,cv2.CHAIN_APPROX_NONE)
-		# 	cv2.fillPoly(to_ret[Y:Y+width,X:X+height],contours,classids.gameObjectType[game_type],1)
-		# 	temp = to_ret[Y:Y+width,X:X+height]
-		# 	temp[temp>0] = classids.gameObjectType[game_type]
-		# 	temp = classids.gameObjectType[game_type] - temp
-		# 	#label
-		# 	label[Y:Y+width,X:X+height] = temp
-		# label[label>0] = 1
-		# foreground = np.multiply(im,label[:,:,np.newaxis])
-		# cv2.imwrite(os.path.join("dataset/rawdata",'foregrounds/{}'.format(gtimages[j])),foreground)
-		# print ("finish writing images {}".format(j))
+		#label for unknowns
+
+		label = np.zeros((480,840)).astype(np.uint8)
+		for t in truth:
+			info = t.split('|')
+			X = int(info[0])
+			Y = int(info[1])
+			height = int(info[2])
+			width = int(info[3])
+			vertices = info[4]
+			game_type = str(info[5]).strip().split('.')[1]
+			if game_type not in classes:
+				continue
+			if game_type == 'SLING':
+				startPoint = (X,Y)
+				endPoint = (X + height,Y+width)
+				to_ret = np.zeros((480,840)).astype(np.uint8)
+				# cv2.rectangle(im,startPoint,endPoint,(255,0,0),1)
+				to_ret[Y:Y+width,X:X+height] = binary[Y:Y+width,X:X+height]
+				contours,hierarchy = cv2.findContours(to_ret,cv2.RETR_TREE,cv2.CHAIN_APPROX_NONE)
+				cv2.fillPoly(to_ret[Y:Y+width,X:X+height],contours,classids.gameObjectType[game_type],1)
+				temp = to_ret[Y:Y+width,X:X+height]
+				temp[temp>0] = classids.gameObjectType[game_type]
+				temp = classids.gameObjectType[game_type] - temp
+				#label
+				label[Y:Y+width,X:X+height] = temp
+				break
+		for t in truth:
+			info = t.split('|')
+			X = int(info[0])
+			Y = int(info[1])
+			height = int(info[2])
+			width = int(info[3])
+			vertices = info[4]
+			game_type = str(info[5]).strip().split('.')[1]
+			if game_type == 'SLING':
+				continue
+			if game_type not in classes:
+				game_type = 'UNKNOWN'
+			startPoint = (X,Y)
+			endPoint = (X + height,Y+width)
+			to_ret = np.zeros((480,840)).astype(np.uint8)
+			# cv2.rectangle(im,startPoint,endPoint,(255,0,0),1)
+			to_ret[Y:Y+width,X:X+height] = binary[Y:Y+width,X:X+height]
+			contours,hierarchy = cv2.findContours(to_ret,cv2.RETR_TREE,cv2.CHAIN_APPROX_NONE)
+			cv2.fillPoly(to_ret[Y:Y+width,X:X+height],contours,classids.gameObjectType[game_type],1)
+			temp = to_ret[Y:Y+width,X:X+height]
+			temp[temp>0] = classids.gameObjectType[game_type]
+			temp = classids.gameObjectType[game_type] - temp
+			#label
+			label[Y:Y+width,X:X+height] = temp
+		cv2.imwrite(os.path.join(save_folder,'unknowns/{}'.format(gtimages[j])),label)
+		print ("finish writing images {}".format(j))
 	
 
 def generate_imagesets(ratio):
@@ -181,11 +192,10 @@ def generate_imagesets(ratio):
 
 data = open("logs/resnet.txt",'r').readlines()
 # class_info = []
-for i in data[1:]:
-	ratio,classes = i.split('|')
-	ratio = float(ratio.split(':')[1])
-	classes = classes.strip().split(':')[1].split(',')
-	generate_dataset(classes,ratio)
+for i in data[:6]:
+	filename,classes = i.split('|')
+	classes = classes.strip().split(',')
+	generate_dataset(classes,filename)
 # generate_imagesets(0.8)
 
 # a = cv2.imread("dataset/rawdata/foregrounds/0.png")
