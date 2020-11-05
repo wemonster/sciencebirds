@@ -387,6 +387,7 @@ if __name__ == "__main__":
 		id_info = Category(class_info[i][1])
 		trainer = Trainer(class_info[i],id_info,args)
 		filename = class_info[i][0]
+		print (filename)
 		train_log_file = open(os.path.join(root,"training_{}_log.txt".format(filename)),'w')
 		val_log_file = open(os.path.join(root,"val_{}_log.txt".format(filename)),'w')
 		print('Starting Epoch:', trainer.args.start_epoch)

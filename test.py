@@ -131,7 +131,7 @@ def test(args,classes):
 	if args.model_zoo is not None:
 		model = get_model(args.model_zoo, pretrained=True)
 	else:
-		model = get_segmentation_model(nclass,args.model_name, dataset = args.dataset,
+		model = get_segmentation_model(nclass,args.model, dataset = args.dataset,
 									   backbone = args.backbone, dilated = args.dilated,
 									   lateral = args.lateral, jpu = args.jpu, aux = args.aux,
 									   se_loss = args.se_loss, norm_layer = BatchNorm,
@@ -163,8 +163,8 @@ def test(args,classes):
 	#mean_weights = torch.load("../models/gaussian/mean_{}.pt".format(int(args.ratio*10)))
 	#var_weights = torch.load("../models/gaussian/var_{}.pt".format(int(args.ratio*10)))
 	#gaussians = build_gaussian(mean_weights,var_weights)
-	feature_data = torch.load("../models/weibull/{}.pt".format(args.model_name))
-	weibulls_high,weibulls_low,feature_means = build_weibull(feature_data)
+	#feature_data = torch.load("../models/weibull/{}.pt".format(args.model_name))
+	#weibulls_high,weibulls_low,feature_means = build_weibull(feature_data)
 	category = Category(classes,True)
 	threshold = 0.1
 	for i, (image,labels,objectness,edge) in enumerate(tbar):
@@ -193,7 +193,7 @@ def test(args,classes):
 				#print (torch.unique(predict))
 				edge_pred = torch.argmax(edge_label,dim=1)
 				#thresholding here
-				objects,outliers = thresholding(weibulls_high,weibulls_low,feature_means,outputs,objectness_pred,threshold)
+				#objects,outliers = thresholding(weibulls_high,weibulls_low,feature_means,outputs,objectness_pred,threshold)
 
 				#print (weibull_cdfs)
 				#print (outliers)

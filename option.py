@@ -93,7 +93,8 @@ class Options():
 
 		parser.add_argument('--size', type=str, default='small',
 							help = 'size of dataset')
-
+		parser.add_argument('--model_name',type=str,default="00",
+							help = 'model name')
 		# the parser
 		self.parser = parser
 
