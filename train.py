@@ -269,7 +269,7 @@ class Trainer():
 
 
 
-		def eval_batch(model, image, target,object_truth,edge):
+		def eval_batch(epoch,model, image, target,object_truth,edge):
 			labeled,objectness,edge_label = model.val_forward(image)
 			objectness_pred = torch.argmax(objectness,dim=1) #batch_size x 1 x H x W
 			object_truth = object_truth.squeeze().cuda()
@@ -284,8 +284,9 @@ class Trainer():
 			correct, cat_labeled,correct_classified = utils.batch_pix_accuracy(pred.data, target)
 
 			correct_object,labeled_object,correct_classified_object = utils.batch_pix_accuracy(objectness_pred.data,object_truth)
-			collect_features(labeled,correct_classified,pred)
-			self.build_weibull_model()
+			if epoch > 5:
+				collect_features(labeled,correct_classified,pred)
+				self.build_weibull_model()
 			inter, union = utils.batch_intersection_union(pred.data, target, self.nclass)
 			return correct, cat_labeled, inter, union, correct_object, labeled_object,edge_correct,edge_labeled
 
@@ -302,7 +303,7 @@ class Trainer():
 				correct, labeled, inter, union, correct_object,labeled_object,edge_correct,edge_labeled = eval_batch(self.model, image, labels,objectness,edge)
 			else:
 				with torch.no_grad():
-					correct, labeled, inter, union, correct_object,labeled_object,edge_correct,edge_labeled = eval_batch(self.model, image, labels,objectness,edge)
+					correct, labeled, inter, union, correct_object,labeled_object,edge_correct,edge_labeled = eval_batch(epoch,self.model, image, labels,objectness,edge)
 
 			total_correct += correct
 			total_label += labeled
@@ -383,7 +384,7 @@ if __name__ == "__main__":
 	root = "logs/{}".format(args.size)
 	if not os.path.exists(root):
 		os.mkdir(root)
-	for i in range(6):
+	for i in range(len(class_info)):
 		id_info = Category(class_info[i][1])
 		trainer = Trainer(class_info[i],id_info,args)
 		filename = class_info[i][0]
