@@ -3,10 +3,10 @@ from .fcn import *
 from .deeplabv3 import *
 
 
-def get_segmentation_model(nclass,name, **kwargs):
+def get_segmentation_model(nclass,name, model_name,**kwargs):
     from .fcn import get_fcn
     models = {
         'fcn': get_fcn,
         'deeplab': get_deeplab
     }
-    return models[name.lower()](nclass,**kwargs)
+    return models[name.lower()](nclass,model_name,**kwargs)

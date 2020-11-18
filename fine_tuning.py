@@ -33,7 +33,7 @@ TNT = 'TNT'
 
 folder = "dataset/characters"
 
-num_classes = 14
+num_classes = 12
 input_size = 224
 batch_size = 4
 
@@ -131,7 +131,7 @@ def load_weights(pklfile):
 		wts = torch.load('mynet.pkl',map_location=torch.device('cpu'))
 	return wts
 #initialise and reshape network
-def initialise_model(num_classes,feature_extract,use_pretrained=True):
+def initialise_model(num_classes,use_pretrained=True):
 	# model_ft = models.resnet50(pretrained=use_pretrained)
 	# set_parameter_requires_grad(model_ft,feature_extract)
 	model = resnet.resnet50(num_classes=num_classes)
@@ -162,7 +162,7 @@ def load_pretrained_weights(model,state_dict):
 	model.load_state_dict(state_dict)
 	return model
 
-def load_data(folder,batch_size,ratio):
+def load_data(folder,batch_size,num_known):
 	data_transforms = {
 	'train':transforms.Compose([
 
@@ -184,8 +184,7 @@ def load_data(folder,batch_size,ratio):
 	}
 	files = os.listdir(folder)
 	classes = os.listdir(os.path.join(folder,"train"))
-	number_knowns = math.floor(len(classes) * (1-ratio))
-	files = random.sample(classes,number_knowns)
+	files = random.sample(classes,num_known)
 	# imgs = [cv2.imread(os.path.join(folder,i)) for i in files]
 	imgs = {x:datasets.ImageFolder(os.path.join(folder,x),transform=data_transforms[x]) 
 	for x in ['train','val','test']}
@@ -288,7 +287,7 @@ def tune_geometry():
 	classes = ['square','rect','circle','ellipse','trig','right_trig','left_trig','polygon']
 	num_classes = len(classes)
 	model = initialise_model(num_classes,feature_extract)
-	dataloaders_dict,data_transforms,classes = load_data('dataset/geometric',32,0.0)
+	dataloaders_dict,data_transforms,classes = load_data('../dataset/geometric',32,0.0)
 	print (classes)
 	criterion = nn.CrossEntropyLoss()
 	optimizer_model = optimizer(model)
@@ -298,20 +297,25 @@ def tune_geometry():
 if __name__ == "__main__":
 
 	# close_ratios = [0,0.1,0.3,0.5,0.7,0.9]
-	close_ratios = [0,0.1,0.2,0.3,0.4,0.5]
+	# close_ratios = [0,0.1,0.2,0.3,0.4,0.5]
 	if not os.path.exists("../models/resnet"):
 		os.mkdir("../models/resnet")
-	tune_geometry()
-	# resnet_log = open("logs/resnet.txt",'w')
-	# for i in range(len(close_ratios)):
-	# 	model = initialise_model(num_classes,feature_extract)
-	# 	dataloaders_dict,data_transforms,classes = load_data('dataset/characters',8,close_ratios[i])
-	# 	resnet_log.write("ratio:{}|known:{}\n".format(close_ratios[i],','.join(classes)))
-	# 	criterion = nn.CrossEntropyLoss()
-	# 	optimizer_model = optimizer(model)
-	# 	output_model = str(int(close_ratios[i] * 10))
-	# 	train_model(model,dataloaders_dict,criterion,optimizer_model,output_model,num_epochs)
-	# resnet_log.close()
+	# tune_geometry()
+	resnet_log = open("logs/resnet.txt",'r').readlines()
+	for i in data:
+		filename,classes = i.split('|')
+		classes = classes.strip().split(',')
+
+		num_classes = len(classes)
+
+		model = initialise_model(num_classes)
+		dataloaders_dict,data_transforms,classes = load_data('../dataset/characters',8,num_classes)
+		# resnet_log.write("ratio:{}|known:{}\n".format(close_ratios[i],','.join(classes)))
+		criterion = nn.CrossEntropyLoss()
+		optimizer_model = optimizer(model)
+		# output_model = str(int(close_ratios[i] * 10))
+		train_model(model,dataloaders_dict,criterion,optimizer_model,filename,num_epochs)
+		# resnet_log.close()
 	# test_model(model,"mynet.pkl")
 	# plot_info("batchnorm",'logs/log.txt')
 	# plot_info('instance norm','logs/instance_norm_log.txt')

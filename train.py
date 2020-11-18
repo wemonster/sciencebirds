@@ -95,7 +95,7 @@ class Trainer():
 		print ("finish loading the dataset")
 
 		# # model
-		model = get_segmentation_model(self.nclass,args.model, dataset = args.dataset,
+		model = get_segmentation_model(self.nclass,args.model, self.filename,dataset = args.dataset,
 									   backbone = args.backbone, dilated = args.dilated,
 									   lateral = args.lateral, jpu = args.jpu, aux = args.aux,
 									   se_loss = args.se_loss, #norm_layer = SyncBatchNorm,
