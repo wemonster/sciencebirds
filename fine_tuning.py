@@ -17,7 +17,7 @@ import numpy as np
 import random
 import encoding.dilated as resnet
 import matplotlib.pyplot as plt
-
+import sys
 HILL = 'hill'
 SLING = 'slingshot'
 REDBIRD = 'redBird'
@@ -162,7 +162,86 @@ def load_pretrained_weights(model,state_dict):
 	model.load_state_dict(state_dict)
 	return model
 
-def load_data(folder,batch_size,num_known):
+def pil_loader(path):
+	# open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)
+	with open(path, 'rb') as f:
+		img = Image.open(f)
+		return img.convert('RGB')
+def default_loader(path):
+	from torchvision import get_image_backend
+	if get_image_backend() == 'accimage':
+		return accimage_loader(path)
+	else:
+		return pil_loader(path)
+
+def make_dataset(dir, class_to_idx, extensions=None, is_valid_file=None):
+	images = []
+	dir = os.path.expanduser(dir)
+	for target in sorted(class_to_idx.keys()):
+		d = os.path.join(dir, target)
+		if not os.path.isdir(d):
+			continue
+		for root, _, fnames in sorted(os.walk(d, followlinks=True)):
+			for fname in sorted(fnames):
+				path = os.path.join(root, fname)
+				item = (path, class_to_idx[target])
+				images.append(item)
+	# print (images)
+	return images
+IMG_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm', '.tif', '.tiff', '.webp')
+class ImageFolder(datasets.DatasetFolder):
+	"""A generic data loader where the images are arranged in this way: ::
+		root/dog/xxx.png
+		root/dog/xxy.png
+		root/dog/xxz.png
+		root/cat/123.png
+		root/cat/nsdf3.png
+		root/cat/asd932_.png
+	Args:
+		root (string): Root directory path.
+		transform (callable, optional): A function/transform that  takes in an PIL image
+			and returns a transformed version. E.g, ``transforms.RandomCrop``
+		target_transform (callable, optional): A function/transform that takes in the
+			target and transforms it.
+		loader (callable, optional): A function to load an image given its path.
+		is_valid_file (callable, optional): A function that takes path of an Image file
+			and check if the file is a valid file (used to check of corrupt files)
+	 Attributes:
+		classes (list): List of the class names.
+		class_to_idx (dict): Dict with items (class_name, class_index).
+		imgs (list): List of (image path, class_index) tuples
+	"""
+
+	def __init__(self, root,categories, transform=None, target_transform=None,
+				 loader=default_loader, is_valid_file=None):
+		super(ImageFolder, self).__init__(root, loader, IMG_EXTENSIONS if is_valid_file is None else None,
+										  transform=transform,
+										  target_transform=target_transform,
+										  is_valid_file=is_valid_file)
+		
+		self.categories = categories
+
+		classes, class_to_idx = self._find_classess(self.root,categories)
+
+		self.loader = loader
+
+		self.classes = classes
+		self.class_to_idx = class_to_idx
+		self.samples = make_dataset(self.root, self.class_to_idx)
+		self.imgs = self.samples
+		self.targets = [s[1] for s in self.imgs]
+
+	def _find_classess(self,dir,categories):
+		if sys.version_info >= (3, 5):
+			# Faster and available in Python 3.5 and above
+			classes = [d.name for d in os.scandir(dir) if d.name in categories and d.is_dir()]
+		else:
+			classes = [d for d in os.listdir(dir) if d in categories and os.path.isdir(os.path.join(dir, d))]
+		classes.sort()
+		class_to_idx = {classes[i]: i for i in range(len(classes))}
+		return classes, class_to_idx
+
+def load_data(folder,batch_size,classes):
 	data_transforms = {
 	'train':transforms.Compose([
 
@@ -182,13 +261,14 @@ def load_data(folder,batch_size,num_known):
 		transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225])
 		])
 	}
-	files = os.listdir(folder)
-	classes = os.listdir(os.path.join(folder,"train"))
-	files = random.sample(classes,num_known)
+	# files = os.listdir(folder)
+	files = classes
+	# classes = os.listdir(os.path.join(folder,"train"))
+	# files = random.sample(classes,num_known)
 	# imgs = [cv2.imread(os.path.join(folder,i)) for i in files]
-	imgs = {x:datasets.ImageFolder(os.path.join(folder,x),transform=data_transforms[x]) 
-	for x in ['train','val','test']}
-	dataloaders_dict = {x:torch.utils.data.DataLoader(imgs[x],batch_size=batch_size,shuffle=True) for x in ['train','val','test']}
+	imgs = {x:ImageFolder(os.path.join(folder,x),classes,transform=data_transforms[x]) 
+	for x in ['train','val']}
+	dataloaders_dict = {x:torch.utils.data.DataLoader(imgs[x],batch_size=batch_size,shuffle=True) for x in ['train','val']}
 	# imgs = [data_transforms['train'](Image.open(os.path.join(folder,i))) for i in files]
 	# image_datasets = {'train':data_transforms['train']}
 	# for inputs,label in dataloaders_dict:
@@ -204,11 +284,11 @@ def optimizer(model):
 		for name,param in model.named_parameters():
 			if param.requires_grad == True:
 				params_to_update.append(param)
-				print ('\t',name)
-	else:
-		for name,param in model.named_parameters():
-			if param.requires_grad == True:
-				print ('\t',name)
+				# print ('\t',name)
+	# else:
+	# 	for name,param in model.named_parameters():
+	# 		if param.requires_grad == True:
+	# 			print ('\t',name)
 	optimizer_model = optim.SGD(params_to_update,lr=0.001,momentum=0.9)
 	return optimizer_model
 
@@ -298,18 +378,18 @@ if __name__ == "__main__":
 
 	# close_ratios = [0,0.1,0.3,0.5,0.7,0.9]
 	# close_ratios = [0,0.1,0.2,0.3,0.4,0.5]
-	if not os.path.exists("../models/resnet"):
-		os.mkdir("../models/resnet")
+	# if not os.path.exists("../models/resnet"):
+	# 	os.mkdir("../models/resnet")
 	# tune_geometry()
-	resnet_log = open("logs/resnet.txt",'r').readlines()
-	for i in data:
+	data = open("logs/resnet.txt",'r').readlines()
+	for i in data[1:]:
 		filename,classes = i.split('|')
 		classes = classes.strip().split(',')
 
 		num_classes = len(classes)
 
 		model = initialise_model(num_classes)
-		dataloaders_dict,data_transforms,classes = load_data('../dataset/characters',8,num_classes)
+		dataloaders_dict,data_transforms,classes = load_data('../dataset/characters',8,classes)
 		# resnet_log.write("ratio:{}|known:{}\n".format(close_ratios[i],','.join(classes)))
 		criterion = nn.CrossEntropyLoss()
 		optimizer_model = optimizer(model)
