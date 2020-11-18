@@ -202,9 +202,10 @@ class Trainer():
 			class_loss = self.criterion(cat_label, labels)
 			objectness_loss = self.criterion(pixel_wise,objectness)
 			edge_loss = self.criterion(edge_label,edge)
-			loss = class_loss.item() + objectness_loss.item()
+			#loss = class_loss.item() + objectness_loss.item()
 			loss = class_loss + objectness_loss + edge_loss
 #			print (loss)
+			#loss = objectness_loss
 			loss.backward()
 			self.optimizer.step()
 			train_loss += loss.item()

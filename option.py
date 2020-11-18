@@ -114,6 +114,7 @@ class Options():
 			}
 			args.epochs = epoches[args.dataset.lower()]
 		if args.batch_size is None:
+			#"""This file contains all of the code for
 			args.batch_size = 4
 		if args.test_batch_size is None:
 			args.test_batch_size = 8
