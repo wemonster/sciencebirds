@@ -224,11 +224,11 @@ class ASPP_Module(nn.Module):
 		return self.project(y)
 
 
-def get_deeplab(nclass,dataset='sciencebirds', backbone='resnet50', pretrained=False,
+def get_deeplab(nclass,model_name,dataset='sciencebirds', backbone='resnet50', pretrained=False,
 				root='~/.encoding/models', **kwargs):
 	# infer number of classes
 	from ..datasets import datasets
-	model = DeepLabV3(nclass, backbone=backbone, root=root, **kwargs)
+	model = DeepLabV3(nclass,model_name, backbone=backbone, root=root, **kwargs)
 	if pretrained:
 		raise NotImplementedError
 

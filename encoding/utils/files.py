@@ -12,7 +12,7 @@ __all__ = ['save_checkpoint', 'download', 'mkdir', 'check_sha1']
 
 def save_checkpoint(state, args, is_best,filename1,filename='checkpoint.pth.tar'):
 	"""Saves checkpoint to disk"""
-	directory = "../experiments/runs/"
+	directory = "../experiments/runs/characters/"
 	if not os.path.exists(directory):
 		os.makedirs(directory)
 	filename = directory + filename
