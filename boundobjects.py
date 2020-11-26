@@ -24,26 +24,54 @@ def get_class_lists():
 	data = open("logs/resnet.txt",'r').readlines()
 	class_info = []
 	for i in data:
-		ratio,classes = i.split('|')
-		ratio = float(ratio.split(':')[1])
-		classes = classes.strip().split(':')[1].split(',')
-		class_info.append((ratio,classes))
+		filename,classes = i.split('|')
+		classes = classes.strip().split(',')
+		class_info.append((filename,classes))
 	return class_info
-outdir = "../sciencebirdoutputs/5"
+outdir = "../sciencebirdoutputs/ICE"
 if not os.path.exists(outdir):
 	os.makedirs(outdir)
-image_folder = "../testresults/5/mask"
+pallete_folder = "../sciencebirdoutputs/ICE/pallete"
+if not os.path.exists(pallete_folder):
+	os.makedirs(pallete_folder)
+# image_folder = "../testresults/ICE/mask"
+image_folder = "../experiments/results/ICE/mask"
 img_files = os.listdir(image_folder)
 class_info = get_class_lists()
 
-category = Category(class_info[0][1],True)
+category = Category(class_info[17][1],True)
 print (category.id_to_cat.keys())
+colormap = {
+		'BACKGROUND':[0,0,0],
+		'BLACKBIRD':[128,0,0],
+		'BLUEBIRD':[0,128,0],
+		'HILL':[128,128,0],
+		'ICE':[0,0,128],
+		'PIG':[128,0,128],
+		'REDBIRD':[0,128,128],
+		'STONE':[128,128,128],
+		'WHITEBIRD':[64,0,0],
+		'WOOD':[192,0,0],
+		'YELLOWBIRD':[64,128,128],
+		'SLING':[192,128,128],
+		'TNT':[64,128,128],
+		'UNKNOWN':[255,255,255]
+	}
+
 for img in img_files:
 	if img.endswith('png'):
 		masks = cv2.imread(os.path.join(image_folder,img),0)
+		print (masks)
 		categories = np.unique(masks)
 		print (categories)
-		colored = cv2.imread(os.path.join('dataset/rawdata/groundtruthimage',img))
+		pallete = np.zeros((480,840,3)).astype(np.uint8)
+		id_to_cat = category.id_to_cat
+		row,col = 480,840
+		for i in range(row):
+			for j in range(col):
+				pallete[i,j,:] = colormap[id_to_cat[masks[i,j]]]
+		cv2.imwrite(os.path.join(pallete_folder,img),pallete)
+		colored = cv2.imread(os.path.join('../dataset/rawdata/groundtruthimage',img))
 		edge = cv2.Canny(colored,0,255)
 		for cat in categories:
 			if cat == 0:

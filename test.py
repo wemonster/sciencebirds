@@ -63,13 +63,78 @@ def build_weibull(features,ng=50):
 		weibull_high = libmr.MR()
 		weibull_low = libmr.MR()
 		#print (points.size())
-		weibull_high.fit_high(torch.sort(torch.abs(feature_sum[points][:,0,0] - feature_means[i]))[0],ng)
-		weibull_low.fit_low(torch.sort(torch.abs(feature_sum[points][:,0,0] - feature_means[i]),descending=False)[0],ng)
+		toptail = torch.sort(torch.abs(feature_sum[points][:,0,0] - feature_means[i]))[0]
+		# print (len(toptail))
+		weibull_high.fit_high(toptail,len(toptail))
+		bottail = torch.sort(torch.abs(feature_sum[points][:,0,0] - feature_means[i]),descending=False)[0]
+		weibull_low.fit_low(bottail,len(bottail))
 		weibulls_high[i+1] = weibull_high
 		weibulls_low[i+1] = weibull_low
 	return weibulls_high,weibulls_low,feature_means
 
-def thresholding(weibulls_high,weibulls_low,feature_means,test_data,objectness,eps,alpha):
+def recalibrate_scores(weibull_model,feature_means,test_data,objectness,alpharank,num_classes):
+
+	target_class = torch.argmax(test_data,dim=1)
+	#print (target_class.size())
+	#print (test_data.size())
+	objects = torch.nonzero(objectness,as_tuple=True)
+	#print (objects)
+	test_data = test_data[objects[0],:,objects[1],objects[2]] #N x k, n is number of samples and k is dim
+	#print (test_data.size())
+	test_data = torch.abs(feature_means.squeeze() - test_data)
+	# print (dist.size())
+	#get top alpha index for each feature
+	target_class = target_class[objects]
+	# dist = dist[:,:].gather(0,target_class[:].unsqueeze(dim=1))
+
+	ranked_vals = test_data.sort(dim=1,descending=True)[0]
+	print (ranked_vals)
+	ranked_ids = test_data.argsort(dim=1,descending=True)
+	print(ranked_ids.shape)
+	print (ranked_ids[0])
+	alpha_weights = [((alpharank) - i) / float(alpharank) for i in range(1,alpharank+1)]
+	# print (alpha_weights)
+	ranked_alpha = torch.ones((ranked_ids.size(0),num_classes)).cuda()
+	# ranked_alpha
+	for i in range(len(alpha_weights)):
+		# print (ranked_ids[:,i])
+		ranked_alpha[range(ranked_ids.size(0)),ranked_ids[:,i]] = alpha_weights[i]
+	print (ranked_alpha[0])
+	tic = time.time()
+	# scores = torch.Tensor([weibull_model[(ranked_ids.flatten()[i]+1).item()].w_score(ranked_vals.flatten()[i].item()) for i in range(len(ranked_ids.flatten()))]).cuda()
+	scores = torch.Tensor([weibull_model[i%num_classes+1].w_score(test_data.flatten()[i]) for i in range(len(ranked_ids.flatten()))]).cuda()
+	toc = time.time()
+	print (toc-tic)
+
+	print (scores)
+	print (max(scores),min(scores))
+	# res = func(ranked_vals.flatten(),ranked_ids.flatten())
+	# modified_scores = torch.Tensor([weibull_model[k+1].w_score(ranked_vals)])
+	revised = test_data * (1 - ranked_alpha * scores.reshape(ranked_ids.shape))
+	print (revised[0])
+	modified_scores = test_data - revised
+	modified_score = modified_scores.sum(axis=1)
+	expanded = torch.empty((ranked_ids.size(0),num_classes+1)).cuda()
+	expanded[:,0] = modified_score
+	expanded[:,1:] = modified_scores
+	# print (test_data[:5])
+	# print (expanded[:5])
+	# print (torch.nn.functional.softmax(test_data,dim=1)[:5])
+	# print (torch.nn.functional.softmax(expanded,dim=1)[:5])
+
+	pred = torch.argmax(expanded,dim=1)
+	outliers = (pred==0).nonzero().squeeze()
+	print (outliers)
+	return objects,outliers
+	# openmax_unknown = []
+	# for k in range(dist.size(0)):
+	# 	print (dist[k])
+	# for i in range(num_classes):
+		# wscore = [weibull_model[i+1].w_score(dist[k]) for k in range(dist.size(0))]
+
+
+
+def thresholding(weibulls_high,weibulls_low,feature_means,test_data,objectness,eps):
 	
 	target_class = torch.argmax(test_data,dim=1)
 	#print (target_class.size())
@@ -77,18 +142,19 @@ def thresholding(weibulls_high,weibulls_low,feature_means,test_data,objectness,e
 	objects = torch.nonzero(objectness,as_tuple=True)
 	#print (objects)
 	test_data = test_data[objects[0],:,objects[1],objects[2]]
+	print (test_data.size())
 	#print (test_data.size())
+	print (feature_means)
 	dist = torch.abs(feature_means.squeeze() - test_data)
 	#target_class = torch.argmax(test_data,dim=1)[objects[0],:,objects[1],objects[2]]
 	target_class = target_class[objects]
-
 	dist = dist[:,:].gather(0,target_class[:].unsqueeze(dim=1))
 
 	print (dist)
 	weibull_high_cdf = torch.Tensor([weibulls_high[(target_class[k]+1).item()].cdf(dist[k]) for k in range(dist.size(0))])
 	weibull_low_cdf = torch.Tensor([weibulls_low[(target_class[k]+1).item()].cdf(dist[k]) for k in range(dist.size(0))])
-	print (torch.max(weibull_high_cdf),torch.min(weibull_high_cdf))
-	print (torch.max(weibull_low_cdf),torch.min(weibull_low_cdf))
+	# print (torch.max(weibull_high_cdf),torch.min(weibull_high_cdf))
+	# print (torch.max(weibull_low_cdf),torch.min(weibull_low_cdf))
 	high_outliers = (weibull_high_cdf > 1-eps).nonzero().squeeze()	
 	low_outliers = (weibull_low_cdf > eps).nonzero().squeeze()
 	
@@ -98,7 +164,7 @@ def thresholding(weibulls_high,weibulls_low,feature_means,test_data,objectness,e
 	return objects,high_outliers,low_outliers
 
 
-def test(args,x,classes):
+def test(args,model_name,classes):
 	# output folder
 	outdir = os.path.join(args.save_folder,model_name)
 	# outdir = "../results"
@@ -161,17 +227,18 @@ def test(args,x,classes):
 
 	tbar = tqdm(test_data)
 	ids = testset._load_image_set_index()
-	test_log = open("logs/{}.txt".format(args.model_name),'w')
+	test_log = open("logs/{}.txt".format(model_name),'w')
 	overallpix = 0.0
 	overallmIoU = 0.0
 	#load gaussian model
 	#mean_weights = torch.load("../models/gaussian/mean_{}.pt".format(int(args.ratio*10)))
 	#var_weights = torch.load("../models/gaussian/var_{}.pt".format(int(args.ratio*10)))
 	#gaussians = build_gaussian(mean_weights,var_weights)
-	feature_data = torch.load("../models/weibull/{}.pt".format(args.model_name))
-	#weibulls_high,weibulls_low,feature_means = build_weibull(feature_data)
+	feature_data = torch.load("../models/weibull/{}.pt".format(model_name))
+	weibulls_high,weibulls_low,feature_means = build_weibull(feature_data)
 	category = Category(classes,True)
 	threshold = 0.1
+	alpharank = nclass // 2
 	for i, (image,labels,objectness,edge) in enumerate(tbar):
 		print (i,image.size())
 		image = image.type(torch.cuda.FloatTensor)
@@ -198,13 +265,15 @@ def test(args,x,classes):
 				#print (torch.unique(predict))
 				edge_pred = torch.argmax(edge_label,dim=1)
 				#thresholding here
-				#objects,high_outliers,low_outliers = thresholding(weibulls_high,weibulls_low,feature_means,outputs,objectness_pred,threshold)
+				objects,outliers = recalibrate_scores(weibulls_high,feature_means,outputs,objectness_pred,alpharank,nclass)
+				# objects,high_outliers,low_outliers = thresholding(weibulls_high,weibulls_low,feature_means,outputs,objectness_pred,threshold)
 
 				#print (weibull_cdfs)
 				#print (outliers)
 				#print (outliers.size())
 				#print (high_outliers.size(),low_outliers.size())
 				#print (torch.unique(weibull_cdfs))
+				predict[objects[0][outliers],objects[1][outliers],objects[2][outliers]] = 1
 				#predict[objects[0][high_outliers],objects[1][high_outliers],objects[2][high_outliers]] = 1
 				#predict[objects[0][low_outliers],objects[1][low_outliers],objects[2][low_outliers]] = 1
 				predict = predict * (1-edge_pred)
@@ -244,7 +313,7 @@ if __name__ == "__main__":
 	class_info = get_class_lists()
 	#print (class_info)
 	for model_name in class_info.keys():
-		#if model_name.startswith("0"):
+		if model_name.startswith("ICE"):
 		#	continue
-		print (model_name)
-		test(args,model_name,class_info[model_name])
+			print (model_name)
+			test(args,model_name,class_info[model_name])
