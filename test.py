@@ -1,7 +1,7 @@
 ###########################################################################
-# Created by: Hang Zhang 
-# Email: zhang.hang@rutgers.edu 
-# Copyright (c) 2017
+# Created by: Jianan Yang
+# Email: u7083746@anu.edu.au
+# Copyright (c) 2020
 ###########################################################################
 
 import os
@@ -69,7 +69,7 @@ def build_weibull(features,ng=50):
 		weibulls_low[i+1] = weibull_low
 	return weibulls_high,weibulls_low,feature_means
 
-def thresholding(weibulls_high,weibulls_low,feature_means,test_data,objectness,eps):
+def thresholding(weibulls_high,weibulls_low,feature_means,test_data,objectness,eps,alpha):
 	
 	target_class = torch.argmax(test_data,dim=1)
 	#print (target_class.size())
@@ -98,7 +98,7 @@ def thresholding(weibulls_high,weibulls_low,feature_means,test_data,objectness,e
 	return objects,high_outliers,low_outliers
 
 
-def test(args,model_name,classes):
+def test(args,x,classes):
 	# output folder
 	outdir = os.path.join(args.save_folder,model_name)
 	# outdir = "../results"

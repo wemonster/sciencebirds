@@ -1,9 +1,8 @@
 ###########################################################################
-# Created by: Hang Zhang 
-# Email: zhang.hang@rutgers.edu 
-# Copyright (c) 2017
+# Created by: Jianan Yang
+# Email: u7083746@anu.edu.au
+# Copyright (c) 2020
 ###########################################################################
-
 import os
 import numpy as np
 from tqdm import tqdm
@@ -17,6 +16,7 @@ import torch
 from torch.utils import data
 import torchvision.transforms as transform
 from torch.nn.parallel.scatter_gather import gather
+from torchsummary import summary
 
 import encoding.utils as utils
 from encoding.nn import SegmentationLosses, SyncBatchNorm
@@ -24,8 +24,7 @@ from encoding.nn.customize import FocalLoss
 from encoding.parallel import DataParallelModel, DataParallelCriterion
 from encoding.datasets import get_segmentation_dataset
 from encoding.models import get_segmentation_model
-from encoding.roi_data_layer.roibatchLoader import roibatchLoader
-from encoding.roi_data_layer.roidb import combined_roidb
+
 
 from option import Options
 # from maskimage import generate_dataset
@@ -62,9 +61,7 @@ class Trainer():
 		# dataset
 		data_kwargs = {'transform': input_transform, 'target_transform':input_transform,
 						'label_transform':label_transform}
-		#get roidb info
-		#train_imdb,train_roidb = combined_roidb('train',self.categories)
-		#val_imdb,val_roidb = combined_roidb('val',self.categories)
+
 
 		#get image info
 		trainset = get_segmentation_dataset(args.dataset,self.filename,args.size, split=args.train_split, mode='train',
@@ -103,7 +100,8 @@ class Trainer():
 
 
 		for (name,w) in model.named_parameters():
-		 	print (name,w.requires_grad)
+			print (name)
+		# 	print (name,w.requires_grad)
 		# optimizer using different LR
 		params_list = [{'params': model.pretrained.parameters(), 'lr': args.lr}]
 		params_list.append({'params':model.low_level_1.parameters(),'lr':args.lr})
@@ -128,6 +126,7 @@ class Trainer():
 		# self.criterion = FocalLoss(num_class = self.nclass,alpha=torch.ones((self.nclass,1))*0.25)
 		#self.criterion = FocalLoss()
 		self.model, self.optimizer = model, optimizer
+		# print (summary(model,(3,480,840)))
 		# using cuda
 		if args.cuda:
 			self.model = self.model.cuda()
@@ -285,9 +284,9 @@ class Trainer():
 			correct, cat_labeled,correct_classified = utils.batch_pix_accuracy(pred.data, target)
 
 			correct_object,labeled_object,correct_classified_object = utils.batch_pix_accuracy(objectness_pred.data,object_truth)
-			if epoch > 5:
-				collect_features(labeled,correct_classified,pred)
-				self.build_weibull_model()
+			# if epoch > 5:
+			collect_features(labeled,correct_classified,pred)
+			self.build_weibull_model()
 			inter, union = utils.batch_intersection_union(pred.data, target, self.nclass)
 			return correct, cat_labeled, inter, union, correct_object, labeled_object,edge_correct,edge_labeled
 
@@ -385,8 +384,7 @@ if __name__ == "__main__":
 	root = "logs/{}".format(args.size)
 	if not os.path.exists(root):
 		os.mkdir(root)
-	#for i in range(len(class_info)):
-	for i in range(2,6):
+	for i in range(len(class_info)):
 		id_info = Category(class_info[i][1])
 		trainer = Trainer(class_info[i],id_info,args)
 		filename = class_info[i][0]

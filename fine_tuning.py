@@ -1,3 +1,11 @@
+###########################################################################
+# Created by: Jianan Yang
+# Email: u7083746@anu.edu.au
+# Copyright (c) 2020
+###########################################################################
+
+
+
 from __future__ import print_function
 
 import torch
@@ -109,7 +117,7 @@ def train_model(model,dataloaders,criterion,optimizer,output_model,num_epochs=25
 	time_elapsed = time.time() - since
 	print ("Training complete in {:.0f}m {:.0f}s".format(time_elapsed//60,time_elapsed % 60))
 	model.load_state_dict(best_model_wts)
-	torch.save(best_model_wts,"../models/resnet/pretrained_{}.pkl".format(output_model))
+	torch.save(best_model_wts,"../models/pretrained_{}.pkl".format(output_model))
 	info = {'training_loss':train_loss,
 			'training_acc':train_acc,
 			'val_loss':val_loss,
@@ -278,8 +286,7 @@ def load_data(folder,batch_size,classes):
 
 def optimizer(model):
 	params_to_update = model.parameters()
-	#print ("Params to learn:")
-	
+	print ("Params to learn:")
 	if feature_extract:
 		params_to_update = []
 		for name,param in model.named_parameters():
@@ -383,8 +390,7 @@ if __name__ == "__main__":
 	# 	os.mkdir("../models/resnet")
 	# tune_geometry()
 	data = open("logs/resnet.txt",'r').readlines()
-	for i in data[1:]:
-	
+	for i in data[::-1]:
 		filename,classes = i.split('|')
 		print (filename)
 		classes = classes.strip().split(',')

@@ -1,7 +1,7 @@
 ###########################################################################
-# Created by: Hang Zhang 
-# Email: zhang.hang@rutgers.edu 
-# Copyright (c) 2017
+# Created by: Jianan Yang
+# Email: u7083746@anu.edu.au
+# Copyright (c) 2020
 ###########################################################################
 
 import math
