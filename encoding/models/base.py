@@ -35,7 +35,7 @@ class BaseNet(nn.Module):
 		self.crop_size = crop_size
 		# copying modules from pretrained models
 		# pretrained_model = "../models/resnet/pretrained_{}.pkl".format(int(ratio*10))
-		pretrained_model = "../models/resnet/pretrained_{}.pkl".format(model_name)
+		pretrained_model = "../models/resnet/pretrained_{}.pkl".format('geometry')
 		if backbone == 'resnet50':
 			self.pretrained = resnet.resnet50(pretrained_model,self.nclass,pretrained=False)
 		elif backbone == 'resnet101':

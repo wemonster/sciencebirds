@@ -1,0 +1,5 @@
+Epoch:0, Loss:0.182
+Epoch:1, Loss:0.059
+Epoch:2, Loss:0.048
+Epoch:3, Loss:0.043
+Epoch:4, Loss:0.042

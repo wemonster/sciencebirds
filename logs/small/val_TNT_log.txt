@@ -1,0 +1,5 @@
+Epoch:0, pixAcc:0.940, mIoU:0.586, Overall:0.871
+Epoch:1, pixAcc:0.955, mIoU:0.700, Overall:0.903
+Epoch:2, pixAcc:0.960, mIoU:0.713, Overall:0.909
+Epoch:3, pixAcc:0.963, mIoU:0.723, Overall:0.913
+Epoch:4, pixAcc:0.962, mIoU:0.722, Overall:0.913

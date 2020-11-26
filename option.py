@@ -110,12 +110,12 @@ class Options():
 				'pascal_aug': 50,
 				'pcontext': 80,
 				'ade20k': 120,
-				'sciencebirds':10
+				'sciencebirds':5
 			}
 			args.epochs = epoches[args.dataset.lower()]
 		if args.batch_size is None:
 			#"""This file contains all of the code for
-			args.batch_size = 4
+			args.batch_size = 2
 		if args.test_batch_size is None:
 			args.test_batch_size = 8
 		if args.lr is None:

@@ -98,9 +98,9 @@ def thresholding(weibulls_high,weibulls_low,feature_means,test_data,objectness,e
 	return objects,high_outliers,low_outliers
 
 
-def test(args,classes):
+def test(args,model_name,classes):
 	# output folder
-	outdir = os.path.join(args.save_folder,args.model_name)
+	outdir = os.path.join(args.save_folder,model_name)
 	# outdir = "../results"
 	if not os.path.exists(outdir):
 		os.makedirs(outdir)
@@ -124,7 +124,7 @@ def test(args,classes):
 	# dataset
 	data_kwargs = {'transform': input_transform, 'target_transform':input_transform,
 						'label_transform':label_transform}
-	testset = get_segmentation_dataset(args.dataset,args.model_name,args.size, split=args.split, mode='test',
+	testset = get_segmentation_dataset(args.dataset,model_name,args.size, split=args.split, mode='test',
 										   **data_kwargs)
 	# dataloader
 	loader_kwargs = {'num_workers': args.workers, 'pin_memory': True} \
@@ -135,15 +135,16 @@ def test(args,classes):
 	if args.model_zoo is not None:
 		model = get_model(args.model_zoo, pretrained=True)
 	else:
-		model = get_segmentation_model(nclass,args.model, dataset = args.dataset,
+		model = get_segmentation_model(nclass,args.model,model_name, dataset = args.dataset,
 									   backbone = args.backbone, dilated = args.dilated,
 									   lateral = args.lateral, jpu = args.jpu, aux = args.aux,
 									   se_loss = args.se_loss, norm_layer = BatchNorm,
 									   base_size = args.base_size, crop_size = args.crop_size)
 		# resuming checkpoint
-		if args.resume is None or not os.path.isfile(args.resume):
-			raise RuntimeError("=> no checkpoint found at '{}'" .format(args.resume))
-		checkpoint = torch.load(args.resume)
+		#if args.resume is None or not os.path.isfile(args.resume):
+		#	raise RuntimeError("=> no checkpoint found at '{}'" .format(args.resume))
+		#checkpoint = torch.load(args.resume)
+		checkpoint = torch.load("../experiments/runs/characters/model_best_{}.pth.tar".format(model_name))
 		# strict=False, so that it is compatible with old pytorch saved models
 		model.load_state_dict(checkpoint['state_dict'])
 		print("=> loaded checkpoint '{}' (epoch {})".format(args.resume, checkpoint['epoch']))
@@ -241,5 +242,9 @@ if __name__ == "__main__":
 	torch.manual_seed(args.seed)
 	args.test_batch_size = torch.cuda.device_count()
 	class_info = get_class_lists()
-
-	test(args,class_info[args.model_name])
+	#print (class_info)
+	for model_name in class_info.keys():
+		#if model_name.startswith("0"):
+		#	continue
+		print (model_name)
+		test(args,model_name,class_info[model_name])

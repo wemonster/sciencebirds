@@ -278,7 +278,8 @@ def load_data(folder,batch_size,classes):
 
 def optimizer(model):
 	params_to_update = model.parameters()
-	print ("Params to learn:")
+	#print ("Params to learn:")
+	
 	if feature_extract:
 		params_to_update = []
 		for name,param in model.named_parameters():
@@ -383,7 +384,9 @@ if __name__ == "__main__":
 	# tune_geometry()
 	data = open("logs/resnet.txt",'r').readlines()
 	for i in data[1:]:
+	
 		filename,classes = i.split('|')
+		print (filename)
 		classes = classes.strip().split(',')
 
 		num_classes = len(classes)
