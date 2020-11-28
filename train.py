@@ -99,8 +99,8 @@ class Trainer():
 									   base_size = args.base_size, crop_size = args.crop_size)
 
 
-		for (name,w) in model.named_parameters():
-			print (name)
+		# for (name,w) in model.named_parameters():
+		# 	print (name)
 		# 	print (name,w.requires_grad)
 		# optimizer using different LR
 		params_list = [{'params': model.pretrained.parameters(), 'lr': args.lr}]
@@ -384,7 +384,8 @@ if __name__ == "__main__":
 	root = "logs/{}".format(args.size)
 	if not os.path.exists(root):
 		os.mkdir(root)
-	for i in range(len(class_info)-1,len(class_info)):
+	# for i in range(len(class_info)-1,0,-1):
+	for i in range(2,5):
 		id_info = Category(class_info[i][1])
 		trainer = Trainer(class_info[i],id_info,args)
 		filename = class_info[i][0]

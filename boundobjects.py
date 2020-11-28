@@ -28,18 +28,19 @@ def get_class_lists():
 		classes = classes.strip().split(',')
 		class_info.append((filename,classes))
 	return class_info
-outdir = "../sciencebirdoutputs/ICE"
+target_cate = "01"
+outdir = os.path.join("../sciencebirdoutputs/",target_cate)
 if not os.path.exists(outdir):
 	os.makedirs(outdir)
-pallete_folder = "../sciencebirdoutputs/ICE/pallete"
+pallete_folder = os.path.join(outdir,"pallete")
 if not os.path.exists(pallete_folder):
 	os.makedirs(pallete_folder)
 # image_folder = "../testresults/ICE/mask"
-image_folder = "../experiments/results/ICE/mask"
+image_folder = "../experiments/results/{}/mask".format(target_cate)
 img_files = os.listdir(image_folder)
 class_info = get_class_lists()
 
-category = Category(class_info[17][1],True)
+category = Category(class_info[1][1],True)
 print (category.id_to_cat.keys())
 colormap = {
 		'BACKGROUND':[0,0,0],
@@ -61,7 +62,8 @@ colormap = {
 for img in img_files:
 	if img.endswith('png'):
 		masks = cv2.imread(os.path.join(image_folder,img),0)
-		print (masks)
+		# print (category.gameObjectType)
+		masks[masks==3] = 1
 		categories = np.unique(masks)
 		print (categories)
 		pallete = np.zeros((480,840,3)).astype(np.uint8)
@@ -92,6 +94,42 @@ for img in img_files:
 				cv2.rectangle(colored,(ymin,xmin),(ymax,xmax),(0,0,255),1)
 
 		cv2.imwrite(os.path.join(outdir,img),colored)
+
+def synthetic_img():
+
+	masks = cv2.imread(os.path.join(image_folder,img),0)
+		# print (category.gameObjectType)
+	masks[masks==3] = 1
+	categories = np.unique(masks)
+	print (categories)
+	pallete = np.zeros((480,840,3)).astype(np.uint8)
+	id_to_cat = category.id_to_cat
+	row,col = 480,840
+	for i in range(row):
+		for j in range(col):
+			pallete[i,j,:] = colormap[id_to_cat[masks[i,j]]]
+	cv2.imwrite(os.path.join(pallete_folder,img),pallete)
+	colored = cv2.imread(os.path.join('../dataset/rawdata/groundtruthimage',img))
+	edge = cv2.Canny(colored,0,255)
+	for cat in categories:
+		if cat == 0:
+			continue
+		to_ret = np.zeros((480,840)).astype(np.uint8)
+		to_ret[(masks==cat)] = 255
+		to_ret[(edge==255)] = 0
+		labels,num = skimage.measure.label(to_ret,connectivity=2,return_num=True)
+		props = regionprops(labels)
+		for prop in props:
+			xmin,ymin,xmax,ymax = prop['bbox']
+			if (xmax-xmin) * (ymax-ymin) < 30:
+				continue
+			color = (0,0,255)
+			if cat == 1:
+				color = (255,0,0)
+			cv2.putText(colored,category.id_to_cat[cat],(ymin,xmin),cv2.FONT_HERSHEY_SIMPLEX,0.3,color,1,cv2.LINE_AA)
+			cv2.rectangle(colored,(ymin,xmin),(ymax,xmax),(0,0,255),1)
+
+	cv2.imwrite(os.path.join(outdir,img),colored)
 # props = regionprops(labels)
 # print (type(props))
 # for prop in props:

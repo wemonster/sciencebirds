@@ -378,7 +378,6 @@ def resnet50(pretrained_model="../models/resnet/pretrained_geometric.pkl",num_cl
 	"""
 	# model = myNet(13,[3,4,6,3])
 	model = ResNet(num_classes,Bottleneck,[3,4,6,3],**kwargs)
-
 	if pretrained:
 		wts = torch.load(pretrained_model)
 		#model_ft = models.resnet50(pretrained=True)
